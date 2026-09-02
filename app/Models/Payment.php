@@ -23,12 +23,13 @@ use Illuminate\Support\Carbon;
  * @property string $currency
  * @property Carbon|null $paid_at
  * @property string|null $moneybird_invoice_id
+ * @property string|null $moneybird_credit_invoice_id
  * @property array<string, mixed>|null $metadata
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'club_id', 'user_id', 'payable_type', 'payable_id', 'mollie_payment_id', 'moneybird_invoice_id',
+    'club_id', 'user_id', 'payable_type', 'payable_id', 'mollie_payment_id', 'moneybird_invoice_id', 'moneybird_credit_invoice_id',
     'status', 'amount_cents', 'currency', 'paid_at', 'metadata',
 ])]
 class Payment extends Model

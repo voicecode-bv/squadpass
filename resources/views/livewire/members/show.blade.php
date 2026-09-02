@@ -97,6 +97,9 @@
                         <flux:table.column>{{ __('Started') }}</flux:table.column>
                         <flux:table.column>{{ __('Next billing') }}</flux:table.column>
                         <flux:table.column align="end">{{ __('Status') }}</flux:table.column>
+                        @if ($club->hasMoneybirdConfigured())
+                            <flux:table.column align="end">{{ __('Moneybird') }}</flux:table.column>
+                        @endif
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($this->subscriptions as $subscription)
@@ -135,6 +138,9 @@
                         <flux:table.column>{{ __('Purchased') }}</flux:table.column>
                         <flux:table.column>{{ __('Valid until') }}</flux:table.column>
                         <flux:table.column align="end">{{ __('Status') }}</flux:table.column>
+                        @if ($club->hasMoneybirdConfigured())
+                            <flux:table.column align="end">{{ __('Moneybird') }}</flux:table.column>
+                        @endif
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($this->stripCards as $card)
@@ -175,6 +181,9 @@
                         <flux:table.column>{{ __('Description') }}</flux:table.column>
                         <flux:table.column align="end">{{ __('Amount') }}</flux:table.column>
                         <flux:table.column align="end">{{ __('Status') }}</flux:table.column>
+                        @if ($club->hasMoneybirdConfigured())
+                            <flux:table.column align="end">{{ __('Moneybird') }}</flux:table.column>
+                        @endif
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($this->payments as $payment)
@@ -190,6 +199,17 @@
                                         default => 'red',
                                     }">{{ $payment->status->label() }}</flux:badge>
                                 </flux:table.cell>
+                                @if ($club->hasMoneybirdConfigured())
+                                    <flux:table.cell align="end">
+                                        @if ($payment->moneybird_credit_invoice_id)
+                                            <flux:link :href="$club->moneybirdInvoiceUrl($payment->moneybird_credit_invoice_id)" target="_blank" class="text-xs">{{ __('Credit invoice') }}</flux:link>
+                                        @elseif ($payment->moneybird_invoice_id)
+                                            <flux:link :href="$club->moneybirdInvoiceUrl($payment->moneybird_invoice_id)" target="_blank" class="text-xs">{{ __('Invoice') }}</flux:link>
+                                        @else
+                                            <flux:text class="text-xs">—</flux:text>
+                                        @endif
+                                    </flux:table.cell>
+                                @endif
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>

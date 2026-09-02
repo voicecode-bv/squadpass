@@ -4,6 +4,7 @@ namespace App\Actions\Payments;
 
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
+use App\Jobs\CreateMoneybirdCreditInvoice;
 use App\Jobs\CreateMoneybirdInvoice;
 use App\Models\Payment;
 use App\Models\StripCard;
@@ -31,6 +32,9 @@ class ApplyPaymentStatus
                 // Only a refund can follow a paid payment.
                 if ($payment->status === PaymentStatus::Paid && $result->status === PaymentStatus::Refunded) {
                     $payment->update(['status' => PaymentStatus::Refunded]);
+
+                    // Reverse the Moneybird invoice with a credit invoice once the transaction commits.
+                    CreateMoneybirdCreditInvoice::dispatch($payment)->afterCommit();
                 }
 
                 return;

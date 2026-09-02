@@ -57,6 +57,11 @@
                         </div>
 
                         <div class="flex gap-2">
+                            @if ($unlocked && $addon->key === \App\Enums\AddonKey::Moneybird)
+                                <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.moneybird', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
+                            @elseif ($unlocked && $addon->key === \App\Enums\AddonKey::Mollie)
+                                <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.settings', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
+                            @endif
                             @if ($status === $statuses::Active)
                                 <flux:button size="sm" wire:click="cancel({{ $subscription->id }})" wire:confirm="{{ __('Cancel this add-on? It stays active until the end of the paid month.') }}">{{ __('Cancel') }}</flux:button>
                             @elseif ($status === $statuses::PastDue)

@@ -76,6 +76,11 @@
                             <flux:sidebar.item icon="puzzle-piece" :href="route('clubs.addons', $currentClub)" :current="request()->routeIs('clubs.addons')" wire:navigate>
                                 {{ __('Add-ons') }}
                             </flux:sidebar.item>
+                            @if ($currentClub->hasAddon(\App\Enums\AddonKey::Moneybird))
+                                <flux:sidebar.item icon="document-text" :href="route('clubs.moneybird', $currentClub)" :current="request()->routeIs('clubs.moneybird')" wire:navigate>
+                                    {{ __('Moneybird') }}
+                                </flux:sidebar.item>
+                            @endif
                         @endcan
                     </flux:sidebar.group>
 

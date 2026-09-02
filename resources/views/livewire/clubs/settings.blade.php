@@ -41,22 +41,16 @@
         <flux:separator />
 
         @if ($club->hasAddon(\App\Enums\AddonKey::Moneybird))
-            <div>
-                <flux:heading size="lg">{{ __('Moneybird') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Link Moneybird to sync members as contacts and invoice paid payments automatically.') }}</flux:text>
-            </div>
-
-            <flux:field>
-                <flux:input
-                    wire:model="moneybird_access_token"
-                    :label="__('Moneybird access token')"
-                    type="password"
-                    viewable
-                />
-                <flux:description>{{ __('Create a personal API token in Moneybird under Settings, API & webhooks.') }}</flux:description>
-            </flux:field>
-
-            <flux:input wire:model="moneybird_administration_id" :label="__('Moneybird administration ID')" placeholder="123456789012345678" />
+            <flux:callout icon="document-text" variant="secondary">
+                <flux:callout.heading>{{ __('Moneybird') }}</flux:callout.heading>
+                <flux:callout.text>
+                    {{ $club->hasMoneybirdConfigured() ? __('Connected to administration :id.', ['id' => $club->moneybird_administration_id]) : __('Not connected yet.') }}
+                    {{ __('Invoice settings and contact sync are managed on the Moneybird page.') }}
+                </flux:callout.text>
+                <x-slot name="actions">
+                    <flux:button :href="route('clubs.moneybird', $club)" wire:navigate size="sm">{{ __('Moneybird settings') }}</flux:button>
+                </x-slot>
+            </flux:callout>
         @else
             <flux:callout icon="document-text" variant="secondary">
                 <flux:callout.heading>{{ __('Invoicing (Moneybird)') }}</flux:callout.heading>

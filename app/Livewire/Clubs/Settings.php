@@ -20,10 +20,6 @@ class Settings extends Component
 
     public string $mollie_api_key = '';
 
-    public string $moneybird_access_token = '';
-
-    public string $moneybird_administration_id = '';
-
     public bool $self_signup = true;
 
     public function mount(Club $club): void
@@ -34,8 +30,6 @@ class Settings extends Component
         $this->name = $club->name;
         $this->timezone = $club->timezone;
         $this->mollie_api_key = $club->mollie_api_key ?? '';
-        $this->moneybird_access_token = $club->moneybird_access_token ?? '';
-        $this->moneybird_administration_id = $club->moneybird_administration_id ?? '';
         $this->self_signup = $club->self_signup ?? true;
     }
 
@@ -47,8 +41,6 @@ class Settings extends Component
             'name' => ['required', 'string', 'max:255'],
             'timezone' => ['required', 'string', 'timezone:all'],
             'mollie_api_key' => ['nullable', 'string', 'starts_with:test_,live_'],
-            'moneybird_access_token' => ['nullable', 'string'],
-            'moneybird_administration_id' => ['nullable', 'string', 'max:30'],
             'self_signup' => ['boolean'],
         ]);
 
@@ -61,11 +53,6 @@ class Settings extends Component
         // Integration credentials can only be edited while the matching add-on is unlocked.
         if ($this->club->hasAddon(AddonKey::Mollie)) {
             $attributes['mollie_api_key'] = $validated['mollie_api_key'] ?: null;
-        }
-
-        if ($this->club->hasAddon(AddonKey::Moneybird)) {
-            $attributes['moneybird_access_token'] = $validated['moneybird_access_token'] ?: null;
-            $attributes['moneybird_administration_id'] = $validated['moneybird_administration_id'] ?: null;
         }
 
         $this->club->update($attributes);

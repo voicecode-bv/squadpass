@@ -22,7 +22,7 @@ class SyncMemberContact
         }
 
         $user = $membership->user;
-        [$firstName, $lastName] = array_pad(explode(' ', $user->name, 2), 2, '');
+        [$firstName, $lastName] = array_pad(explode(' ', trim($user->name), 2), 2, '');
 
         $contactId = $this->gateway->upsertContact($club, $membership->moneybird_contact_id, [
             'firstname' => $firstName,
@@ -32,6 +32,8 @@ class SyncMemberContact
         ]);
 
         $membership->update(['moneybird_contact_id' => $contactId]);
+
+        $club->recordMoneybirdSuccess();
 
         return $contactId;
     }

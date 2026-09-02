@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\AddonKey;
 use App\Enums\MembershipStatus;
+use App\Enums\MoneybirdInvoiceDelivery;
 use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
+use App\Jobs\SyncMoneybirdContact;
 use App\Services\Mollie\MollieAccount;
 use Database\Factories\ClubFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -28,6 +30,14 @@ use Illuminate\Support\Facades\DB;
  * @property string|null $platform_mollie_customer_id customer on the platform's Mollie account, for add-on billing
  * @property string|null $moneybird_access_token
  * @property string|null $moneybird_administration_id
+ * @property string|null $moneybird_ledger_account_id
+ * @property string|null $moneybird_tax_rate_id
+ * @property string|null $moneybird_workflow_id
+ * @property string|null $moneybird_document_style_id
+ * @property MoneybirdInvoiceDelivery $moneybird_invoice_delivery
+ * @property bool $moneybird_sync_contacts
+ * @property string|null $moneybird_last_error
+ * @property Carbon|null $moneybird_last_synced_at
  * @property int $next_membership_number
  * @property int $next_ticket_number
  * @property bool $self_signup
@@ -35,12 +45,27 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id', 'self_signup', 'onboarded_at'])]
+#[Fillable(['name', 'slug', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
+    'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
+    'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at',
+    'self_signup', 'onboarded_at',
+])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
 class Club extends Model implements MollieAccount
 {
     /** @use HasFactory<ClubFactory> */
     use HasFactory;
+
+    /**
+     * Defaults that mirror the database, so freshly created clubs behave the
+     * same before and after a refresh.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'moneybird_invoice_delivery' => 'draft',
+        'moneybird_sync_contacts' => true,
+    ];
 
     /**
      * Add-on keys that are currently unlocked, resolved once per instance.
@@ -62,6 +87,9 @@ class Club extends Model implements MollieAccount
         return [
             'mollie_api_key' => 'encrypted',
             'moneybird_access_token' => 'encrypted',
+            'moneybird_invoice_delivery' => MoneybirdInvoiceDelivery::class,
+            'moneybird_sync_contacts' => 'boolean',
+            'moneybird_last_synced_at' => 'datetime',
             'next_membership_number' => 'integer',
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
@@ -171,6 +199,32 @@ class Club extends Model implements MollieAccount
             && $this->hasAddon(AddonKey::Moneybird);
     }
 
+    /**
+     * Whether new and changed members are pushed to Moneybird automatically.
+     */
+    public function syncsMoneybirdContacts(): bool
+    {
+        return $this->hasMoneybirdConfigured() && $this->moneybird_sync_contacts;
+    }
+
+    /**
+     * Link to a sales invoice in the club's Moneybird administration.
+     */
+    public function moneybirdInvoiceUrl(string $invoiceId): string
+    {
+        return "https://moneybird.com/{$this->moneybird_administration_id}/sales_invoices/{$invoiceId}";
+    }
+
+    public function recordMoneybirdSuccess(): void
+    {
+        $this->forceFill(['moneybird_last_error' => null, 'moneybird_last_synced_at' => now()])->saveQuietly();
+    }
+
+    public function recordMoneybirdError(string $message): void
+    {
+        $this->forceFill(['moneybird_last_error' => mb_substr($message, 0, 1000)])->saveQuietly();
+    }
+
     public function mollieApiKey(): ?string
     {
         return $this->mollie_api_key ?: null;
@@ -208,16 +262,20 @@ class Club extends Model implements MollieAccount
                 'status' => MembershipStatus::Active,
                 'ended_at' => null,
             ]);
-
-            return $membership;
+        } else {
+            $membership = $this->memberships()->create([
+                'user_id' => $user->id,
+                'membership_number' => $this->allocateMembershipNumber(),
+                'status' => MembershipStatus::Active,
+                'joined_at' => now()->toDateString(),
+            ]);
         }
 
-        return $this->memberships()->create([
-            'user_id' => $user->id,
-            'membership_number' => $this->allocateMembershipNumber(),
-            'status' => MembershipStatus::Active,
-            'joined_at' => now()->toDateString(),
-        ]);
+        if ($this->syncsMoneybirdContacts()) {
+            SyncMoneybirdContact::dispatch($membership)->afterCommit();
+        }
+
+        return $membership;
     }
 
     /**

@@ -3,6 +3,9 @@
 namespace App\Livewire\Settings;
 
 use App\Concerns\ProfileValidationRules;
+use App\Jobs\SyncMoneybirdContact;
+use App\Models\Membership;
+use App\Models\User;
 use Flux\Flux;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
@@ -48,9 +51,27 @@ class Profile extends Component
             $user->email_verified_at = null;
         }
 
+        $contactDetailsChanged = $user->isDirty(['name', 'email']);
+
         $user->save();
 
+        if ($contactDetailsChanged) {
+            $this->resyncMoneybirdContacts($user);
+        }
+
         Flux::toast(variant: 'success', text: __('Profile updated.'));
+    }
+
+    /**
+     * Push changed name/email to Moneybird for every club that syncs contacts.
+     */
+    protected function resyncMoneybirdContacts(User $user): void
+    {
+        $user->memberships()
+            ->with('club')
+            ->get()
+            ->filter(fn (Membership $membership) => $membership->club->syncsMoneybirdContacts())
+            ->each(fn (Membership $membership) => SyncMoneybirdContact::dispatch($membership));
     }
 
     /**

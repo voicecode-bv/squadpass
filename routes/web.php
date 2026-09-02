@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('onboarding', Clubs\Onboarding::class)->name('clubs.onboarding');
         Route::livewire('settings', Clubs\Settings::class)->name('clubs.settings');
         Route::livewire('addons', Clubs\Addons::class)->name('clubs.addons');
+        Route::livewire('moneybird', Clubs\Moneybird::class)->name('clubs.moneybird');
         Route::livewire('members', Members\Index::class)->name('clubs.members');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');
         Route::livewire('trainers', Trainers\Index::class)->name('clubs.trainers');
