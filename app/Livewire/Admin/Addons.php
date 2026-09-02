@@ -9,6 +9,7 @@ use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -76,6 +77,8 @@ class Addons extends Component
         ]);
 
         unset($this->addons);
+
+        Cache::forget(Addon::LANDING_CACHE_KEY);
 
         Flux::modal('edit-addon')->close();
         Flux::toast(variant: 'success', text: __('Add-on saved.'));

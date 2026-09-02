@@ -28,6 +28,17 @@ enum AddonKey: string
         };
     }
 
+    /**
+     * Public path of the partner's (white) logo, for marketing surfaces.
+     */
+    public function logoPath(): string
+    {
+        return match ($this) {
+            self::Mollie => 'images/logos/mollie.svg',
+            self::Moneybird => 'images/logos/moneybird.svg',
+        };
+    }
+
     public function icon(): string
     {
         return match ($this) {

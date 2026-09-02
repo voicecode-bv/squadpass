@@ -32,6 +32,9 @@
 
                 @if (Route::has('login'))
                     <nav class="flex items-center gap-3">
+                        <a href="#add-ons" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
+                            {{ __('Add-ons') }}
+                        </a>
                         @auth
                             <a href="{{ route('dashboard') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
                                 {{ __('Dashboard') }}
@@ -127,7 +130,7 @@
                             ['icon' => 'users', 'title' => __('Member management'), 'text' => __('Invite members, track memberships and keep every detail in one place.')],
                             ['icon' => 'calendar-days', 'title' => __('Lessons & schedules'), 'text' => __('Plan recurring lessons, manage capacity and let members enroll themselves.')],
                             ['icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell digital strip cards that members redeem with a single check-in.')],
-                            ['icon' => 'credit-card', 'title' => __('Subscriptions & payments'), 'text' => __('Recurring billing powered by Mollie, with automatic credit tracking.')],
+                            ['icon' => 'credit-card', 'title' => __('Subscriptions & payments'), 'text' => __('Monthly and yearly plans with automatic credit tracking. Add online payments when you are ready.')],
                             ['icon' => 'finger-print', 'title' => __('Check-in desk'), 'text' => __('Check members in at the door and instantly see their coverage.')],
                             ['icon' => 'device-phone-mobile', 'title' => __('Member portal'), 'text' => __('Members book lessons, buy cards and follow their visits from any device.')],
                         ] as $feature)
@@ -137,6 +140,96 @@
                                 </span>
                                 <h3 class="mt-4 text-lg font-semibold text-white">{{ $feature['title'] }}</h3>
                                 <p class="mt-2 leading-relaxed text-zinc-400">{{ $feature['text'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+
+                {{-- Add-ons --}}
+                <section id="add-ons" class="scroll-mt-8 py-16 lg:py-24">
+                    @php($addonPrices = \App\Models\Addon::landingPrices())
+                    <div class="mx-auto max-w-2xl text-center">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
+                            <flux:icon.puzzle-piece variant="micro" class="size-4" />
+                            {{ __('Add-ons & integrations') }}
+                        </span>
+                        <h2 class="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Connect SquadPass with the tools that make your club stronger') }}</h2>
+                        <p class="mt-4 text-lg text-zinc-400">{{ __('Start with the essentials for free and switch on extras the moment you need them. Every add-on is billed per month and can be cancelled monthly.') }}</p>
+                    </div>
+
+                    <div class="mt-14 grid gap-6 lg:grid-cols-2">
+                        @foreach ([
+                            [
+                                'key' => \App\Enums\AddonKey::Mollie,
+                                'category' => __('Payments & direct debit'),
+                                'title' => __('Online payments with Mollie'),
+                                'text' => __('Members pay for strip cards and subscriptions online through your own Mollie account. Recurring charges run automatically via direct debit.'),
+                                'badges' => [__('iDEAL & cards'), __('SEPA direct debit'), __('Failed charge alerts')],
+                            ],
+                            [
+                                'key' => \App\Enums\AddonKey::Moneybird,
+                                'category' => __('Accounting & invoicing'),
+                                'title' => __('Invoicing with Moneybird'),
+                                'text' => __('Every member becomes a Moneybird contact and every paid payment turns into a draft sales invoice, ready to send from your own administration.'),
+                                'badges' => [__('Contact sync'), __('Draft invoices'), __('Member numbers as customer IDs')],
+                            ],
+                        ] as $item)
+                            @php($priceCents = $addonPrices[$item['key']->value] ?? null)
+                            <div class="group relative flex flex-col gap-5 overflow-hidden rounded-3xl bg-white/5 p-8 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
+                                <div class="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20" aria-hidden="true"></div>
+
+                                <div class="relative flex items-start justify-between gap-4">
+                                    <img src="{{ asset($item['key']->logoPath()) }}" alt="{{ $item['title'] }}" class="h-7 w-auto" loading="lazy" />
+                                    <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-zinc-300 ring-1 ring-white/10">{{ $item['category'] }}</span>
+                                </div>
+
+                                <div class="relative">
+                                    <h3 class="text-xl font-semibold text-white">{{ $item['title'] }}</h3>
+                                    <p class="mt-2 leading-relaxed text-zinc-400">{{ $item['text'] }}</p>
+                                </div>
+
+                                <div class="relative flex flex-wrap gap-2">
+                                    @foreach ($item['badges'] as $badge)
+                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-200 ring-1 ring-blue-400/20">
+                                            <flux:icon.check variant="micro" class="size-3.5" />
+                                            {{ $badge }}
+                                        </span>
+                                    @endforeach
+                                </div>
+
+                                <div class="relative mt-auto flex items-end justify-between gap-4 border-t border-white/10 pt-5">
+                                    <div>
+                                        @if ($priceCents !== null)
+                                            <p class="text-2xl font-semibold text-white">{{ \App\Models\Addon::formatCents($priceCents) }}<span class="text-sm font-normal text-zinc-400"> / {{ __('month') }}</span></p>
+                                            <p class="mt-1 text-xs text-zinc-500">{{ __('Cancel monthly, no minimum term') }}</p>
+                                        @else
+                                            <p class="text-sm font-medium text-zinc-300">{{ __('Coming soon') }}</p>
+                                        @endif
+                                    </div>
+                                    <a href="{{ Route::has('register') ? route('register') : route('login') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-300 transition hover:text-white">
+                                        {{ __('Activate in your club') }}
+                                        <flux:icon.arrow-right variant="micro" class="size-4" />
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-10 grid gap-6 rounded-3xl bg-white/5 p-8 ring-1 ring-white/10 sm:grid-cols-3">
+                        @foreach ([
+                            ['icon' => 'cursor-arrow-rays', 'title' => __('Activate in one click'), 'text' => __('Buy an add-on from your club settings and pay securely via Mollie. It is live the moment the payment succeeds.')],
+                            ['icon' => 'arrow-path', 'title' => __('Cancel monthly'), 'text' => __('No long contracts. Cancel whenever you like and keep using the add-on until the end of the paid month.')],
+                            ['icon' => 'sparkles', 'title' => __('More on the way'), 'text' => __('We keep adding integrations. Missing one your club relies on? Let us know.')],
+                        ] as $point)
+                            <div class="flex gap-4">
+                                <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30">
+                                    <flux:icon :icon="$point['icon']" class="size-5" />
+                                </span>
+                                <div>
+                                    <h3 class="font-semibold text-white">{{ $point['title'] }}</h3>
+                                    <p class="mt-1 text-sm leading-relaxed text-zinc-400">{{ $point['text'] }}</p>
+                                </div>
                             </div>
                         @endforeach
                     </div>

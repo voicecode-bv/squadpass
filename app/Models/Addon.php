@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * A platform add-on clubs can subscribe to monthly. Priced and managed by superadmins.
@@ -84,8 +85,30 @@ class Addon extends Model
         return static::query()->orderBy('id')->get();
     }
 
+    public const string LANDING_CACHE_KEY = 'addons.landing';
+
+    /**
+     * Monthly prices in cents of the add-ons for sale, keyed by AddonKey value.
+     * Cached as a plain array (never models) for the public landing page.
+     *
+     * @return array<string, int>
+     */
+    public static function landingPrices(): array
+    {
+        return Cache::remember(self::LANDING_CACHE_KEY, now()->addHour(), fn (): array => static::query()
+            ->active()
+            ->get(['key', 'price_cents'])
+            ->mapWithKeys(fn (self $addon) => [$addon->key->value => $addon->price_cents])
+            ->all());
+    }
+
+    public static function formatCents(int $cents): string
+    {
+        return '€ '.number_format($cents / 100, 2, ',', '.');
+    }
+
     public function formattedPrice(): string
     {
-        return '€ '.number_format($this->price_cents / 100, 2, ',', '.');
+        return self::formatCents($this->price_cents);
     }
 }
