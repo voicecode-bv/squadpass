@@ -3,14 +3,14 @@
 namespace Tests\Fakes;
 
 use App\Enums\PaymentStatus;
-use App\Models\Club;
+use App\Services\Mollie\MollieAccount;
 use App\Services\Mollie\MollieGateway;
 use App\Services\Mollie\MolliePaymentResult;
 use RuntimeException;
 
 class FakeMollieGateway implements MollieGateway
 {
-    /** @var array<int, array{club: int, name: string, email: string, id: string}> */
+    /** @var array<int, array{account: string, name: string, email: string, id: string}> */
     public array $createdCustomers = [];
 
     /** @var array<int, array<string, mixed>> */
@@ -21,17 +21,17 @@ class FakeMollieGateway implements MollieGateway
 
     protected int $sequence = 0;
 
-    public function createCustomer(Club $club, string $name, string $email): string
+    public function createCustomer(MollieAccount $account, string $name, string $email): string
     {
         $id = 'cst_fake'.(++$this->sequence);
 
-        $this->createdCustomers[] = ['club' => $club->id, 'name' => $name, 'email' => $email, 'id' => $id];
+        $this->createdCustomers[] = ['account' => $account->mollieAccountLabel(), 'name' => $name, 'email' => $email, 'id' => $id];
 
         return $id;
     }
 
     public function createPayment(
-        Club $club,
+        MollieAccount $account,
         int $amountCents,
         string $description,
         string $redirectUrl,
@@ -45,7 +45,7 @@ class FakeMollieGateway implements MollieGateway
 
         $this->createdPayments[] = [
             'id' => $id,
-            'club' => $club->id,
+            'account' => $account->mollieAccountLabel(),
             'amount_cents' => $amountCents,
             'description' => $description,
             'redirect_url' => $redirectUrl,
@@ -64,7 +64,7 @@ class FakeMollieGateway implements MollieGateway
         );
     }
 
-    public function getPayment(Club $club, string $paymentId): MolliePaymentResult
+    public function getPayment(MollieAccount $account, string $paymentId): MolliePaymentResult
     {
         return $this->payments[$paymentId]
             ?? throw new RuntimeException("Unknown fake Mollie payment [{$paymentId}].");

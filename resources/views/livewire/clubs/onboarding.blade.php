@@ -173,22 +173,32 @@
             </div>
         </div>
     @elseif ($step === 5)
-        <div class="flex flex-col gap-4">
-            <flux:text>{{ __('Connect Mollie so members can pay online for subscriptions and strip cards. You can find your API key in the Mollie dashboard under Developers → API keys.') }}</flux:text>
+        @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
+            <div class="flex flex-col gap-4">
+                <flux:text>{{ __('Connect Mollie so members can pay online for subscriptions and strip cards. You can find your API key in the Mollie dashboard under Developers → API keys.') }}</flux:text>
 
-            <form wire:submit="saveMollieKey" class="flex items-end gap-3">
-                <div class="flex-1">
-                    <flux:input wire:model="mollie_api_key" :label="__('Mollie API key')" type="password" viewable placeholder="test_..." />
-                </div>
-                <flux:button type="submit">{{ __('Save') }}</flux:button>
-            </form>
+                <form wire:submit="saveMollieKey" class="flex items-end gap-3">
+                    <div class="flex-1">
+                        <flux:input wire:model="mollie_api_key" :label="__('Mollie API key')" type="password" viewable placeholder="test_..." />
+                    </div>
+                    <flux:button type="submit">{{ __('Save') }}</flux:button>
+                </form>
 
-            @if (str_starts_with($mollie_api_key, 'live_'))
-                <flux:text class="text-sm">{{ __('Live mode: real payments will be processed.') }}</flux:text>
-            @elseif (str_starts_with($mollie_api_key, 'test_'))
-                <flux:text class="text-sm">{{ __('Test mode: no real payments will be processed.') }}</flux:text>
-            @endif
-        </div>
+                @if (str_starts_with($mollie_api_key, 'live_'))
+                    <flux:text class="text-sm">{{ __('Live mode: real payments will be processed.') }}</flux:text>
+                @elseif (str_starts_with($mollie_api_key, 'test_'))
+                    <flux:text class="text-sm">{{ __('Test mode: no real payments will be processed.') }}</flux:text>
+                @endif
+            </div>
+        @else
+            <flux:callout icon="credit-card" variant="secondary">
+                <flux:callout.heading>{{ __('Online payments (Mollie)') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('Online payments are an add-on. Activate it to connect your Mollie account; you can also do this later from the add-ons page.') }}</flux:callout.text>
+                <x-slot name="actions">
+                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
+                </x-slot>
+            </flux:callout>
+        @endif
     @endif
 
     <flux:separator />

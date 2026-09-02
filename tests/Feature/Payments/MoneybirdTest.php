@@ -19,10 +19,7 @@ beforeEach(function () {
     $this->gateway = new FakeMoneybirdGateway;
     $this->app->instance(MoneybirdGateway::class, $this->gateway);
 
-    $this->club = Club::factory()->create([
-        'moneybird_access_token' => 'mb_token',
-        'moneybird_administration_id' => '123456',
-    ]);
+    $this->club = Club::factory()->withMoneybird('mb_token', '123456')->create();
     $this->owner = User::factory()->create();
     $this->club->addStaff($this->owner, StaffRole::Owner);
 

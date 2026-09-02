@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'mollie' => [
+        // Platform Mollie account used to bill clubs for add-ons.
+        'key' => env('MOLLIE_API_KEY'),
+        'currency' => env('MOLLIE_CURRENCY', 'EUR'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

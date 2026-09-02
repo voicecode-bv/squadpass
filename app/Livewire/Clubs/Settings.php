@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Clubs;
 
+use App\Enums\AddonKey;
 use App\Models\Club;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -51,14 +52,23 @@ class Settings extends Component
             'self_signup' => ['boolean'],
         ]);
 
-        $this->club->update([
+        $attributes = [
             'name' => $validated['name'],
             'timezone' => $validated['timezone'],
-            'mollie_api_key' => $validated['mollie_api_key'] ?: null,
-            'moneybird_access_token' => $validated['moneybird_access_token'] ?: null,
-            'moneybird_administration_id' => $validated['moneybird_administration_id'] ?: null,
             'self_signup' => $validated['self_signup'],
-        ]);
+        ];
+
+        // Integration credentials can only be edited while the matching add-on is unlocked.
+        if ($this->club->hasAddon(AddonKey::Mollie)) {
+            $attributes['mollie_api_key'] = $validated['mollie_api_key'] ?: null;
+        }
+
+        if ($this->club->hasAddon(AddonKey::Moneybird)) {
+            $attributes['moneybird_access_token'] = $validated['moneybird_access_token'] ?: null;
+            $attributes['moneybird_administration_id'] = $validated['moneybird_administration_id'] ?: null;
+        }
+
+        $this->club->update($attributes);
 
         Flux::toast(variant: 'success', text: __('Club settings saved.'));
     }

@@ -20,6 +20,11 @@
                             {{ __('My clubs') }}
                         </flux:sidebar.item>
                     @endif
+                    @if (auth()->user()->is_superadmin)
+                        <flux:sidebar.item icon="puzzle-piece" :href="route('admin.addons')" :current="request()->routeIs('admin.addons')" wire:navigate>
+                            {{ __('Add-ons') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
 
                 @if (auth()->user()->trainerProfiles()->exists())
@@ -67,6 +72,9 @@
                         @can('update', $currentClub)
                             <flux:sidebar.item icon="cog-6-tooth" :href="route('clubs.settings', $currentClub)" :current="request()->routeIs('clubs.settings')" wire:navigate>
                                 {{ __('Settings') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="puzzle-piece" :href="route('clubs.addons', $currentClub)" :current="request()->routeIs('clubs.addons')" wire:navigate>
+                                {{ __('Add-ons') }}
                             </flux:sidebar.item>
                         @endcan
                     </flux:sidebar.group>

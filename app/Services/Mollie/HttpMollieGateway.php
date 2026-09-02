@@ -3,16 +3,15 @@
 namespace App\Services\Mollie;
 
 use App\Enums\PaymentStatus;
-use App\Models\Club;
 use InvalidArgumentException;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Resources\Payment as MolliePayment;
 
 class HttpMollieGateway implements MollieGateway
 {
-    public function createCustomer(Club $club, string $name, string $email): string
+    public function createCustomer(MollieAccount $account, string $name, string $email): string
     {
-        $customer = $this->clientFor($club)->customers->create([
+        $customer = $this->clientFor($account)->customers->create([
             'name' => $name,
             'email' => $email,
         ]);
@@ -21,7 +20,7 @@ class HttpMollieGateway implements MollieGateway
     }
 
     public function createPayment(
-        Club $club,
+        MollieAccount $account,
         int $amountCents,
         string $description,
         string $redirectUrl,
@@ -33,7 +32,7 @@ class HttpMollieGateway implements MollieGateway
     ): MolliePaymentResult {
         $attributes = [
             'amount' => [
-                'currency' => $club->currency,
+                'currency' => $account->mollieCurrency(),
                 'value' => number_format($amountCents / 100, 2, '.', ''),
             ],
             'description' => $description,
@@ -54,22 +53,22 @@ class HttpMollieGateway implements MollieGateway
             $attributes['mandateId'] = $mandateId;
         }
 
-        return $this->toResult($this->clientFor($club)->payments->create($attributes));
+        return $this->toResult($this->clientFor($account)->payments->create($attributes));
     }
 
-    public function getPayment(Club $club, string $paymentId): MolliePaymentResult
+    public function getPayment(MollieAccount $account, string $paymentId): MolliePaymentResult
     {
-        return $this->toResult($this->clientFor($club)->payments->get($paymentId));
+        return $this->toResult($this->clientFor($account)->payments->get($paymentId));
     }
 
-    protected function clientFor(Club $club): MollieApiClient
+    protected function clientFor(MollieAccount $account): MollieApiClient
     {
-        if (! $club->mollie_api_key) {
-            throw new InvalidArgumentException("Club [{$club->slug}] has no Mollie API key configured.");
+        if (! $account->mollieApiKey()) {
+            throw new InvalidArgumentException("Mollie account [{$account->mollieAccountLabel()}] has no API key configured.");
         }
 
         $client = new MollieApiClient;
-        $client->setApiKey($club->mollie_api_key);
+        $client->setApiKey($account->mollieApiKey());
 
         return $client;
     }

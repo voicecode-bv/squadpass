@@ -9,43 +9,63 @@
 
         <flux:input wire:model="timezone" :label="__('Timezone')" required />
 
-        <flux:field>
-            <flux:input
-                wire:model="mollie_api_key"
-                :label="__('Mollie API key')"
-                type="password"
-                viewable
-                placeholder="test_..."
-            />
-            <flux:description>
-                @if (str_starts_with($mollie_api_key, 'live_'))
-                    {{ __('Live mode: real payments will be processed.') }}
-                @elseif (str_starts_with($mollie_api_key, 'test_'))
-                    {{ __('Test mode: no real payments will be processed.') }}
-                @else
-                    {{ __('Members can only pay online once a Mollie API key is set.') }}
-                @endif
-            </flux:description>
-        </flux:field>
+        @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
+            <flux:field>
+                <flux:input
+                    wire:model="mollie_api_key"
+                    :label="__('Mollie API key')"
+                    type="password"
+                    viewable
+                    placeholder="test_..."
+                />
+                <flux:description>
+                    @if (str_starts_with($mollie_api_key, 'live_'))
+                        {{ __('Live mode: real payments will be processed.') }}
+                    @elseif (str_starts_with($mollie_api_key, 'test_'))
+                        {{ __('Test mode: no real payments will be processed.') }}
+                    @else
+                        {{ __('Members can only pay online once a Mollie API key is set.') }}
+                    @endif
+                </flux:description>
+            </flux:field>
+        @else
+            <flux:callout icon="credit-card" variant="secondary">
+                <flux:callout.heading>{{ __('Online payments (Mollie)') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('Activate the Mollie add-on to let members pay online for strip cards and subscriptions.') }}</flux:callout.text>
+                <x-slot name="actions">
+                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
+                </x-slot>
+            </flux:callout>
+        @endif
 
         <flux:separator />
 
-        <div>
-            <flux:heading size="lg">{{ __('Moneybird') }}</flux:heading>
-            <flux:text class="mt-1">{{ __('Link Moneybird to sync members as contacts and invoice paid payments automatically.') }}</flux:text>
-        </div>
+        @if ($club->hasAddon(\App\Enums\AddonKey::Moneybird))
+            <div>
+                <flux:heading size="lg">{{ __('Moneybird') }}</flux:heading>
+                <flux:text class="mt-1">{{ __('Link Moneybird to sync members as contacts and invoice paid payments automatically.') }}</flux:text>
+            </div>
 
-        <flux:field>
-            <flux:input
-                wire:model="moneybird_access_token"
-                :label="__('Moneybird access token')"
-                type="password"
-                viewable
-            />
-            <flux:description>{{ __('Create a personal API token in Moneybird under Settings, API & webhooks.') }}</flux:description>
-        </flux:field>
+            <flux:field>
+                <flux:input
+                    wire:model="moneybird_access_token"
+                    :label="__('Moneybird access token')"
+                    type="password"
+                    viewable
+                />
+                <flux:description>{{ __('Create a personal API token in Moneybird under Settings, API & webhooks.') }}</flux:description>
+            </flux:field>
 
-        <flux:input wire:model="moneybird_administration_id" :label="__('Moneybird administration ID')" placeholder="123456789012345678" />
+            <flux:input wire:model="moneybird_administration_id" :label="__('Moneybird administration ID')" placeholder="123456789012345678" />
+        @else
+            <flux:callout icon="document-text" variant="secondary">
+                <flux:callout.heading>{{ __('Invoicing (Moneybird)') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('Activate the Moneybird add-on to sync members as contacts and invoice paid payments automatically.') }}</flux:callout.text>
+                <x-slot name="actions">
+                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
+                </x-slot>
+            </flux:callout>
+        @endif
 
         <flux:separator />
 

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\AddonKey;
 use App\Enums\MembershipStatus;
 use App\Enums\StaffRole;
+use App\Enums\SubscriptionStatus;
+use App\Services\Mollie\MollieAccount;
 use Database\Factories\ClubFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -22,6 +25,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $currency
  * @property string|null $mollie_api_key
  * @property string|null $mollie_profile_id
+ * @property string|null $platform_mollie_customer_id customer on the platform's Mollie account, for add-on billing
  * @property string|null $moneybird_access_token
  * @property string|null $moneybird_administration_id
  * @property int $next_membership_number
@@ -31,12 +35,19 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'moneybird_access_token', 'moneybird_administration_id', 'self_signup', 'onboarded_at'])]
+#[Fillable(['name', 'slug', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id', 'self_signup', 'onboarded_at'])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
-class Club extends Model
+class Club extends Model implements MollieAccount
 {
     /** @use HasFactory<ClubFactory> */
     use HasFactory;
+
+    /**
+     * Add-on keys that are currently unlocked, resolved once per instance.
+     *
+     * @var list<string>|null
+     */
+    protected ?array $activeAddonKeys = null;
 
     public function getRouteKeyName(): string
     {
@@ -108,9 +119,71 @@ class Club extends Model
         return $this->hasMany(LessonOccurrence::class);
     }
 
+    /**
+     * @return HasMany<AddonSubscription, $this>
+     */
+    public function addonSubscriptions(): HasMany
+    {
+        return $this->hasMany(AddonSubscription::class);
+    }
+
+    /**
+     * Whether the club currently has the given add-on unlocked: an active
+     * subscription, or a cancelled one that is paid up until its end date.
+     */
+    public function hasAddon(AddonKey $key): bool
+    {
+        if ($this->activeAddonKeys === null) {
+            $this->activeAddonKeys = AddonSubscription::query()
+                ->where('addon_subscriptions.club_id', $this->id)
+                ->where(function ($query): void {
+                    $query->where('status', SubscriptionStatus::Active)
+                        ->orWhere(function ($query): void {
+                            $query->where('status', SubscriptionStatus::Cancelled)
+                                ->whereDate('ends_at', '>=', today());
+                        });
+                })
+                ->join('addons', 'addons.id', '=', 'addon_subscriptions.addon_id')
+                ->pluck('addons.key')
+                ->all();
+        }
+
+        return in_array($key->value, $this->activeAddonKeys, true);
+    }
+
+    public function forgetAddonCache(): void
+    {
+        $this->activeAddonKeys = null;
+    }
+
+    /**
+     * Members can pay online once the Mollie add-on is active and a key is set.
+     */
+    public function acceptsOnlinePayments(): bool
+    {
+        return filled($this->mollie_api_key) && $this->hasAddon(AddonKey::Mollie);
+    }
+
     public function hasMoneybirdConfigured(): bool
     {
-        return filled($this->moneybird_access_token) && filled($this->moneybird_administration_id);
+        return filled($this->moneybird_access_token)
+            && filled($this->moneybird_administration_id)
+            && $this->hasAddon(AddonKey::Moneybird);
+    }
+
+    public function mollieApiKey(): ?string
+    {
+        return $this->mollie_api_key ?: null;
+    }
+
+    public function mollieCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function mollieAccountLabel(): string
+    {
+        return "club:{$this->slug}";
     }
 
     public function isOnboarded(): bool

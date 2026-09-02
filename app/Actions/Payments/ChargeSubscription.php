@@ -42,7 +42,7 @@ class ChargeSubscription
         ]);
 
         $result = $this->gateway->createPayment(
-            club: $club,
+            account: $club,
             amountCents: $plan->price_cents,
             description: "{$club->name} — {$plan->name} ({$plan->interval->label()})",
             redirectUrl: route('portal.subscriptions'),

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Actions\Lessons\EnrollSingle;
+use App\Enums\AddonKey;
 use App\Enums\MembershipStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
@@ -11,6 +12,8 @@ use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Exceptions\EnrollmentException;
+use App\Models\Addon;
+use App\Models\AddonSubscription;
 use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\Lesson;
@@ -64,8 +67,25 @@ class DatabaseSeeder extends Seeder
             'email' => 'owner@example.com',
         ]);
 
+        $this->seedAddons();
+
         foreach ($this->clubConfigurations() as $index => $configuration) {
             $this->seedClub($configuration, $owner, isPrimary: $index === 0);
+        }
+    }
+
+    /**
+     * Price the sellable add-ons so the superadmin page and club add-on page have data.
+     */
+    protected function seedAddons(): void
+    {
+        $prices = [
+            AddonKey::Mollie->value => 1500,
+            AddonKey::Moneybird->value => 1000,
+        ];
+
+        foreach (Addon::syncFromKeys() as $addon) {
+            $addon->update(['price_cents' => $prices[$addon->key->value] ?? 1000, 'is_active' => true]);
         }
     }
 
@@ -136,6 +156,15 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $club->addStaff($owner, StaffRole::Owner);
+
+        // Every demo club has the Mollie add-on, so member payments work out of the box.
+        AddonSubscription::factory()->active()->create([
+            'club_id' => $club->id,
+            'addon_id' => Addon::query()->where('key', AddonKey::Mollie->value)->firstOrFail()->id,
+            'user_id' => $owner->id,
+            'price_cents' => 1500,
+            'starts_at' => now()->subMonths(6)->toDateString(),
+        ]);
 
         $rooms = collect($configuration['rooms'])
             ->map(fn (string $name) => Room::create(['club_id' => $club->id, 'name' => $name]));

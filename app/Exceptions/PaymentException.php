@@ -11,6 +11,21 @@ class PaymentException extends RuntimeException
         return new self(__('Online payments are not available for this club yet.'));
     }
 
+    public static function platformPaymentsUnavailable(): self
+    {
+        return new self(__('Add-on payments are not available right now. Please contact support.'));
+    }
+
+    public static function addonUnavailable(): self
+    {
+        return new self(__('This add-on is not available.'));
+    }
+
+    public static function addonAlreadyActive(): self
+    {
+        return new self(__('Your club already has this add-on.'));
+    }
+
     public static function membershipRequired(): self
     {
         return new self(__('An active membership at this club is required.'));

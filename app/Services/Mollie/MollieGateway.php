@@ -2,22 +2,20 @@
 
 namespace App\Services\Mollie;
 
-use App\Models\Club;
-
 interface MollieGateway
 {
     /**
-     * Create a Mollie customer for the club's Mollie account and return its id.
+     * Create a Mollie customer on the account and return its id.
      */
-    public function createCustomer(Club $club, string $name, string $email): string;
+    public function createCustomer(MollieAccount $account, string $name, string $email): string;
 
     /**
-     * Create a payment on the club's Mollie account.
+     * Create a payment on the account.
      *
      * @param  array<string, mixed>  $metadata
      */
     public function createPayment(
-        Club $club,
+        MollieAccount $account,
         int $amountCents,
         string $description,
         string $redirectUrl,
@@ -31,5 +29,5 @@ interface MollieGateway
     /**
      * Fetch the current state of a payment from Mollie.
      */
-    public function getPayment(Club $club, string $paymentId): MolliePaymentResult;
+    public function getPayment(MollieAccount $account, string $paymentId): MolliePaymentResult;
 }

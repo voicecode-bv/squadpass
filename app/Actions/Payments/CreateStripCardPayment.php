@@ -24,12 +24,12 @@ class CreateStripCardPayment
         $club = $plan->club;
 
         throw_unless($user->isMemberOf($club), PaymentException::membershipRequired());
-        throw_unless($club->mollie_api_key, PaymentException::onlinePaymentsUnavailable());
+        throw_unless($club->acceptsOnlinePayments(), PaymentException::onlinePaymentsUnavailable());
 
         $customerId = $this->resolveMollieCustomer->handle($club, $user);
 
         $result = $this->gateway->createPayment(
-            club: $club,
+            account: $club,
             amountCents: $plan->price_cents,
             description: "{$club->name} — {$plan->name}",
             redirectUrl: route('portal.cards'),

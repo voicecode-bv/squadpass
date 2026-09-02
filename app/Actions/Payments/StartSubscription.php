@@ -27,7 +27,7 @@ class StartSubscription
         $club = $plan->club;
 
         throw_unless($user->isMemberOf($club), PaymentException::membershipRequired());
-        throw_unless($club->mollie_api_key, PaymentException::onlinePaymentsUnavailable());
+        throw_unless($club->acceptsOnlinePayments(), PaymentException::onlinePaymentsUnavailable());
 
         $blocking = Subscription::query()
             ->where('club_id', $club->id)
@@ -48,7 +48,7 @@ class StartSubscription
         ]);
 
         $result = $this->gateway->createPayment(
-            club: $club,
+            account: $club,
             amountCents: $plan->price_cents,
             description: "{$club->name} — {$plan->name} ({$plan->interval->label()})",
             redirectUrl: route('portal.subscriptions'),

@@ -3,6 +3,7 @@
 namespace App\Livewire\Clubs;
 
 use App\Actions\Invitations\InviteToClub;
+use App\Enums\AddonKey;
 use App\Enums\BillingInterval;
 use App\Enums\ClubInvitationRole;
 use App\Exceptions\ClubInvitationException;
@@ -249,6 +250,8 @@ class Onboarding extends Component
     public function saveMollieKey(): void
     {
         $this->authorize('update', $this->club);
+
+        abort_unless($this->club->hasAddon(AddonKey::Mollie), 403);
 
         $validated = $this->validate([
             'mollie_api_key' => ['required', 'string', 'starts_with:test_,live_'],

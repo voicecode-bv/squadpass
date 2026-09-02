@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\MollieWebhookController;
+use App\Http\Controllers\PlatformMollieWebhookController;
+use App\Livewire\Admin;
 use App\Livewire\CheckIns;
 use App\Livewire\Clubs;
 use App\Livewire\Dashboard;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
+Route::post('webhooks/mollie-platform', PlatformMollieWebhookController::class)->name('webhooks.mollie.platform');
 Route::post('webhooks/mollie/{club}', MollieWebhookController::class)->name('webhooks.mollie');
 
 Route::livewire('invitations/{token}', Invitations\Accept::class)->name('invitations.accept');
@@ -28,10 +31,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::livewire('clubs', Clubs\Index::class)->name('clubs.index');
 
+    Route::livewire('admin/addons', Admin\Addons::class)->name('admin.addons');
+
     Route::prefix('clubs/{club}')->scopeBindings()->group(function () {
         Route::livewire('dashboard', Clubs\Dashboard::class)->name('clubs.dashboard');
         Route::livewire('onboarding', Clubs\Onboarding::class)->name('clubs.onboarding');
         Route::livewire('settings', Clubs\Settings::class)->name('clubs.settings');
+        Route::livewire('addons', Clubs\Addons::class)->name('clubs.addons');
         Route::livewire('members', Members\Index::class)->name('clubs.members');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');
         Route::livewire('trainers', Trainers\Index::class)->name('clubs.trainers');

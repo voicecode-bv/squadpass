@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Superadmins manage every club and all underlying data.
         Gate::before(fn (User $user) => $user->is_superadmin ? true : null);
+
+        // Platform management (add-ons, pricing) is superadmin-only; the hook above grants it.
+        Gate::define('manage-platform', fn (User $user): bool => false);
     }
 
     /**

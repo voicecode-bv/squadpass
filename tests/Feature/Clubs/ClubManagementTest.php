@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AddonKey;
 use App\Enums\StaffRole;
 use App\Livewire\Clubs\Index;
 use App\Livewire\Clubs\Settings;
@@ -46,7 +47,7 @@ test('club slugs are unique even for identical names', function () {
 
 test('an owner can update club settings', function () {
     $owner = User::factory()->create();
-    $club = Club::factory()->create();
+    $club = Club::factory()->withAddon(AddonKey::Mollie)->create();
     $club->addStaff($owner, StaffRole::Owner);
 
     Livewire::actingAs($owner)

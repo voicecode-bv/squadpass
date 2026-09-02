@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AddonKey;
 use App\Enums\StaffRole;
 use App\Livewire\Clubs\Index;
 use App\Livewire\Clubs\Onboarding;
@@ -15,7 +16,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     $this->owner = User::factory()->create();
-    $this->club = Club::factory()->create();
+    $this->club = Club::factory()->withAddon(AddonKey::Mollie)->create();
     $this->club->addStaff($this->owner, StaffRole::Owner);
 });
 
