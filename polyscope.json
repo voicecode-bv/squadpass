@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "run": [
+      "npm run dev", { "label": "Tests", "command": "npm run test:watch" }
+    ],
+    "setup": [
+      "herd link",
+      "herd secure"
+    ],
+    "archive": [
+      "herd unsecure",
+      "herd unlink"
+    ]
+  },
+  "preview": {
+    "url": "https://{{folder}}.test"
+  }
+}
