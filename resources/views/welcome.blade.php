@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>{{ __('Welcome') }} - {{ config('app.name', 'Laravel') }}</title>
+
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        @fonts
+        @vite(['resources/css/app.css'])
+    </head>
+    <body class="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+        {{-- Glow backdrop --}}
+        <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+            <div class="absolute -top-40 left-1/2 h-[32rem] w-[52rem] -translate-x-1/2 rounded-full bg-blue-600/25 blur-3xl"></div>
+            <div class="absolute top-1/3 -left-40 h-96 w-96 rounded-full bg-indigo-600/15 blur-3xl"></div>
+            <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-sky-600/10 blur-3xl"></div>
+        </div>
+
+        <div class="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 lg:px-8">
+            <header class="flex items-center justify-between py-6">
+                <div class="flex items-center gap-3">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/40">
+                        <x-app-logo-icon class="size-6 fill-current text-white" />
+                    </span>
+                    <span class="text-lg font-semibold tracking-tight text-white">{{ config('app.name', 'Laravel') }}</span>
+                </div>
+
+                @if (Route::has('login'))
+                    <nav class="flex items-center gap-3">
+                        @auth
+                            <a href="{{ route('dashboard') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
+                                {{ __('Dashboard') }}
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white">
+                                {{ __('Log in') }}
+                            </a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
+                                    {{ __('Register') }}
+                                </a>
+                            @endif
+                        @endauth
+                    </nav>
+                @endif
+            </header>
+
+            <main class="flex flex-1 flex-col">
+                {{-- Hero --}}
+                <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
+                    <div class="flex flex-col items-start gap-6">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
+                            <flux:icon.bolt variant="micro" class="size-4" />
+                            {{ __('Club management, lessons & payments') }}
+                        </span>
+
+                        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                            {{ __('Everything your club needs,') }}
+                            <span class="bg-linear-to-r from-blue-400 via-indigo-400 to-sky-400 bg-clip-text text-transparent">{{ __('in one pass.') }}</span>
+                        </h1>
+
+                        <p class="max-w-xl text-lg leading-relaxed text-zinc-400">
+                            {{ __('Members, lessons, strip cards, subscriptions and check-ins. SquadPass handles the admin so you can focus on your club.') }}
+                        </p>
+
+                        <div class="flex flex-wrap items-center gap-4">
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
+                                    {{ __('Get started for free') }}
+                                </a>
+                            @endif
+                            <a href="{{ route('login') }}" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-300 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
+                                {{ __('Log in') }}
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Membership pass mockup --}}
+                    <div class="relative mx-auto w-full max-w-md" aria-hidden="true">
+                        <div class="absolute inset-0 rotate-6 rounded-3xl bg-linear-to-br from-sky-500/40 to-indigo-600/40 blur-sm"></div>
+                        <div class="relative -rotate-3 rounded-3xl bg-linear-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 shadow-2xl shadow-blue-950/60 ring-1 ring-white/20 transition duration-500 hover:rotate-0">
+                            <div class="flex items-start justify-between">
+                                <span class="flex size-10 items-center justify-center rounded-xl bg-white/15">
+                                    <x-app-logo-icon class="size-6 fill-current text-white" />
+                                </span>
+                                <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-widest text-white uppercase">{{ __('Member pass') }}</span>
+                            </div>
+
+                            <div class="mt-10">
+                                <p class="text-sm text-blue-200">Padel Club Amsterdam</p>
+                                <p class="mt-1 text-2xl font-semibold text-white">Alex Janssen</p>
+                            </div>
+
+                            <div class="mt-8 flex items-end justify-between">
+                                <div>
+                                    <p class="text-xs tracking-widest text-blue-200 uppercase">{{ __('Strip card') }}</p>
+                                    <div class="mt-2 flex gap-1.5">
+                                        @foreach (range(1, 10) as $strip)
+                                            <span class="size-2.5 rounded-full {{ $strip <= 7 ? 'bg-white' : 'bg-white/25' }}"></span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-4 gap-1 rounded-lg bg-white/90 p-1.5">
+                                    @foreach ([1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1] as $dot)
+                                        <span class="size-1.5 rounded-[2px] {{ $dot ? 'bg-blue-900' : 'bg-transparent' }}"></span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- Features --}}
+                <section class="py-16 lg:py-24">
+                    <div class="mx-auto max-w-2xl text-center">
+                        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('One platform, your whole club') }}</h2>
+                        <p class="mt-4 text-lg text-zinc-400">{{ __('From the front desk to the locker room, every part of your club runs through SquadPass.') }}</p>
+                    </div>
+
+                    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ([
+                            ['icon' => 'users', 'title' => __('Member management'), 'text' => __('Invite members, track memberships and keep every detail in one place.')],
+                            ['icon' => 'calendar-days', 'title' => __('Lessons & schedules'), 'text' => __('Plan recurring lessons, manage capacity and let members enroll themselves.')],
+                            ['icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell digital strip cards that members redeem with a single check-in.')],
+                            ['icon' => 'credit-card', 'title' => __('Subscriptions & payments'), 'text' => __('Recurring billing powered by Mollie, with automatic credit tracking.')],
+                            ['icon' => 'finger-print', 'title' => __('Check-in desk'), 'text' => __('Check members in at the door and instantly see their coverage.')],
+                            ['icon' => 'device-phone-mobile', 'title' => __('Member portal'), 'text' => __('Members book lessons, buy cards and follow their visits from any device.')],
+                        ] as $feature)
+                            <div class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
+                                <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
+                                    <flux:icon :icon="$feature['icon']" class="size-5" />
+                                </span>
+                                <h3 class="mt-4 text-lg font-semibold text-white">{{ $feature['title'] }}</h3>
+                                <p class="mt-2 leading-relaxed text-zinc-400">{{ $feature['text'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- CTA --}}
+                <section class="pb-24">
+                    <div class="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600 to-indigo-700 px-8 py-16 text-center shadow-2xl shadow-blue-950/50">
+                        <div class="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-white/15 blur-3xl" aria-hidden="true"></div>
+                        <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Ready to get started?') }}</h2>
+                        <p class="relative mx-auto mt-4 max-w-xl text-lg text-blue-100">{{ __('Create your club in minutes and invite your members today.') }}</p>
+                        @if (Route::has('register'))
+                            <a href="{{ route('register') }}" class="relative mt-8 inline-block rounded-xl bg-white px-6 py-3 text-base font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50">
+                                {{ __('Create your club') }}
+                            </a>
+                        @endif
+                    </div>
+                </section>
+            </main>
+
+            <footer class="flex items-center justify-between border-t border-white/10 py-8 text-sm text-zinc-500">
+                <span>&copy; {{ now()->year }} {{ config('app.name', 'Laravel') }}</span>
+                <span>{{ __('Made for clubs that keep moving.') }}</span>
+            </footer>
+        </div>
+    </body>
+</html>

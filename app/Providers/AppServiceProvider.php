@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Providers;
+
+use App\Models\User;
+use App\Services\Mollie\HttpMollieGateway;
+use App\Services\Mollie\MollieGateway;
+use App\Services\Moneybird\HttpMoneybirdGateway;
+use App\Services\Moneybird\MoneybirdGateway;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->app->bind(MollieGateway::class, HttpMollieGateway::class);
+        $this->app->bind(MoneybirdGateway::class, HttpMoneybirdGateway::class);
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        $this->configureDefaults();
+
+        // Superadmins manage every club and all underlying data.
+        Gate::before(fn (User $user) => $user->is_superadmin ? true : null);
+    }
+
+    /**
+     * Configure default behaviors for production-ready applications.
+     */
+    protected function configureDefaults(): void
+    {
+        Date::use(CarbonImmutable::class);
+
+        DB::prohibitDestructiveCommands(
+            app()->isProduction(),
+        );
+
+        Password::defaults(fn (): ?Password => app()->isProduction()
+            ? Password::min(12)
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()
+            : null,
+        );
+    }
+}
