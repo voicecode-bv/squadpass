@@ -4,6 +4,7 @@ namespace App\Services\Moneybird;
 
 use App\Models\Club;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
@@ -20,7 +21,7 @@ class HttpMoneybirdGateway implements MoneybirdGateway
         return (string) $response->throw()->json('id');
     }
 
-    public function createInvoice(Club $club, string $contactId, array $lines): string
+    public function createInvoice(Club $club, string $contactId, array $lines): array
     {
         $response = $this->clientFor($club)->post('sales_invoices.json', [
             'sales_invoice' => [
@@ -33,7 +34,38 @@ class HttpMoneybirdGateway implements MoneybirdGateway
             ],
         ]);
 
-        return (string) $response->throw()->json('id');
+        return $response->throw()->json();
+    }
+
+    public function getInvoice(Club $club, string $invoiceId): array
+    {
+        return $this->clientFor($club)->get("sales_invoices/{$invoiceId}.json")->throw()->json();
+    }
+
+    public function listInvoices(Club $club, ?Carbon $updatedAfter = null, int $page = 1, int $perPage = 100): array
+    {
+        $filter = ['state:all'];
+
+        if ($updatedAfter !== null) {
+            $filter[] = 'updated_after:'.$updatedAfter->utc()->format('Y-m-d H:i:s');
+        }
+
+        return $this->clientFor($club)
+            ->get('sales_invoices.json', [
+                'filter' => implode(',', $filter),
+                'page' => $page,
+                'per_page' => $perPage,
+            ])
+            ->throw()
+            ->json();
+    }
+
+    public function createCreditInvoice(Club $club, string $invoiceId): array
+    {
+        return $this->clientFor($club)
+            ->patch("sales_invoices/{$invoiceId}/duplicate_creditinvoice.json")
+            ->throw()
+            ->json();
     }
 
     protected function clientFor(Club $club): PendingRequest

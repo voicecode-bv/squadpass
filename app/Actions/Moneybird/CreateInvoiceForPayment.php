@@ -12,6 +12,7 @@ class CreateInvoiceForPayment
     public function __construct(
         protected MoneybirdGateway $gateway,
         protected SyncMemberContact $syncMemberContact,
+        protected RecordInvoice $recordInvoice,
     ) {}
 
     /**
@@ -44,16 +45,18 @@ class CreateInvoiceForPayment
             return null;
         }
 
-        $invoiceId = $this->gateway->createInvoice($club, $contactId, [
+        $invoice = $this->gateway->createInvoice($club, $contactId, [
             [
                 'description' => $this->descriptionFor($payment),
                 'price_cents' => $payment->amount_cents,
             ],
         ]);
 
-        $payment->update(['moneybird_invoice_id' => $invoiceId]);
+        $this->recordInvoice->handle($club, $invoice, $payment, [$contactId => $membership->id]);
 
-        return $invoiceId;
+        $payment->update(['moneybird_invoice_id' => (string) $invoice['id']]);
+
+        return (string) $invoice['id'];
     }
 
     protected function descriptionFor(Payment $payment): string

@@ -2,11 +2,13 @@
 
 use App\Actions\Moneybird\CreateInvoiceForPayment;
 use App\Actions\Payments\ApplyPaymentStatus;
+use App\Enums\MoneybirdInvoiceState;
 use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
 use App\Jobs\CreateMoneybirdInvoice;
 use App\Livewire\Members\Show;
 use App\Models\Club;
+use App\Models\MoneybirdInvoice;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Mollie\MolliePaymentResult;
@@ -69,6 +71,15 @@ test('a paid payment creates a draft invoice and syncs the contact once', functi
     // Idempotent: a second run does not create another invoice.
     expect($action->handle($payment->refresh()))->toBeNull()
         ->and($this->gateway->createdInvoices)->toHaveCount(1);
+
+    // The invoice is mirrored locally so it shows up in the overview.
+    $invoice = MoneybirdInvoice::query()->firstOrFail();
+
+    expect($invoice->moneybird_id)->toBe('mb_invoice_2')
+        ->and($invoice->payment_id)->toBe($payment->id)
+        ->and($invoice->membership_id)->toBe($this->membership->id)
+        ->and($invoice->total_price_incl_tax_cents)->toBe(7500)
+        ->and($invoice->state)->toBe(MoneybirdInvoiceState::Draft);
 });
 
 test('unpaid payments and clubs without Moneybird are skipped', function () {

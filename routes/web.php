@@ -5,6 +5,7 @@ use App\Livewire\CheckIns;
 use App\Livewire\Clubs;
 use App\Livewire\Dashboard;
 use App\Livewire\Invitations;
+use App\Livewire\Invoices;
 use App\Livewire\Lessons;
 use App\Livewire\Members;
 use App\Livewire\Portal;
@@ -44,6 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('strip-cards', StripCardPlans\Index::class)->name('clubs.strip-cards');
         Route::livewire('subscription-plans', SubscriptionPlans\Index::class)->name('clubs.subscription-plans');
         Route::livewire('subscriptions', Subscriptions\Index::class)->name('clubs.subscriptions');
+        Route::livewire('invoices', Invoices\Index::class)->name('clubs.invoices');
         Route::livewire('check-ins', CheckIns\Desk::class)->name('clubs.check-ins');
         Route::livewire('tickets', Tickets\Index::class)->name('clubs.tickets');
         Route::livewire('tickets/{ticket}', Tickets\Show::class)->name('clubs.tickets.show');
