@@ -70,6 +70,21 @@ interface MoneybirdGateway
     public function registerPayment(Club $club, string $invoiceId, int $amountCents, CarbonInterface $paidAt): void;
 
     /**
+     * Fetch a single sales invoice.
+     *
+     * @return array<string, mixed>
+     */
+    public function getInvoice(Club $club, string $invoiceId): array;
+
+    /**
+     * Fetch one page of sales invoices. Passing $updatedAfter limits the page
+     * to invoices changed since that moment, which keeps repeated syncs cheap.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listInvoices(Club $club, ?CarbonInterface $updatedAfter = null, int $page = 1, int $perPage = 100): array;
+
+    /**
      * Create a credit invoice that reverses the given invoice and return its id.
      */
     public function createCreditInvoice(Club $club, string $invoiceId): string;

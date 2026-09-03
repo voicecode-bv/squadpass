@@ -118,6 +118,9 @@
                         <flux:sidebar.item icon="banknotes" :href="route('clubs.subscriptions', $currentClub)" :current="request()->routeIs('clubs.subscriptions')" wire:navigate>
                             {{ __('Subscriptions') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="receipt-percent" :href="route('clubs.invoices', $currentClub)" :current="request()->routeIs('clubs.invoices')" wire:navigate>
+                            {{ __('Invoices') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
 
                     <flux:sidebar.group :heading="__('Support')" class="grid">

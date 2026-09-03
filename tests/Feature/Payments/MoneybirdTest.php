@@ -4,6 +4,7 @@ use App\Actions\Moneybird\CreateCreditInvoiceForPayment;
 use App\Actions\Moneybird\CreateInvoiceForPayment;
 use App\Actions\Payments\ApplyPaymentStatus;
 use App\Enums\MoneybirdInvoiceDelivery;
+use App\Enums\MoneybirdInvoiceState;
 use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
 use App\Jobs\CreateMoneybirdCreditInvoice;
@@ -12,6 +13,7 @@ use App\Jobs\SyncMoneybirdContact;
 use App\Livewire\Members\Show;
 use App\Livewire\Settings\Profile;
 use App\Models\Club;
+use App\Models\MoneybirdInvoice;
 use App\Models\Payment;
 use App\Models\StripCardPlan;
 use App\Models\User;
@@ -94,6 +96,16 @@ test('a paid payment creates a draft invoice with the club settings and syncs th
     // Idempotent: a second run does not create another invoice.
     expect($action->handle($payment->refresh()))->toBeNull()
         ->and($this->gateway->createdInvoices)->toHaveCount(1);
+
+    // The invoice is mirrored locally so it shows up in the club's overview.
+    $mirrored = MoneybirdInvoice::query()->firstOrFail();
+
+    expect($mirrored->moneybird_id)->toBe('mb_invoice_2')
+        ->and($mirrored->payment_id)->toBe($payment->id)
+        ->and($mirrored->membership_id)->toBe($this->membership->id)
+        ->and($mirrored->total_price_incl_tax_cents)->toBe(7500)
+        ->and($mirrored->state)->toBe(MoneybirdInvoiceState::Draft)
+        ->and($mirrored->is_credit_invoice)->toBeFalse();
 });
 
 test('with email delivery the invoice is sent and the Mollie payment is registered on it', function () {
@@ -168,6 +180,9 @@ test('a refund creates a credit invoice that is finalized and settled when invoi
     // Idempotent.
     expect($action->handle($payment->refresh()))->toBeNull()
         ->and($this->gateway->createdCreditInvoices)->toHaveCount(1);
+
+    // The credit invoice is mirrored locally too.
+    expect(MoneybirdInvoice::query()->where('moneybird_id', 'mb_credit_1')->firstOrFail()->is_credit_invoice)->toBeTrue();
 });
 
 test('a refund of a payment that was never invoiced creates no credit invoice', function () {

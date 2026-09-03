@@ -8,7 +8,10 @@ use App\Services\Moneybird\MoneybirdGateway;
 
 class CreateCreditInvoiceForPayment
 {
-    public function __construct(protected MoneybirdGateway $gateway) {}
+    public function __construct(
+        protected MoneybirdGateway $gateway,
+        protected RecordInvoice $recordInvoice,
+    ) {}
 
     /**
      * Reverse the Moneybird invoice of a refunded payment with a credit invoice.
@@ -34,6 +37,9 @@ class CreateCreditInvoiceForPayment
             $this->gateway->sendInvoice($club, $creditInvoiceId, $club->moneybird_invoice_delivery);
             $this->gateway->settleCreditInvoice($club, $creditInvoiceId);
         }
+
+        // Mirror the credit invoice locally so it shows up in the club's overview.
+        $this->recordInvoice->handle($club, $this->gateway->getInvoice($club, $creditInvoiceId), $payment);
 
         $club->recordMoneybirdSuccess();
 

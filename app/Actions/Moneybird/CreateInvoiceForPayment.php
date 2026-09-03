@@ -14,6 +14,7 @@ class CreateInvoiceForPayment
     public function __construct(
         protected MoneybirdGateway $gateway,
         protected SyncMemberContact $syncMemberContact,
+        protected RecordInvoice $recordInvoice,
     ) {}
 
     /**
@@ -70,6 +71,9 @@ class CreateInvoiceForPayment
             $this->gateway->sendInvoice($club, $invoiceId, $club->moneybird_invoice_delivery);
             $this->gateway->registerPayment($club, $invoiceId, $payment->amount_cents, $payment->paid_at ?? now());
         }
+
+        // Mirror the invoice locally so it shows up in the club's overview.
+        $this->recordInvoice->handle($club, $this->gateway->getInvoice($club, $invoiceId), $payment, [$contactId => $membership->id]);
 
         $club->recordMoneybirdSuccess();
 

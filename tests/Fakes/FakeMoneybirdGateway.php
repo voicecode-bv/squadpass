@@ -34,6 +34,13 @@ class FakeMoneybirdGateway implements MoneybirdGateway
     /** @var list<string> tokens that are rejected by listAdministrations */
     public array $invalidTokens = [];
 
+    /** Invoice payloads keyed by Moneybird id, as getInvoice/listInvoices return them. */
+    /** @var array<string, array<string, mixed>> */
+    public array $invoices = [];
+
+    /** @var array<int, array{club: int, updated_after: string|null, page: int}> */
+    public array $listCalls = [];
+
     protected int $sequence = 0;
 
     public function listAdministrations(string $accessToken): array
@@ -80,7 +87,39 @@ class FakeMoneybirdGateway implements MoneybirdGateway
 
         $this->createdInvoices[] = ['club' => $club->id, 'contact_id' => $contactId, 'lines' => $lines, 'attributes' => $attributes, 'id' => $id];
 
+        $totalCents = collect($lines)->sum('price_cents');
+
+        $this->invoices[$id] = [
+            'id' => $id,
+            'contact_id' => $contactId,
+            'invoice_id' => null,
+            'reference' => $attributes['reference'] ?? null,
+            'state' => 'draft',
+            'invoice_date' => $attributes['invoice_date'] ?? today()->toDateString(),
+            'currency' => 'EUR',
+            'total_price_incl_tax' => number_format($totalCents / 100, 2, '.', ''),
+            'updated_at' => now()->toIso8601String(),
+            'details' => collect($lines)->map(fn (array $line) => [
+                'description' => $line['description'],
+                'amount' => '1',
+                'price' => number_format($line['price_cents'] / 100, 2, '.', ''),
+                'total_price_excl_tax_with_discount' => number_format($line['price_cents'] / 100, 2, '.', ''),
+            ])->all(),
+        ];
+
         return $id;
+    }
+
+    public function getInvoice(Club $club, string $invoiceId): array
+    {
+        return $this->invoices[$invoiceId] ?? ['id' => $invoiceId];
+    }
+
+    public function listInvoices(Club $club, ?CarbonInterface $updatedAfter = null, int $page = 1, int $perPage = 100): array
+    {
+        $this->listCalls[] = ['club' => $club->id, 'updated_after' => $updatedAfter?->toIso8601String(), 'page' => $page];
+
+        return $page === 1 ? array_values($this->invoices) : [];
     }
 
     public function sendInvoice(Club $club, string $invoiceId, MoneybirdInvoiceDelivery $delivery): void
@@ -96,8 +135,23 @@ class FakeMoneybirdGateway implements MoneybirdGateway
     public function createCreditInvoice(Club $club, string $invoiceId): string
     {
         $id = 'mb_credit_'.(++$this->sequence);
+        $original = $this->invoices[$invoiceId] ?? [];
 
         $this->createdCreditInvoices[] = ['club' => $club->id, 'invoice_id' => $invoiceId, 'id' => $id];
+
+        $this->invoices[$id] = array_merge($original, [
+            'id' => $id,
+            'invoice_id' => null,
+            'state' => 'draft',
+            'original_sales_invoice_id' => $invoiceId,
+            'invoice_date' => today()->toDateString(),
+            'updated_at' => now()->toIso8601String(),
+            'total_price_incl_tax' => number_format(-1 * (float) ($original['total_price_incl_tax'] ?? 0), 2, '.', ''),
+            'details' => collect($original['details'] ?? [])->map(fn (array $detail) => array_merge($detail, [
+                'price' => number_format(-1 * (float) $detail['price'], 2, '.', ''),
+                'total_price_excl_tax_with_discount' => number_format(-1 * (float) $detail['total_price_excl_tax_with_discount'], 2, '.', ''),
+            ]))->all(),
+        ]);
 
         return $id;
     }
