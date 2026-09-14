@@ -31,6 +31,7 @@ use App\Models\Trainer;
 use App\Models\User;
 use App\Services\Lessons\OccurrenceGenerator;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -41,10 +42,10 @@ use Illuminate\Support\Str;
  * payments and check-in history, so every dashboard and chart has data.
  *
  * Demo accounts (password for all: "password"):
- * - superadmin@example.com (superadmin)
- * - owner@example.com (owner of all three clubs)
- * - trainer@example.com (trainer at Padel Club Amsterdam)
- * - lid1@example.com (member of Padel Club Amsterdam, for the member portal)
+ * - superadmin@squadpass.nl (superadmin)
+ * - owner@squadpass.nl (owner of all three clubs)
+ * - trainer@squadpass.nl (trainer at Padel Club Amsterdam)
+ * - lid1@squadpass.nl (member of Padel Club Amsterdam, for the member portal)
  */
 class DatabaseSeeder extends Seeder
 {
@@ -55,16 +56,18 @@ class DatabaseSeeder extends Seeder
 
     private int $paymentSequence = 0;
 
+    private static int $userSequence = 0;
+
     public function run(): void
     {
         User::factory()->superadmin()->create([
             'name' => 'Superadmin',
-            'email' => 'superadmin@example.com',
+            'email' => 'superadmin@squadpass.nl',
         ]);
 
         $owner = User::factory()->create([
             'name' => 'Demo Eigenaar',
-            'email' => 'owner@example.com',
+            'email' => 'owner@squadpass.nl',
         ]);
 
         $this->seedAddons();
@@ -72,6 +75,27 @@ class DatabaseSeeder extends Seeder
         foreach ($this->clubConfigurations() as $index => $configuration) {
             $this->seedClub($configuration, $owner, isPrimary: $index === 0);
         }
+    }
+
+    /**
+     * User factory that puts every demo account on the squadpass.nl domain.
+     *
+     * @return Factory<User>
+     */
+    protected function userFactory(int $count = 1): Factory
+    {
+        // The state closure is rebound to the factory, so resolve the helper statically.
+        return User::factory($count)->state(fn (array $attributes): array => [
+            'email' => self::squadpassEmail($attributes['name']),
+        ]);
+    }
+
+    /**
+     * Build a unique squadpass.nl address from a name, e.g. "Anna Bakker" => "anna.bakker.12@squadpass.nl".
+     */
+    protected static function squadpassEmail(string $name): string
+    {
+        return Str::slug($name, '.').'.'.self::$userSequence++.'@squadpass.nl';
     }
 
     /**
@@ -240,12 +264,12 @@ class DatabaseSeeder extends Seeder
      */
     protected function seedTrainers(Club $club, bool $isPrimary): Collection
     {
-        $users = User::factory(3)->create();
+        $users = $this->userFactory(3)->create();
 
         if ($isPrimary) {
             $users->prepend(User::factory()->create([
                 'name' => 'Demo Trainer',
-                'email' => 'trainer@example.com',
+                'email' => 'trainer@squadpass.nl',
             ]));
         }
 
@@ -295,12 +319,12 @@ class DatabaseSeeder extends Seeder
      */
     protected function seedMembers(Club $club, int $count, bool $isPrimary): Collection
     {
-        $users = User::factory($count - ($isPrimary ? 1 : 0))->create();
+        $users = $this->userFactory($count - ($isPrimary ? 1 : 0))->create();
 
         if ($isPrimary) {
             $users->prepend(User::factory()->create([
                 'name' => 'Demo Lid',
-                'email' => 'lid1@example.com',
+                'email' => 'lid1@squadpass.nl',
             ]));
         }
 

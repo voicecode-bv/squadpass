@@ -26,9 +26,16 @@ test('the demo seeder builds three fully populated clubs', function () {
             ->and(Payment::query()->where('club_id', $club->id)->where('status', PaymentStatus::Paid)->count())->toBeGreaterThan(20);
     });
 
-    $owner = User::query()->where('email', 'owner@example.com')->firstOrFail();
-    $member = User::query()->where('email', 'lid1@example.com')->firstOrFail();
+    $owner = User::query()->where('email', 'owner@squadpass.nl')->firstOrFail();
+    $member = User::query()->where('email', 'lid1@squadpass.nl')->firstOrFail();
 
     expect($owner->staffClubs()->count())->toBe(3)
         ->and($member->memberships()->count())->toBe(1);
+});
+
+test('every seeded user has a squadpass.nl e-mail address', function () {
+    $this->seed();
+
+    expect(User::query()->where('email', 'not like', '%@squadpass.nl')->count())->toBe(0)
+        ->and(User::query()->count())->toBeGreaterThan(190);
 });
