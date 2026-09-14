@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AddonKey;
 use App\Livewire\Admin\Addons as AdminAddons;
 use App\Models\Addon;
 use App\Models\User;
@@ -16,6 +17,8 @@ test('the landing page highlights add-ons for sale with their price', function (
         ->assertSee('images/logos/moneybird.svg')
         ->assertSee('€ 15,00')
         ->assertSee(__('Invoicing with Moneybird'))
+        ->assertSee(__('Branded mobile app'))
+        ->assertSee('€ 79,00')
         ->assertSee(__('Coming soon'))
         ->assertDontSee('€ 10,00');
 });
@@ -33,4 +36,13 @@ test('changing an add-on price in the admin refreshes the landing page', functio
         ->assertHasNoErrors();
 
     $this->get(route('home'))->assertSee('€ 19,95')->assertDontSee('€ 15,00');
+});
+
+test('the branded mobile app add-on falls back to its icon without a partner logo', function () {
+    expect(AddonKey::MobileApp->logoPath())->toBeNull();
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee(__('Branded mobile app'))
+        ->assertSee('€ 79,00');
 });

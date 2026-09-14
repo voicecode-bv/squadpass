@@ -18,7 +18,9 @@ test('a superadmin sees every add-on key, created on first visit', function () {
         ->assertSee(AddonKey::Moneybird->defaultName());
 
     expect(Addon::query()->count())->toBe(count(AddonKey::cases()))
-        ->and(Addon::query()->where('is_active', true)->count())->toBe(0);
+        ->and(Addon::query()->where('key', AddonKey::Mollie->value)->first())
+        ->price_cents->toBe(0)
+        ->is_active->toBeFalse();
 });
 
 test('a superadmin can price and publish an add-on', function () {

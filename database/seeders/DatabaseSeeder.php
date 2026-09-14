@@ -106,6 +106,7 @@ class DatabaseSeeder extends Seeder
         $prices = [
             AddonKey::Mollie->value => 1500,
             AddonKey::Moneybird->value => 1000,
+            AddonKey::MobileApp->value => 7900,
         ];
 
         foreach (Addon::syncFromKeys() as $addon) {
