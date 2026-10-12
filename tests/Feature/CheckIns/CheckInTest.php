@@ -3,6 +3,7 @@
 use App\Actions\CheckIns\CheckInMember;
 use App\Actions\Lessons\EnrollSingle;
 use App\Enums\StaffRole;
+use App\Enums\SubscriptionStatus;
 use App\Exceptions\CheckInException;
 use App\Livewire\CheckIns\Desk;
 use App\Models\CheckIn;
@@ -20,6 +21,29 @@ beforeEach(function () {
     $this->member = User::factory()->create();
     $this->club->addMember($this->member);
 });
+
+function subscribeMember(Club $club, User $member, ?int $credits): Subscription
+{
+    $plan = SubscriptionPlan::factory()->for($club)->create(['credits' => $credits]);
+
+    return Subscription::factory()->active()->create([
+        'club_id' => $club->id,
+        'user_id' => $member->id,
+        'subscription_plan_id' => $plan->id,
+        'credits_remaining' => $credits,
+    ]);
+}
+
+function upcomingOccurrence(Club $club): LessonOccurrence
+{
+    $lesson = Lesson::factory()->for($club)->create();
+
+    return LessonOccurrence::factory()->for($lesson)->create([
+        'club_id' => $club->id,
+        'starts_at' => now()->addHours(2),
+        'ends_at' => now()->addHours(3),
+    ]);
+}
 
 test('a strip is redeemed for a free visit', function () {
     $card = StripCard::factory()->create([
@@ -78,12 +102,8 @@ test('an unlimited subscription covers the visit without using strips', function
 });
 
 test('a lesson reservation covers the check-in without a strip', function () {
-    $lesson = Lesson::factory()->for($this->club)->create();
-    $occurrence = LessonOccurrence::factory()->for($lesson)->create([
-        'club_id' => $this->club->id,
-        'starts_at' => now()->addHours(2),
-        'ends_at' => now()->addHours(3),
-    ]);
+    $subscription = subscribeMember($this->club, $this->member, credits: 5);
+    $occurrence = upcomingOccurrence($this->club);
     StripCard::factory()->create(['club_id' => $this->club->id, 'user_id' => $this->member->id]);
 
     app(EnrollSingle::class)->handle($this->member, $occurrence);
@@ -93,7 +113,49 @@ test('a lesson reservation covers the check-in without a strip', function () {
     expect($checkIn->strip_card_id)->toBeNull()
         ->and($checkIn->subscription_id)->toBeNull()
         ->and($checkIn->lesson_occurrence_id)->toBe($occurrence->id)
-        ->and(StripCard::query()->first()->strips_remaining)->toBe(10);
+        ->and(StripCard::query()->first()->strips_remaining)->toBe(10)
+        ->and($subscription->refresh()->credits_remaining)->toBe(4);
+});
+
+test('a reservation stops covering visits once the subscription has ended', function () {
+    $subscription = subscribeMember($this->club, $this->member, credits: 5);
+    $occurrence = upcomingOccurrence($this->club);
+    $card = StripCard::factory()->create(['club_id' => $this->club->id, 'user_id' => $this->member->id]);
+
+    app(EnrollSingle::class)->handle($this->member, $occurrence);
+
+    $subscription->update([
+        'status' => SubscriptionStatus::Cancelled,
+        'ends_at' => today()->subDay(),
+    ]);
+
+    $checkIn = app(CheckInMember::class)->handle($this->member, $this->club, $occurrence);
+
+    expect($checkIn->strip_card_id)->toBe($card->id)
+        ->and($card->refresh()->strips_remaining)->toBe(9);
+});
+
+test('a reservation without a subscription and without strips gives no coverage', function () {
+    $occurrence = upcomingOccurrence($this->club);
+
+    app(EnrollSingle::class)->handle($this->member, $occurrence);
+
+    expect(fn () => app(CheckInMember::class)->handle($this->member, $this->club, $occurrence))
+        ->toThrow(CheckInException::class);
+});
+
+test('an overdue subscription no longer covers a reservation', function () {
+    $subscription = subscribeMember($this->club, $this->member, credits: 5);
+    $occurrence = upcomingOccurrence($this->club);
+    $card = StripCard::factory()->create(['club_id' => $this->club->id, 'user_id' => $this->member->id]);
+
+    app(EnrollSingle::class)->handle($this->member, $occurrence);
+
+    $subscription->update(['status' => SubscriptionStatus::PastDue]);
+
+    $checkIn = app(CheckInMember::class)->handle($this->member, $this->club, $occurrence);
+
+    expect($checkIn->strip_card_id)->toBe($card->id);
 });
 
 test('a card with one strip can only cover one check-in', function () {

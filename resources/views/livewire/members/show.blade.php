@@ -26,62 +26,44 @@
                         {{ $membership->moneybird_contact_id ? __('Sync with Moneybird') : __('Link to Moneybird') }}
                     </flux:button>
                 @endif
+                @can('impersonate', $membership)
+                    <form method="POST" action="{{ route('clubs.members.impersonate', [$club, $membership]) }}">
+                        @csrf
+                        <flux:button type="submit" size="sm" icon="eye">
+                            {{ __('View as member') }}
+                        </flux:button>
+                    </form>
+                @endcan
             </div>
         </div>
     </div>
 
     {{-- Membership details --}}
-    <div class="grid gap-6 rounded-xl bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4 dark:bg-zinc-900">
+    <div class="sp-panel animate-rise grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.identification variant="micro" class="size-4" /> {{ __('Membership number') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $membership->membership_number }}</p>
+            <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Membership number') }}</p>
+            <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $membership->membership_number }}</p>
         </div>
         <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.calendar variant="micro" class="size-4" /> {{ __('Member since') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $membership->joined_at->format('d-m-Y') }}</p>
+            <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Member since') }}</p>
+            <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $membership->joined_at->format('d-m-Y') }}</p>
         </div>
         <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.envelope variant="micro" class="size-4" /> {{ __('Email') }}
-            </p>
-            <p class="mt-2 truncate font-medium text-zinc-800 dark:text-white">{{ $membership->user->email }}</p>
+            <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Email') }}</p>
+            <p class="mt-2 truncate font-normal text-zinc-800 dark:text-white">{{ $membership->user->email }}</p>
         </div>
         <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.x-circle variant="micro" class="size-4" /> {{ __('Ended at') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $membership->ended_at?->format('d-m-Y') ?? '-' }}</p>
+            <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Ended at') }}</p>
+            <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $membership->ended_at?->format('d-m-Y') ?? '-' }}</p>
         </div>
     </div>
 
-    {{-- KPI cards --}}
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-zinc-900">
-            <span class="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                <flux:icon.ticket class="size-5" />
-            </span>
-            <p class="mt-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">{{ __('Strips remaining') }}</p>
-            <p class="mt-1 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $this->stripsRemaining }}</p>
-        </div>
-        <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-zinc-900">
-            <span class="flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                <flux:icon.credit-card class="size-5" />
-            </span>
-            <p class="mt-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">{{ __('Active subscriptions') }}</p>
-            <p class="mt-1 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $this->activeSubscriptionCount }}</p>
-        </div>
-        <div class="rounded-xl bg-white p-5 shadow-sm dark:bg-zinc-900">
-            <span class="flex size-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
-                <flux:icon.finger-print class="size-5" />
-            </span>
-            <p class="mt-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">{{ __('Check-ins this month') }}</p>
-            <p class="mt-1 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $this->checkInsThisMonth }}</p>
-        </div>
-    </div>
+    {{-- KPI band --}}
+    <x-portal.kpi-band :items="[
+        ['label' => __('Strips remaining').' · '.__('Right now'), 'value' => $this->stripsRemaining, 'countUp' => $this->stripsRemaining],
+        ['label' => __('Active subscriptions').' · '.__('Right now'), 'value' => $this->activeSubscriptionCount, 'countUp' => $this->activeSubscriptionCount],
+        ['label' => __('Check-ins').' · '.__('This month'), 'value' => $this->checkInsThisMonth, 'countUp' => $this->checkInsThisMonth],
+    ]" />
 
     {{-- Subscriptions --}}
     <section class="flex flex-col gap-4">
@@ -104,7 +86,7 @@
                     <flux:table.rows>
                         @foreach ($this->subscriptions as $subscription)
                             <flux:table.row :key="'sub-'.$subscription->id">
-                                <flux:table.cell variant="strong">{{ $subscription->plan->name }} · {{ $subscription->plan->formattedPrice() }}</flux:table.cell>
+                                <flux:table.cell class="sp-strong">{{ $subscription->plan->name }} · {{ $subscription->plan->formattedPrice() }}</flux:table.cell>
                                 <flux:table.cell>{{ $subscription->starts_at->format('d-m-Y') }}</flux:table.cell>
                                 <flux:table.cell>{{ $subscription->next_billing_at?->format('d-m-Y') ?? '-' }}</flux:table.cell>
                                 <flux:table.cell align="end">
@@ -145,7 +127,7 @@
                     <flux:table.rows>
                         @foreach ($this->stripCards as $card)
                             <flux:table.row :key="'card-'.$card->id">
-                                <flux:table.cell variant="strong">{{ $card->plan->name }}</flux:table.cell>
+                                <flux:table.cell class="sp-strong">{{ $card->plan->name }}</flux:table.cell>
                                 <flux:table.cell>{{ $card->strips_remaining }} / {{ $card->strips_total }}</flux:table.cell>
                                 <flux:table.cell>{{ $card->purchased_at->format('d-m-Y') }}</flux:table.cell>
                                 <flux:table.cell>{{ $card->expires_at?->format('d-m-Y') ?? '-' }}</flux:table.cell>
@@ -188,7 +170,7 @@
                     <flux:table.rows>
                         @foreach ($this->payments as $payment)
                             <flux:table.row :key="'payment-'.$payment->id">
-                                <flux:table.cell variant="strong">{{ ($payment->paid_at ?? $payment->created_at)->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</flux:table.cell>
+                                <flux:table.cell class="sp-strong">{{ ($payment->paid_at ?? $payment->created_at)->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</flux:table.cell>
                                 <flux:table.cell>{{ $purposeLabels[$payment->purpose()] ?? __('Payment') }}</flux:table.cell>
                                 <flux:table.cell align="end">&euro; {{ number_format($payment->amount_cents / 100, 2, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell align="end">
@@ -218,6 +200,51 @@
         @endif
     </section>
 
+    {{-- Forms --}}
+    <section class="flex flex-col gap-4">
+        <flux:heading size="lg">{{ __('Forms') }}</flux:heading>
+
+        @if ($this->forms->isEmpty())
+            <flux:text>{{ __('This club has no published forms.') }}</flux:text>
+        @else
+            <x-table-card>
+                <flux:table>
+                    <flux:table.columns>
+                        <flux:table.column class="w-2/5">{{ __('Form') }}</flux:table.column>
+                        <flux:table.column>{{ __('Status') }}</flux:table.column>
+                        <flux:table.column align="end"></flux:table.column>
+                    </flux:table.columns>
+                    <flux:table.rows>
+                        @foreach ($this->forms as $form)
+                            @php($submission = $this->formSubmissions->get($form->id))
+                            <flux:table.row :key="'form-'.$form->id">
+                                <flux:table.cell class="sp-strong">{{ $form->name }}</flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($submission && $submission->reopened_at)
+                                        <flux:badge size="sm" color="amber">{{ __('Reopened') }}</flux:badge>
+                                    @elseif ($submission)
+                                        <flux:badge size="sm" color="green">
+                                            {{ __('Filled in on :date', ['date' => $submission->submitted_at->timezone($club->timezone)->isoFormat('D MMM YYYY')]) }}
+                                        </flux:badge>
+                                    @else
+                                        <flux:badge size="sm" color="amber">{{ __('Not filled in yet') }}</flux:badge>
+                                    @endif
+                                </flux:table.cell>
+                                <flux:table.cell align="end">
+                                    @if ($submission)
+                                        <flux:button variant="ghost" size="sm" :href="route('clubs.forms.submissions.show', [$club, $form, $submission])" wire:navigate>
+                                            {{ __('View') }}
+                                        </flux:button>
+                                    @endif
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            </x-table-card>
+        @endif
+    </section>
+
     {{-- Check-ins --}}
     <section class="flex flex-col gap-4">
         <flux:heading size="lg">{{ __('Recent check-ins') }}</flux:heading>
@@ -235,7 +262,7 @@
                     <flux:table.rows>
                         @foreach ($this->checkIns as $checkIn)
                             <flux:table.row :key="'checkin-'.$checkIn->id">
-                                <flux:table.cell variant="strong">{{ $checkIn->checked_in_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</flux:table.cell>
+                                <flux:table.cell class="sp-strong">{{ $checkIn->checked_in_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</flux:table.cell>
                                 <flux:table.cell>{{ $checkIn->occurrence?->lesson->name ?? '-' }}</flux:table.cell>
                                 <flux:table.cell align="end">
                                     <flux:badge size="sm">{{ $checkIn->coverageLabel() }}</flux:badge>

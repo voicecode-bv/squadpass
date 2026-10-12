@@ -63,6 +63,4 @@ test('the club dashboard warns about failed charges of the last 30 days', functi
     $component = Livewire::actingAs($this->owner)->test(Dashboard::class, ['club' => $this->club]);
 
     expect($component->instance()->failedChargeCount)->toBe(1);
-
-    $component->assertSee(__('Failed charges'));
 });

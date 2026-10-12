@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\TicketCategory;
+use App\Enums\TicketPriority;
+use App\Enums\TicketStatus;
 use App\Models\Club;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
@@ -67,4 +70,34 @@ test('a member can reply on their own open ticket but not on a closed one', func
         ->assertStatus(422);
 
     expect(TicketMessage::query()->where('ticket_id', $closed->id)->count())->toBe(0);
+});
+
+test('ticket options offer the member clubs plus labelled categories and priorities', function () {
+    Club::factory()->create(['name' => 'Andere club']);
+
+    $response = $this->getJson('/api/v1/tickets/options')
+        ->assertOk()
+        ->assertJsonCount(1, 'clubs')
+        ->assertJsonPath('clubs.0.id', $this->club->id)
+        ->assertJsonCount(3, 'categories')
+        ->assertJsonCount(3, 'priorities');
+
+    expect(collect($response->json('categories'))->pluck('value')->all())
+        ->toBe(['billing', 'lessons', 'other'])
+        ->and(collect($response->json('priorities'))->pluck('label')->filter()->count())->toBe(3);
+});
+
+test('tickets carry the labels for their status, category and priority', function () {
+    Ticket::factory()->for($this->club)->create([
+        'user_id' => $this->member->id,
+        'status' => TicketStatus::InProgress,
+        'category' => TicketCategory::Billing,
+        'priority' => TicketPriority::High,
+    ]);
+
+    $this->getJson('/api/v1/tickets')
+        ->assertOk()
+        ->assertJsonPath('data.0.status_label', TicketStatus::InProgress->label())
+        ->assertJsonPath('data.0.category_label', TicketCategory::Billing->label())
+        ->assertJsonPath('data.0.priority_label', TicketPriority::High->label());
 });

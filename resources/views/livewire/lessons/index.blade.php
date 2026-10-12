@@ -1,14 +1,11 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('Lessons') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-
-        <flux:button variant="primary" icon="plus" :href="route('clubs.lessons.create', $club)" wire:navigate>
+    <x-portal.hero :title="__('Lessons')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:button variant="primary" icon="plus" :href="route('clubs.lessons.create', $club)" wire:navigate>
             {{ __('New lesson') }}
-        </flux:button>
-    </div>
+            </flux:button>
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if ($this->lessons->isEmpty())
         <flux:callout icon="calendar">
@@ -30,7 +27,7 @@
             <flux:table.rows>
                 @foreach ($this->lessons as $lesson)
                     <flux:table.row :key="$lesson->id">
-                        <flux:table.cell variant="strong">
+                        <flux:table.cell class="sp-strong">
                             {{ $lesson->name }}
                             @if ($lesson->room)
                                 <flux:text class="text-xs">{{ $lesson->room->name }}</flux:text>
@@ -42,11 +39,7 @@
                         </flux:table.cell>
                         <flux:table.cell>{{ $lesson->capacity }}</flux:table.cell>
                         <flux:table.cell>
-                            @forelse ($lesson->trainers as $trainer)
-                                <x-user-chip :user="$trainer->user" class="me-2" wire:key="lesson-trainer-{{ $lesson->id }}-{{ $trainer->id }}" />
-                            @empty
-                                -
-                            @endforelse
+                            {{ $lesson->trainers->map(fn ($trainer) => $trainer->user->name)->join(', ') ?: '-' }}
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" :color="$lesson->active ? 'green' : 'zinc'">
@@ -54,7 +47,7 @@
                             </flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:button variant="ghost" size="sm" :href="route('clubs.lessons.edit', [$club, $lesson])" wire:navigate>
+                            <flux:button variant="ghost" size="sm" icon="pencil-square" :href="route('clubs.lessons.edit', [$club, $lesson])" wire:navigate>
                                 {{ __('Edit') }}
                             </flux:button>
                         </flux:table.cell>

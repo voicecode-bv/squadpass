@@ -9,6 +9,8 @@
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/site.webmanifest">
+        <meta name="theme-color" content="#2563eb">
 
         @fonts
         @vite(['resources/css/app.css'])
@@ -23,12 +25,9 @@
 
         <div class="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 lg:px-8">
             <header class="flex items-center justify-between py-6">
-                <div class="flex items-center gap-3">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/40">
-                        <x-app-logo-icon class="size-6 fill-current text-white" />
-                    </span>
-                    <span class="text-lg font-semibold tracking-tight text-white">{{ config('app.name', 'Laravel') }}</span>
-                </div>
+                <a href="{{ route('home') }}" class="flex items-center">
+                    <x-app-logo-lockup class="h-12" />
+                </a>
 
                 @if (Route::has('login'))
                     <nav class="flex items-center gap-3">

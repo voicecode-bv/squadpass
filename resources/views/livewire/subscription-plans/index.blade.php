@@ -1,14 +1,9 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('Subscription plans') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-
-        <flux:modal.trigger name="create-plan">
-            <flux:button variant="primary" icon="plus">{{ __('New plan') }}</flux:button>
-        </flux:modal.trigger>
-    </div>
+    <x-portal.hero :title="__('Subscription plans')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:button variant="primary" icon="plus" wire:click="newPlan">{{ __('New plan') }}</flux:button>
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if ($this->plans->isEmpty())
         <flux:callout icon="credit-card">
@@ -30,7 +25,7 @@
             <flux:table.rows>
                 @foreach ($this->plans as $plan)
                     <flux:table.row :key="$plan->id">
-                        <flux:table.cell variant="strong">
+                        <flux:table.cell class="sp-strong">
                             {{ $plan->name }}
                             @if ($plan->description)
                                 <flux:text class="text-xs">{{ $plan->description }}</flux:text>
@@ -45,9 +40,16 @@
                             </flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:button variant="ghost" size="sm" wire:click="toggleActive({{ $plan->id }})">
-                                {{ $plan->active ? __('Archive') : __('Activate') }}
-                            </flux:button>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" :aria-label="__('Actions')" />
+
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil-square" wire:click="editPlan({{ $plan->id }})">{{ __('Edit') }}</flux:menu.item>
+                                    <flux:menu.item icon="archive-box" wire:click="toggleActive({{ $plan->id }})">
+                                        {{ $plan->active ? __('Archive') : __('Activate') }}
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach
@@ -56,10 +58,10 @@
         </x-table-card>
     @endif
 
-    <flux:modal name="create-plan" class="md:w-96">
-        <form wire:submit="createPlan" class="space-y-6">
+    <flux:modal name="plan" class="md:w-96">
+        <form wire:submit="savePlan" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('New subscription plan') }}</flux:heading>
+                <flux:heading size="lg">{{ $editingPlanId ? __('Edit subscription plan') : __('New subscription plan') }}</flux:heading>
             </div>
 
             <flux:input wire:model="name" :label="__('Name')" placeholder="Onbeperkt" required autofocus />
@@ -77,7 +79,7 @@
             </flux:field>
 
             <div class="flex justify-end">
-                <flux:button type="submit" variant="primary">{{ __('Create plan') }}</flux:button>
+                <flux:button type="submit" variant="primary">{{ $editingPlanId ? __('Save changes') : __('Create plan') }}</flux:button>
             </div>
         </form>
     </flux:modal>

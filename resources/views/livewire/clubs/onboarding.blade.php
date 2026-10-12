@@ -1,4 +1,4 @@
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-8">
+<div class="flex w-full flex-col gap-8">
     <div>
         <flux:heading size="xl">{{ __('Set up :club', ['club' => $club->name]) }}</flux:heading>
         <flux:text class="mt-1">{{ __('Step :current of :total', ['current' => $step, 'total' => \App\Livewire\Clubs\Onboarding::LAST_STEP]) }} — {{ $this->stepLabels[$step] }}</flux:text>

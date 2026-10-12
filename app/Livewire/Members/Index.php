@@ -31,6 +31,10 @@ class Index extends Component
     #[Url]
     public string $search = '';
 
+    /** Filters the list on membership status; 'all' shows every status. */
+    #[Url]
+    public string $status = MembershipStatus::Active->value;
+
     public string $email = '';
 
     public function mount(Club $club): void
@@ -147,6 +151,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedStatus(): void
+    {
+        $this->resetPage();
+    }
+
     /**
      * @return LengthAwarePaginator<int, Membership>
      */
@@ -155,6 +164,10 @@ class Index extends Component
     {
         return $this->club->memberships()
             ->with('user')
+            ->when(
+                MembershipStatus::tryFrom($this->status),
+                fn ($query, MembershipStatus $status) => $query->where('status', $status),
+            )
             ->when($this->search !== '', function ($query) {
                 $query->whereHas('user', function ($userQuery) {
                     $userQuery->where('name', 'like', $this->search.'%')

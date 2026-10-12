@@ -1,8 +1,5 @@
 <div class="flex w-full flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ __('My lessons') }}</flux:heading>
-        <flux:text class="mt-1">{{ __('The lessons you teach in the next four weeks.') }}</flux:text>
-    </div>
+    <x-portal.hero :title="__('My lessons')" :subtitle="__('The lessons you teach in the next four weeks.')" />
 
     @if ($this->occurrences->isEmpty())
         <flux:callout icon="academic-cap">
@@ -26,7 +23,7 @@
                 @foreach ($this->occurrences as $occurrence)
                     @php $timezone = $occurrence->lesson->club->timezone; @endphp
                     <flux:table.row :key="$occurrence->id">
-                        <flux:table.cell variant="strong">{{ $occurrence->starts_at->timezone($timezone)->isoFormat('dd D MMM') }}</flux:table.cell>
+                        <flux:table.cell class="sp-strong">{{ $occurrence->starts_at->timezone($timezone)->isoFormat('dd D MMM') }}</flux:table.cell>
                         <flux:table.cell>{{ $occurrence->starts_at->timezone($timezone)->format('H:i') }}–{{ $occurrence->ends_at->timezone($timezone)->format('H:i') }}</flux:table.cell>
                         <flux:table.cell>{{ $occurrence->lesson->club->name }}</flux:table.cell>
                         <flux:table.cell>{{ $occurrence->lesson->name }}</flux:table.cell>

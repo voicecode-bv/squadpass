@@ -9,7 +9,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -23,6 +23,13 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
+    /* Page background behind the white panels. */
+    --color-canvas: #f5f6fa;
+
+    /* Text emphasis: ink for content that matters, ink-muted for the rest. */
+    --color-ink: #1a1a1a;
+    --color-ink-muted: #939393;
+
     --color-accent: var(--color-blue-600);
     --color-accent-content: var(--color-blue-600);
     --color-accent-foreground: var(--color-white);
@@ -30,6 +37,9 @@
 
 @layer theme {
     .dark {
+        --color-canvas: var(--color-zinc-950);
+        --color-ink: var(--color-white);
+        --color-ink-muted: var(--color-zinc-400);
         --color-accent: var(--color-blue-500);
         --color-accent-content: var(--color-blue-400);
         --color-accent-foreground: var(--color-white);
@@ -47,27 +57,154 @@
     }
 }
 
-/* TailPanel-style sidebar navigation: active items get a soft blue background,
-   a visible border and an accent bar on the sidebar edge. */
-[data-flux-sidebar-item] {
-    @apply font-medium;
+/* The sidebar itself never scrolls; only the navigation between the brand and
+   the account link does, so that link stays in view however long the menu gets.
+   Unlayered, so it beats the overflow/height utilities Flux's `sticky` prop adds. */
+[data-flux-sidebar] {
+    height: 100dvh;
+    overflow: hidden;
 }
 
-[data-flux-sidebar-item][data-current] {
-    @apply border-blue-100 bg-blue-50;
+[data-flux-sidebar-nav] {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Reach into the sidebar's padding so the full-bleed items below still span
+       the full width without overflowing this scroll container sideways. */
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+}
+
+/* Sidebar navigation: 52px rows, 14px semibold labels, 24px icons. Every item
+   is a full-bleed bar, so hover and current state cover exactly the same area. */
+[data-flux-sidebar-item] {
+    height: 52px;
+    font-size: 14px;
+    font-weight: 600;
+    @apply -mx-4 w-[calc(100%+2rem)] rounded-none border-transparent px-7;
+}
+
+/* Collapsible groups: drop Flux's indent and guide line so the items keep the
+   full-bleed look of the rest of the navigation. */
+ui-disclosure[data-flux-sidebar-group] > div:last-child {
+    padding-inline-start: 0;
+}
+
+ui-disclosure[data-flux-sidebar-group] > div:last-child > div:first-child {
+    display: none;
+}
+
+[data-flux-sidebar-item] svg {
+    width: 24px;
+    height: 24px;
+}
+
+[data-flux-sidebar-item]:hover {
+    @apply bg-zinc-100 dark:bg-white/5;
+}
+
+[data-flux-sidebar-item][data-current],
+[data-flux-sidebar-item][data-current]:hover {
+    @apply border-transparent bg-blue-600 text-white;
+}
+
+[data-flux-sidebar-item][data-current] svg {
+    @apply text-white!;
 }
 
 .dark [data-flux-sidebar-item][data-current] {
-    @apply border-blue-500/20 bg-blue-500/10;
+    @apply bg-blue-600;
 }
 
-[data-flux-sidebar-item][data-current]::after {
-    content: '';
-    @apply absolute top-1/2 -left-4 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600;
+/* Flux headings default to 500; the design uses 400 for text and keeps 600
+   for the real page/section titles. */
+[data-flux-heading] {
+    @apply font-normal;
 }
 
-.dark [data-flux-sidebar-item][data-current]::after {
-    @apply bg-blue-400;
+/* Card titles: Poppins semibold 21px. Unlayered so it beats the Flux size and
+   weight utilities on <flux:heading>. */
+.sp-card-title {
+    font-size: 21px;
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+/* Colour only the Flux headings, so a .sp-card-title on a coloured card
+   (the strip card / subscription passes) keeps its own text colour. */
+[data-flux-heading].sp-card-title {
+    color: var(--color-ink);
+}
+
+/* The supporting line under a card title. */
+.sp-card-subtitle {
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* Tables: quiet uppercase column headers, no lines between rows, and the same
+   hover as the sidebar links. */
+[data-flux-column] {
+    @apply border-transparent text-xs font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500;
+}
+
+[data-flux-cell] {
+    border-top-width: 0;
+    font-weight: 400;
+    color: var(--color-ink-muted);
+}
+
+/* Emphasis inside a table: .sp-strong for the content that matters, .sp-muted
+   to push something back. */
+.sp-strong {
+    font-weight: 500;
+    color: var(--color-ink);
+}
+
+.sp-muted {
+    font-weight: 400;
+    color: var(--color-ink-muted);
+}
+
+[data-flux-row]:hover {
+    @apply bg-zinc-100 dark:bg-white/5;
+}
+
+/* The last column always sits against the right edge (actions, amounts, status). */
+[data-flux-column]:last-child,
+[data-flux-cell]:last-child {
+    text-align: end;
+}
+
+[data-flux-cell]:last-child > * {
+    margin-inline-start: auto;
+}
+
+/* A table fills its card edge to edge (see x-table-card): the inset moves from
+   the card to the cells, so a row hover runs all the way to the card borders. */
+[data-flux-column]:first-child,
+[data-flux-cell]:first-child {
+    padding-inline-start: 1.25rem;
+}
+
+[data-flux-column]:last-child,
+[data-flux-cell]:last-child {
+    padding-inline-end: 1.25rem;
+}
+
+[data-flux-column] {
+    padding-top: 1.25rem;
+}
+
+[data-flux-rows] tr:last-child [data-flux-cell] {
+    padding-bottom: 1rem;
+}
+
+[data-flux-pagination] {
+    padding-inline: 1.25rem;
+    padding-bottom: 1rem;
 }
 
 [x-cloak] {
@@ -88,6 +225,158 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* ==========================================================================
+   Motion system
+   Keyframes live at the top level so they are always emitted, also for the
+   component classes below; @theme only maps them to `animate-*` utilities.
+   ========================================================================== */
+
+@keyframes sp-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes sp-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sp-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes sp-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+
+    70% {
+        opacity: 1;
+        transform: scale(1.12);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes sp-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes sp-pulse-ring {
+    0% {
+        opacity: 0.5;
+        transform: scale(0.85);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(2.1);
+    }
+}
+
+@keyframes sp-grow-x {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: var(--sp-width, 0%);
+    }
+}
+
+@keyframes sp-grow-ring {
+    from {
+        stroke-dasharray: 0 100;
+    }
+
+    to {
+        stroke-dasharray: var(--sp-dash, 0) 100;
+    }
+}
+
+@theme {
+    --animate-rise: sp-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-fade: sp-fade 0.45s ease-out both;
+    --animate-slide-in: sp-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-pop: sp-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-float: sp-float 6s ease-in-out infinite;
+}
+
+@layer components {
+    /* Delay any entrance animation with an inline `--d` (see x-portal.* blades). */
+    .stagger {
+        animation-delay: var(--d, 0ms);
+    }
+
+    /* White panel: the single surface style for the whole app. */
+    .sp-panel {
+        @apply rounded-2xl bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] dark:bg-zinc-900;
+    }
+
+    /* Progress bars and rings fill themselves from their inline --sp-width /
+       --sp-dash, so they never depend on JavaScript to reach their value. */
+    .sp-bar {
+        width: var(--sp-width, 0%);
+        animation: sp-grow-x 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: var(--d, 250ms);
+    }
+
+    .sp-ring-value {
+        stroke-dasharray: var(--sp-dash, 0) 100;
+        animation: sp-grow-ring 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: var(--d, 250ms);
+    }
+
+    /* Expanding ring used to mark "live"/urgent items. */
+    .sp-ping::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: 2px solid currentColor;
+        animation: sp-pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

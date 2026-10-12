@@ -5,6 +5,7 @@ use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\LessonEnrollment;
 use App\Models\Payment;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 
 test('the demo seeder builds three fully populated clubs', function () {
@@ -38,4 +39,20 @@ test('every seeded user has a squadpass.nl e-mail address', function () {
 
     expect(User::query()->where('email', 'not like', '%@squadpass.nl')->count())->toBe(0)
         ->and(User::query()->count())->toBeGreaterThan(190);
+});
+
+test('every seeded club offers the same subscription ladder', function () {
+    $this->seed();
+
+    Club::all()->each(function (Club $club) {
+        $plans = SubscriptionPlan::query()
+            ->where('club_id', $club->id)
+            ->orderBy('price_cents')
+            ->get();
+
+        expect($plans)->toHaveCount(4)
+            ->and($plans->whereNull('credits'))->toHaveCount(1)
+            ->and($plans->last()->isUnlimited())->toBeTrue()
+            ->and($plans->pluck('credits')->filter()->values()->all())->toBe([4, 8, 12]);
+    });
 });

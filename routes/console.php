@@ -10,4 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('lessons:generate-occurrences')->dailyAt('03:00');
 Schedule::command('subscriptions:charge')->dailyAt('06:00');
+Schedule::command('enrollments:end-uncovered')->dailyAt('06:15');
 Schedule::command('addons:charge')->dailyAt('06:30');

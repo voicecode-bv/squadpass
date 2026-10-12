@@ -6,17 +6,23 @@ use App\Enums\AddonKey;
 use App\Models\Club;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 #[Title('Club settings')]
 class Settings extends Component
 {
+    use WithFileUploads;
+
     public Club $club;
 
-    public string $name = '';
+    /** Newly picked club photo, stored on save. */
+    public ?TemporaryUploadedFile $photo = null;
 
-    public string $timezone = '';
+    public string $name = '';
 
     public string $mollie_api_key = '';
 
@@ -28,7 +34,6 @@ class Settings extends Component
 
         $this->club = $club;
         $this->name = $club->name;
-        $this->timezone = $club->timezone;
         $this->mollie_api_key = $club->mollie_api_key ?? '';
         $this->self_signup = $club->self_signup ?? true;
     }
@@ -39,16 +44,23 @@ class Settings extends Component
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'timezone' => ['required', 'string', 'timezone:all'],
+            'photo' => ['nullable', 'image', 'max:4096'],
             'mollie_api_key' => ['nullable', 'string', 'starts_with:test_,live_'],
             'self_signup' => ['boolean'],
         ]);
 
         $attributes = [
             'name' => $validated['name'],
-            'timezone' => $validated['timezone'],
             'self_signup' => $validated['self_signup'],
         ];
+
+        if ($this->photo) {
+            if ($this->club->photo_path) {
+                Storage::disk('public')->delete($this->club->photo_path);
+            }
+
+            $attributes['photo_path'] = $this->photo->store('club-photos', 'public');
+        }
 
         // Integration credentials can only be edited while the matching add-on is unlocked.
         if ($this->club->hasAddon(AddonKey::Mollie)) {
@@ -57,7 +69,23 @@ class Settings extends Component
 
         $this->club->update($attributes);
 
+        $this->photo = null;
+
         Flux::toast(variant: 'success', text: __('Club settings saved.'));
+    }
+
+    public function deletePhoto(): void
+    {
+        $this->authorize('update', $this->club);
+
+        if ($this->club->photo_path) {
+            Storage::disk('public')->delete($this->club->photo_path);
+            $this->club->update(['photo_path' => null]);
+        }
+
+        $this->photo = null;
+
+        Flux::toast(variant: 'success', text: __('Club photo removed.'));
     }
 
     public function render(): View

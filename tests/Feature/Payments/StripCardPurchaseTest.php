@@ -141,3 +141,16 @@ test('the mollie customer is reused for repeat purchases', function () {
         ->and(count($this->gateway->createdCustomers))->toBe(1)
         ->and(Payment::query()->count())->toBe(2);
 });
+
+test('a strip card of a club without online payments is offered without a buy button', function () {
+    $otherClub = Club::factory()->create();
+    $otherClub->addMember($this->member);
+    $otherPlan = StripCardPlan::factory()->for($otherClub)->create(['name' => 'Offline kaart']);
+
+    Livewire::actingAs($this->member)
+        ->test(BuyStripCard::class)
+        ->assertSee('Offline kaart')
+        ->assertSee(__('This club has not set up online payments yet. Contact the club to buy a strip card.'))
+        ->assertDontSeeHtml('wire:click="buy('.$otherPlan->id.')"')
+        ->assertSeeHtml('wire:click="buy('.$this->plan->id.')"');
+});

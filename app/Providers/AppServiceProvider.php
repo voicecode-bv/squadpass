@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureNotImpersonating;
 use App\Models\User;
 use App\Services\Mollie\HttpMollieGateway;
 use App\Services\Mollie\MollieGateway;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Platform management (add-ons, pricing) is superadmin-only; the hook above grants it.
         Gate::define('manage-platform', fn (User $user): bool => false);
+
+        // Re-apply the impersonation guard to Livewire component updates.
+        Livewire::addPersistentMiddleware([EnsureNotImpersonating::class]);
     }
 
     /**

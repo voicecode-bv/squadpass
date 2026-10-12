@@ -1,11 +1,9 @@
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <flux:heading size="xl">{{ __('Moneybird') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-        <img src="{{ asset(\App\Enums\AddonKey::Moneybird->logoPath()) }}" alt="Moneybird" class="mt-1 h-6 w-auto invert dark:invert-0" />
-    </div>
+<div class="flex w-full flex-col gap-6">
+    <x-portal.hero :title="__('Moneybird')" :subtitle="$club->name">
+        <x-slot:actions>
+            <img src="{{ asset(\App\Enums\AddonKey::Moneybird->logoPath()) }}" alt="Moneybird" class="h-6 w-auto invert dark:invert-0" />
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if (! $this->hasAddon)
         <flux:callout icon="document-text" variant="secondary">
@@ -135,7 +133,7 @@
 
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <flux:text class="font-medium text-zinc-900 dark:text-white">{{ trans_choice(':count paid payment without invoice|:count paid payments without invoice', $this->missingInvoiceCount) }}</flux:text>
+                    <flux:text class="font-normal text-zinc-900 dark:text-white">{{ trans_choice(':count paid payment without invoice|:count paid payments without invoice', $this->missingInvoiceCount) }}</flux:text>
                     <flux:text class="text-sm">{{ __('Payments made before Moneybird was connected, or that failed earlier.') }}</flux:text>
                 </div>
                 <flux:button size="sm" icon="document-plus" wire:click="invoiceMissingPayments" :disabled="$this->missingInvoiceCount === 0">{{ __('Create invoices') }}</flux:button>
@@ -145,7 +143,7 @@
 
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <flux:text class="font-medium text-zinc-900 dark:text-white">{{ trans_choice(':count active member without Moneybird contact|:count active members without Moneybird contact', $this->unsyncedMemberCount) }}</flux:text>
+                    <flux:text class="font-normal text-zinc-900 dark:text-white">{{ trans_choice(':count active member without Moneybird contact|:count active members without Moneybird contact', $this->unsyncedMemberCount) }}</flux:text>
                     <flux:text class="text-sm">{{ __('Push all active members to Moneybird; existing contacts are updated.') }}</flux:text>
                 </div>
                 <flux:button size="sm" icon="users" wire:click="syncAllContacts">{{ __('Sync all members') }}</flux:button>

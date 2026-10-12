@@ -1,11 +1,44 @@
 <div class="flex w-full flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ __('Check-in desk') }}</flux:heading>
-        <flux:text class="mt-1">{{ $club->name }}</flux:text>
-    </div>
+    <x-portal.hero :title="__('Check-in desk')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:button
+                :href="route('clubs.check-ins.kiosk', $club)"
+                target="_blank"
+                icon="qr-code"
+                size="sm"
+            >
+                {{ __('Open QR screen') }}
+            </flux:button>
+        </x-slot:actions>
+    </x-portal.hero>
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="flex flex-col gap-4">
+            {{-- Reads the rotating QR code from the member's app; always a free visit, so the lesson picker below does not apply. --}}
+            <div
+                class="sp-panel flex flex-col gap-3 p-5"
+                x-data="spQrScanner({
+                    unsupported: @js(__('This browser cannot use the camera.')),
+                    denied: @js(__('No camera access. Allow it in your browser and try again.')),
+                })"
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="sp-card-title">{{ __('Scan member QR code') }}</p>
+                        <p class="sp-card-subtitle">{{ __('Registers a visit without a lesson') }}</p>
+                    </div>
+
+                    <flux:button size="sm" x-show="! active" x-on:click="start()">{{ __('Start camera') }}</flux:button>
+                    <flux:button size="sm" variant="ghost" x-cloak x-show="active" x-on:click="stop()">{{ __('Stop') }}</flux:button>
+                </div>
+
+                <div x-cloak x-show="active" class="overflow-hidden rounded-xl bg-zinc-900">
+                    <video x-ref="video" class="aspect-video w-full object-cover" playsinline muted></video>
+                </div>
+
+                <p x-cloak x-show="error" x-text="error" class="text-sm text-red-600 dark:text-red-400"></p>
+            </div>
+
             <flux:select wire:model.live="occurrenceId" :label="__('Lesson (optional)')">
                 <flux:select.option value="">{{ __('Free visit (no lesson)') }}</flux:select.option>
                 @foreach ($this->todayOccurrences as $occurrence)
@@ -64,7 +97,7 @@
                         @foreach ($this->todayCheckIns as $checkIn)
                             <flux:table.row :key="$checkIn->id">
                                 <flux:table.cell>{{ $checkIn->checked_in_at->timezone($club->timezone)->format('H:i') }}</flux:table.cell>
-                                <flux:table.cell variant="strong"><x-user-chip :user="$checkIn->user" /></flux:table.cell>
+                                <flux:table.cell class="sp-strong">{{ $checkIn->user->name }}</flux:table.cell>
                                 <flux:table.cell>{{ $checkIn->occurrence?->lesson->name ?? '—' }}</flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm">{{ $checkIn->coverageLabel() }}</flux:badge>

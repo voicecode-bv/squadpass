@@ -1,8 +1,5 @@
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ $lesson ? __('Edit lesson') : __('New lesson') }}</flux:heading>
-        <flux:text class="mt-1">{{ $club->name }}</flux:text>
-    </div>
+<div class="flex w-full flex-col gap-6">
+    <x-portal.hero :title="$lesson ? __('Edit lesson') : __('New lesson')" :subtitle="$club->name" />
 
     <form wire:submit="save" class="space-y-6">
         <flux:input wire:model="name" :label="__('Name')" required />

@@ -60,10 +60,10 @@
             <flux:separator :text="__('Development logins')" />
 
             <div class="flex flex-col gap-1 text-center text-sm">
-                <x-login-link email="owner@example.com" :label="__('Login as club owner')" class="text-blue-600 hover:underline dark:text-blue-400" />
-                <x-login-link email="tessa@example.com" :label="__('Login as trainer')" class="text-blue-600 hover:underline dark:text-blue-400" />
-                <x-login-link email="lid1@example.com" :label="__('Login as member')" class="text-blue-600 hover:underline dark:text-blue-400" />
-                <x-login-link email="superadmin@example.com" :label="__('Login as superadmin')" class="text-blue-600 hover:underline dark:text-blue-400" />
+                <x-login-link email="owner@squadpass.nl" :label="__('Login as club owner')" class="text-blue-600 hover:underline dark:text-blue-400" />
+                <x-login-link email="trainer@squadpass.nl" :label="__('Login as trainer')" class="text-blue-600 hover:underline dark:text-blue-400" />
+                <x-login-link email="lid1@squadpass.nl" :label="__('Login as member')" class="text-blue-600 hover:underline dark:text-blue-400" />
+                <x-login-link email="superadmin@squadpass.nl" :label="__('Login as superadmin')" class="text-blue-600 hover:underline dark:text-blue-400" />
             </div>
         @endenv
     </div>

@@ -195,3 +195,16 @@ test('subscribing requires membership and a mollie key', function () {
 
     expect(Subscription::query()->count())->toBe(0);
 });
+
+test('a plan of a club without online payments is offered without a subscribe button', function () {
+    $otherClub = Club::factory()->create();
+    $otherClub->addMember($this->member);
+    $otherPlan = SubscriptionPlan::factory()->for($otherClub)->create(['name' => 'Offline abonnement']);
+
+    Livewire::actingAs($this->member)
+        ->test(PortalSubscriptions::class)
+        ->assertSee('Offline abonnement')
+        ->assertSee(__('This club has not set up online payments yet. Contact the club to take out a subscription.'))
+        ->assertDontSeeHtml('wire:click="subscribe('.$otherPlan->id.')"')
+        ->assertSeeHtml('wire:click="subscribe('.$this->plan->id.')"');
+});

@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'avatar_url' => $this->avatarUrl(),
+            'is_trainer' => $this->trainerProfiles()->where('active', true)->exists(),
         ];
     }
 }

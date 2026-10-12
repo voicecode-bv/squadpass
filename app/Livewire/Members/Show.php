@@ -3,9 +3,12 @@
 namespace App\Livewire\Members;
 
 use App\Actions\Moneybird\SyncMemberContact;
+use App\Enums\FormAudience;
 use App\Enums\SubscriptionStatus;
 use App\Models\CheckIn;
 use App\Models\Club;
+use App\Models\Form;
+use App\Models\FormSubmission;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\StripCard;
@@ -120,6 +123,40 @@ class Show extends Component
             ->latest('created_at')
             ->limit(15)
             ->get();
+    }
+
+    /**
+     * Published forms this member can fill in for this club.
+     *
+     * @return Collection<int, Form>
+     */
+    #[Computed]
+    public function forms(): Collection
+    {
+        return Form::query()
+            ->where('club_id', $this->club->id)
+            ->published()
+            ->where(fn ($query) => $query
+                ->where('audience', FormAudience::AllMembers->value)
+                ->orWhereHas('assignments', fn ($assignment) => $assignment->where('user_id', $this->membership->user_id)))
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * The member's latest response per form, keyed by form id.
+     *
+     * @return Collection<int, FormSubmission>
+     */
+    #[Computed]
+    public function formSubmissions(): Collection
+    {
+        return FormSubmission::query()
+            ->where('user_id', $this->membership->user_id)
+            ->where('is_current', true)
+            ->whereIn('form_id', $this->forms->modelKeys())
+            ->get()
+            ->keyBy('form_id');
     }
 
     /**

@@ -26,6 +26,9 @@ class Join extends Component
         abort_unless(Auth::check(), 403);
         abort_unless($this->club->self_signup, 403);
 
+        // Staff run the club; they do not sign themselves up as one of its members.
+        abort_if(Auth::user()->isStaffOf($this->club), 403);
+
         if (Auth::user()->isMemberOf($this->club)) {
             $this->redirectRoute('portal.schedule', navigate: true);
 

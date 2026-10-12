@@ -18,11 +18,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string|null $photo_path
  * @property string $timezone
  * @property string $currency
  * @property string|null $mollie_api_key
@@ -45,7 +47,7 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
+#[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
     'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at',
     'self_signup', 'onboarded_at',
@@ -113,6 +115,14 @@ class Club extends Model implements MollieAccount
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
+    }
+
+    /**
+     * @return HasMany<Form, $this>
+     */
+    public function forms(): HasMany
+    {
+        return $this->hasMany(Form::class);
     }
 
     /**
@@ -238,6 +248,16 @@ class Club extends Model implements MollieAccount
     public function mollieAccountLabel(): string
     {
         return "club:{$this->slug}";
+    }
+
+    /**
+     * Public URL of the uploaded club photo, or null when none is set.
+     */
+    public function photoUrl(): ?string
+    {
+        return $this->photo_path
+            ? Storage::disk('public')->url($this->photo_path)
+            : null;
     }
 
     public function isOnboarded(): bool

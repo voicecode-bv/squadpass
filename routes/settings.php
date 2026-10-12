@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureNotImpersonating;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\Security;
@@ -8,7 +9,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
-    Route::livewire('settings/profile', Profile::class)->name('profile.edit');
+    Route::livewire('settings/profile', Profile::class)
+        ->middleware(EnsureNotImpersonating::class)
+        ->name('profile.edit');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -17,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/security', Security::class)
         ->middleware([
             'password.confirm',
+            EnsureNotImpersonating::class,
         ])
         ->name('security.edit');
 });

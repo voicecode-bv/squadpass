@@ -16,9 +16,14 @@ class CheckInMember
 {
     /**
      * Check a member in. Coverage order:
-     * 1. a reservation for the given lesson occurrence (already paid with a credit),
+     * 1. a reservation for the given lesson occurrence, but only while the
+     *    subscription that paid the credit for it is still current,
      * 2. an unlimited subscription,
      * 3. one strip from the oldest usable strip card (FIFO by expiry).
+     *
+     * A reservation on its own is never free: without a current subscription
+     * the visit falls through to a strip, so an ended or overdue subscription
+     * cannot keep paying for lessons.
      */
     public function handle(User $member, Club $club, ?LessonOccurrence $occurrence = null, ?User $checkedInBy = null): CheckIn
     {
@@ -44,14 +49,14 @@ class CheckInMember
                 'checked_in_at' => now(),
             ];
 
+            $subscription = Subscription::currentFor($club->id, $member->id);
+
             // 1. An existing reservation covers the visit; the credit was spent at booking time.
-            if ($occurrence && $this->isEnrolledFor($member, $occurrence)) {
+            if ($subscription && $occurrence && $this->isEnrolledFor($member, $occurrence)) {
                 return CheckIn::create($attributes);
             }
 
             // 2. An unlimited subscription covers any visit.
-            $subscription = Subscription::currentFor($club->id, $member->id);
-
             if ($subscription?->isUnlimited()) {
                 return CheckIn::create($attributes + ['subscription_id' => $subscription->id]);
             }

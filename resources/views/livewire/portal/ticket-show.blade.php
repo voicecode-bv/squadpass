@@ -1,69 +1,50 @@
 <div class="flex w-full flex-col gap-6">
-    {{-- Header --}}
-    <div>
-        <flux:button :href="route('portal.tickets')" wire:navigate variant="ghost" size="sm" icon="arrow-left">
-            {{ __('Back to tickets') }}
-        </flux:button>
+    <x-portal.hero
+        :eyebrow="$ticket->reference()"
+        :title="$ticket->subject"
+        :subtitle="$ticket->club->name"
+    >
+        <x-slot:actions>
+            <flux:button :href="route('portal.tickets')" wire:navigate variant="ghost" size="sm" icon="arrow-left">
+                {{ __('Back to tickets') }}
+            </flux:button>
+        </x-slot:actions>
 
-        <div class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span class="font-mono text-xl font-semibold text-zinc-400 dark:text-zinc-500">{{ $ticket->reference() }}</span>
-            <flux:heading size="xl">{{ $ticket->subject }}</flux:heading>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <x-portal.stat :value="$ticket->status->label()" :label="__('Status')" :delay="240" />
+            <x-portal.stat :value="$ticket->priority->label()" :label="__('Priority')" :delay="290" />
+            <x-portal.stat :value="$ticket->category->label()" :label="__('Category')" :delay="340" />
+            <x-portal.stat :value="$ticket->created_at->timezone($ticket->club->timezone)->isoFormat('D MMM YYYY')" :label="__('Created')" :delay="390" />
         </div>
+    </x-portal.hero>
 
-        <div class="mt-3 flex gap-2">
-            <flux:badge size="sm" :color="$ticket->status->color()">{{ $ticket->status->label() }}</flux:badge>
-            <flux:badge size="sm" :color="$ticket->priority->color()">{{ $ticket->priority->label() }}</flux:badge>
+    @if ($ticket->assignee)
+        <div class="stagger animate-rise sp-panel flex items-center gap-3 px-4 py-3" style="--d: 100ms">
+            <span class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Assignee') }}</span>
+            <x-user-chip :user="$ticket->assignee" />
         </div>
-    </div>
+    @endif
 
-    {{-- Ticket details --}}
-    <div class="grid gap-6 rounded-xl bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4 dark:bg-zinc-900">
-        <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.building-storefront variant="micro" class="size-4" /> {{ __('Club') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->club->name }}</p>
-        </div>
-        <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.user variant="micro" class="size-4" /> {{ __('Assignee') }}
-            </p>
-            <div class="mt-2 font-medium text-zinc-800 dark:text-white">
-                @if ($ticket->assignee)
-                    <x-user-chip :user="$ticket->assignee" />
-                @else
-                    {{ __('Unassigned') }}
-                @endif
-            </div>
-        </div>
-        <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.tag variant="micro" class="size-4" /> {{ __('Category') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->category->label() }}</p>
-        </div>
-        <div>
-            <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                <flux:icon.calendar variant="micro" class="size-4" /> {{ __('Created') }}
-            </p>
-            <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->created_at->timezone($ticket->club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</p>
-        </div>
-    </div>
+    <x-tickets.thread :ticket="$ticket" :messages="$this->messages" class="stagger animate-rise" style="--d: 160ms" />
 
-    {{-- Conversation --}}
-    <x-tickets.thread :ticket="$ticket" :messages="$this->messages" />
-
-    {{-- Reply --}}
     @if ($ticket->isClosed())
-        <flux:callout icon="lock-closed">
-            <flux:callout.heading>{{ __('This ticket is closed.') }}</flux:callout.heading>
-            <flux:callout.text>{{ __('Create a new ticket if you have another question.') }}</flux:callout.text>
-        </flux:callout>
+        <x-portal.empty icon="lock-closed" :heading="__('This ticket is closed.')" :text="__('Create a new ticket if you have another question.')">
+            <flux:button variant="primary" icon="plus" :href="route('portal.tickets')" wire:navigate
+                        >
+                {{ __('Support tickets') }}
+            </flux:button>
+        </x-portal.empty>
     @else
-        <form wire:submit="sendMessage" class="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-sm dark:bg-zinc-900">
-            <flux:textarea wire:model="reply" rows="4" :placeholder="__('Write your reply...')" />
-            <div class="flex justify-end">
-                <flux:button type="submit" variant="primary" icon="paper-airplane">{{ __('Send reply') }}</flux:button>
+        <form wire:submit="sendMessage"
+              class="stagger animate-rise sp-panel flex flex-col gap-4 p-6"
+              style="--d: 220ms">
+
+            <flux:textarea wire:model="reply" rows="4" :placeholder="__('Write your reply...')" class="relative" />
+            <div class="relative flex justify-end">
+                <flux:button type="submit" variant="primary" icon="paper-airplane"
+                            >
+                    {{ __('Send reply') }}
+                </flux:button>
             </div>
         </form>
     @endif

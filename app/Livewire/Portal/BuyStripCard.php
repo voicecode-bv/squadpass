@@ -5,6 +5,7 @@ namespace App\Livewire\Portal;
 use App\Actions\Payments\CreateStripCardPayment;
 use App\Enums\MembershipStatus;
 use App\Exceptions\PaymentException;
+use App\Models\Club;
 use App\Models\StripCardPlan;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -52,6 +53,23 @@ class BuyStripCard extends Component
             ->orderBy('club_id')
             ->orderBy('strips')
             ->get();
+    }
+
+    /**
+     * Clubs from the offered plans that can actually take an online payment.
+     * Without it the member would only find out after being sent to checkout.
+     *
+     * @return array<int, true>
+     */
+    #[Computed]
+    public function payableClubIds(): array
+    {
+        return $this->plans
+            ->pluck('club')
+            ->unique('id')
+            ->filter(fn (Club $club): bool => $club->acceptsOnlinePayments())
+            ->mapWithKeys(fn (Club $club): array => [$club->id => true])
+            ->all();
     }
 
     public function render(): View

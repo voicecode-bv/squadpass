@@ -7,6 +7,7 @@ use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\ClubResource;
 use App\Http\Resources\Api\V1\TicketResource;
 use App\Models\Club;
 use App\Models\Ticket;
@@ -28,6 +29,25 @@ class TicketController extends Controller
                 ->latest('updated_at')
                 ->get()
         );
+    }
+
+    /**
+     * The choices the app must offer when opening a ticket: the member's own
+     * clubs plus the categories and priorities, already labelled, so the app
+     * never has to mirror these enums itself.
+     */
+    public function options(Request $request): JsonResponse
+    {
+        return response()->json([
+            'clubs' => ClubResource::collection(
+                $request->user()->memberClubs()
+                    ->wherePivot('status', MembershipStatus::Active->value)
+                    ->orderBy('name')
+                    ->get()
+            ),
+            'categories' => $this->choices(TicketCategory::cases()),
+            'priorities' => $this->choices(TicketPriority::cases()),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -76,6 +96,18 @@ class TicketController extends Controller
             ->findOrFail($ticketId);
 
         return new TicketResource($this->loadForShow($ticket));
+    }
+
+    /**
+     * @param  list<TicketCategory|TicketPriority>  $cases
+     * @return list<array{value: string, label: string}>
+     */
+    protected function choices(array $cases): array
+    {
+        return array_map(fn (TicketCategory|TicketPriority $case): array => [
+            'value' => $case->value,
+            'label' => $case->label(),
+        ], $cases);
     }
 
     protected function loadForShow(Ticket $ticket): Ticket

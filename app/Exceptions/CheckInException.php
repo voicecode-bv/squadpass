@@ -20,4 +20,14 @@ class CheckInException extends RuntimeException
     {
         return new self(__('No coverage: no unlimited subscription and no usable strip card.'));
     }
+
+    public static function invalidCode(): self
+    {
+        return new self(__('This QR code is no longer valid. Show a fresh code and scan again.'));
+    }
+
+    public static function recentlyCheckedIn(): self
+    {
+        return new self(__('A check-in for this member was already registered a moment ago.'));
+    }
 }

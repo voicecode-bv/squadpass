@@ -1,17 +1,14 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex items-center justify-between gap-4">
-        <div>
-            <flux:heading size="xl">{{ __('Tickets') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-
-        <flux:select wire:model.live="status" class="max-w-48">
-            <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
-            @foreach (\App\Enums\TicketStatus::cases() as $statusOption)
-                <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
-            @endforeach
-        </flux:select>
-    </div>
+    <x-portal.hero :title="__('Tickets')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:select wire:model.live="status" class="max-w-48" :label="__('Status')" label:sr-only>
+                <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
+                @foreach (\App\Enums\TicketStatus::cases() as $statusOption)
+                    <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if ($this->tickets->isEmpty())
         <flux:callout icon="lifebuoy">
@@ -35,13 +32,11 @@
                 <flux:table.rows>
                     @foreach ($this->tickets as $ticket)
                         <flux:table.row :key="$ticket->id">
-                            <flux:table.cell variant="strong">
-                                <flux:link :href="route('clubs.tickets.show', [$club, $ticket])" wire:navigate class="font-mono">{{ $ticket->reference() }}</flux:link>
-                            </flux:table.cell>
+                            <flux:table.cell class="font-mono">{{ $ticket->reference() }}</flux:table.cell>
                             <flux:table.cell>
-                                <flux:link :href="route('clubs.tickets.show', [$club, $ticket])" wire:navigate variant="ghost">{{ $ticket->subject }}</flux:link>
+                                <flux:link class="sp-strong" :href="route('clubs.tickets.show', [$club, $ticket])" wire:navigate variant="ghost">{{ $ticket->subject }}</flux:link>
                             </flux:table.cell>
-                            <flux:table.cell><x-user-chip :user="$ticket->user" /></flux:table.cell>
+                            <flux:table.cell>{{ $ticket->user->name }}</flux:table.cell>
                             <flux:table.cell>{{ $ticket->category->label() }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="$ticket->priority->color()">{{ $ticket->priority->label() }}</flux:badge>
@@ -51,7 +46,7 @@
                             </flux:table.cell>
                             <flux:table.cell>
                                 @if ($ticket->assignee)
-                                    <x-user-chip :user="$ticket->assignee" />
+                                    {{ $ticket->assignee->name }}
                                 @else
                                     {{ __('Unassigned') }}
                                 @endif

@@ -1,8 +1,5 @@
 <div class="flex w-full flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ __('Schedule') }}</flux:heading>
-        <flux:text class="mt-1">{{ $club->name }} — {{ __('upcoming lessons') }}</flux:text>
-    </div>
+    <x-portal.hero :title="__('Schedule')" :subtitle="$club->name.' — '.__('upcoming lessons')" />
 
     <x-table-card>
     <flux:table :paginate="$this->occurrences">
@@ -18,7 +15,7 @@
         <flux:table.rows>
             @foreach ($this->occurrences as $occurrence)
                 <flux:table.row :key="$occurrence->id">
-                    <flux:table.cell variant="strong">
+                    <flux:table.cell class="sp-strong">
                         {{ $occurrence->starts_at->timezone($club->timezone)->isoFormat('dd D MMM') }}
                     </flux:table.cell>
                     <flux:table.cell>

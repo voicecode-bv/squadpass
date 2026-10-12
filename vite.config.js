@@ -10,10 +10,13 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/passkeys.js',
+                // Only the check-in kiosk listens for broadcasts, so Echo and
+                // pusher-js stay out of the bundle every other page loads.
+                'resources/js/echo.js',
             ],
             refresh: true,
             fonts: [
-                bunny('Inter', {
+                bunny('Poppins', {
                     weights: [400, 500, 600, 700],
                 }),
             ],

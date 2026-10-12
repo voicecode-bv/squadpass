@@ -118,3 +118,36 @@ test('staff cannot update a membership of another club via the component', funct
 
     expect($foreignMembership->refresh()->status)->toBe(MembershipStatus::Active);
 });
+
+test('the member list only shows active memberships by default', function () {
+    $active = User::factory()->create(['name' => 'Actief Lid']);
+    $this->club->addMember($active);
+
+    $ended = User::factory()->create(['name' => 'Gestopt Lid']);
+    $this->club->addMember($ended)->update([
+        'status' => MembershipStatus::Ended,
+        'ended_at' => now()->toDateString(),
+    ]);
+
+    Livewire::actingAs($this->staff)
+        ->test(Index::class, ['club' => $this->club])
+        ->assertSee('Actief Lid')
+        ->assertDontSee('Gestopt Lid');
+});
+
+test('staff can filter the member list on another status or show them all', function () {
+    $active = User::factory()->create(['name' => 'Actief Lid']);
+    $this->club->addMember($active);
+
+    $paused = User::factory()->create(['name' => 'Gepauzeerd Lid']);
+    $this->club->addMember($paused)->update(['status' => MembershipStatus::Paused]);
+
+    Livewire::actingAs($this->staff)
+        ->test(Index::class, ['club' => $this->club])
+        ->set('status', MembershipStatus::Paused->value)
+        ->assertSee('Gepauzeerd Lid')
+        ->assertDontSee('Actief Lid')
+        ->set('status', 'all')
+        ->assertSee('Gepauzeerd Lid')
+        ->assertSee('Actief Lid');
+});

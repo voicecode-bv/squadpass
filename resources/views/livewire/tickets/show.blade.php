@@ -20,34 +20,26 @@
     <div class="flex flex-col gap-6 rounded-xl bg-white p-6 shadow-sm dark:bg-zinc-900">
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-                <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                    <flux:icon.user variant="micro" class="size-4" /> {{ __('Member') }}
-                </p>
+                <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Member') }}</p>
                 <div class="mt-2 flex items-center gap-2">
                     <flux:avatar :src="$ticket->user->avatarUrl()" :name="$ticket->user->name" :initials="$ticket->user->initials()" size="sm" />
                     <div class="min-w-0">
-                        <p class="truncate font-medium text-zinc-800 dark:text-white">{{ $ticket->user->name }}</p>
+                        <p class="truncate font-normal text-zinc-800 dark:text-white">{{ $ticket->user->name }}</p>
                         <p class="truncate text-sm text-zinc-500 dark:text-zinc-400">{{ $ticket->user->email }}</p>
                     </div>
                 </div>
             </div>
             <div>
-                <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                    <flux:icon.tag variant="micro" class="size-4" /> {{ __('Category') }}
-                </p>
-                <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->category->label() }}</p>
+                <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Category') }}</p>
+                <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $ticket->category->label() }}</p>
             </div>
             <div>
-                <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                    <flux:icon.calendar variant="micro" class="size-4" /> {{ __('Created') }}
-                </p>
-                <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->created_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</p>
+                <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Created') }}</p>
+                <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $ticket->created_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</p>
             </div>
             <div>
-                <p class="flex items-center gap-1.5 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                    <flux:icon.clock variant="micro" class="size-4" /> {{ __('Last update') }}
-                </p>
-                <p class="mt-2 font-medium text-zinc-800 dark:text-white">{{ $ticket->updated_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</p>
+                <p class="text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">{{ __('Last update') }}</p>
+                <p class="mt-2 font-normal text-zinc-800 dark:text-white">{{ $ticket->updated_at->timezone($club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}</p>
             </div>
         </div>
 

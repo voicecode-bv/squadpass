@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\CheckInCodeImageController;
+use App\Http\Controllers\FormSignatureController;
+use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\MollieWebhookController;
 use App\Http\Controllers\PlatformMollieWebhookController;
 use App\Livewire\Admin;
 use App\Livewire\CheckIns;
 use App\Livewire\Clubs;
 use App\Livewire\Dashboard;
+use App\Livewire\Forms;
 use App\Livewire\Invitations;
 use App\Livewire\Invoices;
 use App\Livewire\Lessons;
@@ -21,8 +25,20 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
+// Stopping impersonation only needs an authenticated session; the impersonated
+// member may well be unverified, which must not lock staff out of their session.
+Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('impersonate.stop');
+
 Route::post('webhooks/mollie-platform', PlatformMollieWebhookController::class)->name('webhooks.mollie.platform');
 Route::post('webhooks/mollie/{club}', MollieWebhookController::class)->name('webhooks.mollie');
+
+// The member's own check-in code as a QR image, for the mobile app. The signed,
+// seconds-lived code is the only credential the image needs.
+Route::get('check-in-code/{code}', CheckInCodeImageController::class)
+    ->middleware('throttle:60,1')
+    ->name('check-ins.code-image');
 
 Route::livewire('invitations/{token}', Invitations\Accept::class)->name('invitations.accept');
 Route::livewire('join/{club}', Clubs\Join::class)->name('clubs.join');
@@ -42,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('moneybird', Clubs\Moneybird::class)->name('clubs.moneybird');
         Route::livewire('members', Members\Index::class)->name('clubs.members');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');
+        Route::post('members/{membership}/impersonate', [ImpersonationController::class, 'store'])->name('clubs.members.impersonate');
         Route::livewire('trainers', Trainers\Index::class)->name('clubs.trainers');
         Route::livewire('rooms', Rooms\Index::class)->name('clubs.rooms');
         Route::livewire('lessons', Lessons\Index::class)->name('clubs.lessons');
@@ -54,6 +71,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('subscriptions', Subscriptions\Index::class)->name('clubs.subscriptions');
         Route::livewire('invoices', Invoices\Index::class)->name('clubs.invoices');
         Route::livewire('check-ins', CheckIns\Desk::class)->name('clubs.check-ins');
+        Route::livewire('check-ins/kiosk', CheckIns\Kiosk::class)->name('clubs.check-ins.kiosk');
+        Route::livewire('forms', Forms\Index::class)->name('clubs.forms');
+        Route::livewire('forms/{form}/edit', Forms\Builder::class)->name('clubs.forms.edit');
+        Route::livewire('forms/{form}/submissions', Forms\Submissions::class)->name('clubs.forms.submissions');
+        Route::livewire('forms/{form}/submissions/{submission}', Forms\SubmissionShow::class)->name('clubs.forms.submissions.show');
         Route::livewire('tickets', Tickets\Index::class)->name('clubs.tickets');
         Route::livewire('tickets/{ticket}', Tickets\Show::class)->name('clubs.tickets.show');
     });
@@ -66,6 +88,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('cards/buy', Portal\BuyStripCard::class)->name('portal.cards.buy');
         Route::livewire('subscriptions', Portal\Subscriptions::class)->name('portal.subscriptions');
         Route::livewire('history', Portal\History::class)->name('portal.history');
+        Route::livewire('forms', Portal\MyForms::class)->name('portal.forms');
+        Route::livewire('forms/{form}', Portal\FormFill::class)->name('portal.forms.fill');
+        Route::get('forms/{submission}/signature/{field}', FormSignatureController::class)->name('portal.forms.signature');
         Route::livewire('tickets', Portal\Tickets::class)->name('portal.tickets');
         Route::livewire('tickets/{ticket}', Portal\TicketShow::class)->name('portal.tickets.show');
     });

@@ -1,23 +1,28 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('Members') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
+    <x-portal.hero :title="__('Members')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:modal.trigger name="add-member">
+                <flux:button variant="primary" icon="user-plus">{{ __('Add member') }}</flux:button>
+            </flux:modal.trigger>
+        </x-slot:actions>
+    </x-portal.hero>
 
-        <flux:modal.trigger name="add-member">
-            <flux:button variant="primary" icon="user-plus">{{ __('Add member') }}</flux:button>
-        </flux:modal.trigger>
+    <div class="flex flex-col gap-3 sm:flex-row">
+        <flux:input class="flex-1" wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name or email...')" clearable />
+
+        <flux:select wire:model.live="status" class="sm:max-w-56" :label="__('Status')" label:sr-only>
+            <flux:select.option value="all">{{ __('All statuses') }}</flux:select.option>
+            @foreach (\App\Enums\MembershipStatus::cases() as $statusOption)
+                <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
+            @endforeach
+        </flux:select>
     </div>
-
-    <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name or email...')" clearable />
 
     <x-table-card>
     <flux:table :paginate="$this->memberships">
         <flux:table.columns>
             <flux:table.column>#</flux:table.column>
             <flux:table.column>{{ __('Name') }}</flux:table.column>
-            <flux:table.column>{{ __('Email') }}</flux:table.column>
             <flux:table.column>{{ __('Status') }}</flux:table.column>
             <flux:table.column>{{ __('Member since') }}</flux:table.column>
             <flux:table.column></flux:table.column>
@@ -26,11 +31,10 @@
         <flux:table.rows>
             @foreach ($this->memberships as $membership)
                 <flux:table.row :key="$membership->id">
-                    <flux:table.cell variant="strong">{{ $membership->membership_number }}</flux:table.cell>
+                    <flux:table.cell>{{ $membership->membership_number }}</flux:table.cell>
                     <flux:table.cell>
-                        <flux:link :href="route('clubs.members.show', [$club, $membership])" wire:navigate variant="ghost"><x-user-chip :user="$membership->user" /></flux:link>
+                        <flux:link class="sp-strong" :href="route('clubs.members.show', [$club, $membership])" wire:navigate variant="ghost">{{ $membership->user->name }}</flux:link>
                     </flux:table.cell>
-                    <flux:table.cell>{{ $membership->user->email }}</flux:table.cell>
                     <flux:table.cell>
                         <flux:badge size="sm" :color="match($membership->status) {
                             \App\Enums\MembershipStatus::Active => 'green',
@@ -83,7 +87,7 @@
                 <flux:table.rows>
                     @foreach ($this->pendingInvitations as $invitation)
                         <flux:table.row :key="'invitation-'.$invitation->id">
-                            <flux:table.cell variant="strong">{{ $invitation->email }}</flux:table.cell>
+                            <flux:table.cell class="sp-strong">{{ $invitation->email }}</flux:table.cell>
                             <flux:table.cell>{{ $invitation->created_at->timezone($club->timezone)->isoFormat('D MMM YYYY') }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="$invitation->isExpired() ? 'red' : 'yellow'">

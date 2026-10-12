@@ -1,16 +1,13 @@
-<div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('My clubs') }}</flux:heading>
-            <flux:text class="mt-1">{{ auth()->user()->is_superadmin ? __('All clubs on the platform.') : __('Clubs you manage as staff.') }}</flux:text>
-        </div>
-
-        @can('create', \App\Models\Club::class)
-            <flux:modal.trigger name="create-club">
-                <flux:button variant="primary" icon="plus">{{ __('New club') }}</flux:button>
-            </flux:modal.trigger>
-        @endcan
-    </div>
+<div class="flex w-full flex-col gap-6">
+    <x-portal.hero :title="__('My clubs')" :subtitle="auth()->user()->is_superadmin ? __('All clubs on the platform.') : __('Clubs you manage as staff.')">
+        <x-slot:actions>
+            @can('create', \App\Models\Club::class)
+                <flux:modal.trigger name="create-club">
+                    <flux:button variant="primary" icon="plus">{{ __('New club') }}</flux:button>
+                </flux:modal.trigger>
+            @endcan
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if ($this->clubs->isEmpty())
         <flux:callout icon="building-storefront">
@@ -24,23 +21,33 @@
             </flux:callout.text>
         </flux:callout>
     @else
-        <div class="grid gap-4 sm:grid-cols-2">
-            @foreach ($this->clubs as $club)
-                <a href="{{ $club->isOnboarded() ? route('clubs.dashboard', $club) : route('clubs.onboarding', $club) }}" wire:navigate
-                   class="rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-zinc-900 dark:hover:bg-zinc-800">
-                    <div class="flex items-center justify-between">
-                        <flux:heading>{{ $club->name }}</flux:heading>
-                        @if ($club->pivot?->role)
-                            <flux:badge size="sm">{{ \App\Enums\StaffRole::from($club->pivot->role)->label() }}</flux:badge>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            @foreach ($this->clubs as $clubIndex => $club)
+                <x-portal.card :delay="min(600, $clubIndex * 70)" wire:key="club-{{ $club->id }}">
+                    <a href="{{ $club->isOnboarded() ? route('clubs.dashboard', $club) : route('clubs.onboarding', $club) }}" wire:navigate class="block">
+                        @if ($club->photoUrl())
+                            <img src="{{ $club->photoUrl() }}" alt="{{ $club->name }}"
+                                 class="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.03]" loading="lazy" />
                         @else
-                            <flux:badge size="sm" color="purple">{{ __('Superadmin') }}</flux:badge>
+                            <div class="flex h-72 w-full items-center justify-center bg-blue-50 text-3xl font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                                {{ str($club->name)->substr(0, 1)->upper() }}
+                            </div>
                         @endif
-                    </div>
-                    <flux:text class="mt-1 text-sm">{{ $club->slug }}</flux:text>
-                    @unless ($club->isOnboarded())
-                        <flux:badge size="sm" color="yellow" class="mt-2">{{ __('Finish setup') }}</flux:badge>
-                    @endunless
-                </a>
+
+                        <div class="p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <flux:heading class="sp-card-title">{{ $club->name }}</flux:heading>
+                                @unless ($club->pivot?->role)
+                                    <flux:badge size="sm" color="purple">{{ __('Superadmin') }}</flux:badge>
+                                @endunless
+                            </div>
+                            <flux:text class="sp-card-subtitle mt-1">{{ $club->slug }}</flux:text>
+                            @unless ($club->isOnboarded())
+                                <flux:badge size="sm" color="yellow" class="mt-2">{{ __('Finish setup') }}</flux:badge>
+                            @endunless
+                        </div>
+                    </a>
+                </x-portal.card>
             @endforeach
         </div>
     @endif

@@ -1,0 +1,14 @@
+---
+paths:
+  - 'app/{Services/Impersonation,Http/Middleware}/**'
+---
+
+# Middleware
+
+## Impersonatie: alleen owners, nooit genest, geen accountwijzigingen
+Impersonatie loopt via App\Services\Impersonation\Impersonation (sessiekeys `impersonator_id` + `impersonation_return_to`) en ImpersonationController.
+
+- Alleen club-owners mogen impersonaten (MembershipPolicy::impersonate). De controller weigert daarnaast altijd: al actieve impersonatie, jezelf, superadmins en staff van de club — die invarianten moeten in de controller staan omdat de Gate::before-hook voor superadmins elke policy-check overslaat.
+- Auth::login() migreert de sessie (session->migrate(true)); zet sessiekeys dus altijd ná het inloggen, nooit ervoor.
+- EnsureNotImpersonating blokkeert credential-routes (profile.edit, security.edit, two-factor.*, passkey.*, password.confirm) zodat impersonatie niet omgezet kan worden in permanente toegang. Hij hangt in de `web`-groep (bootstrap/app.php) én op de settings-routes, en staat in Livewire::addPersistentMiddleware zodat hij ook op component-updates opnieuw draait. Nieuwe gevoelige route? Voeg de routenaam toe aan BLOCKED_ROUTES.
+- `impersonate/stop` hangt bewust alleen achter `auth`, niet achter `verified`, anders sluit een niet-geverifieerd lid de staffsessie op.

@@ -109,6 +109,22 @@ class User extends Authenticatable implements PasskeyUser
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<FormSubmission, $this>
+     */
+    public function formSubmissions(): HasMany
+    {
+        return $this->hasMany(FormSubmission::class);
+    }
+
+    /**
+     * @return HasMany<FormAssignment, $this>
+     */
+    public function formAssignments(): HasMany
+    {
+        return $this->hasMany(FormAssignment::class);
+    }
+
     public function isStaffOf(Club $club, ?StaffRole $role = null): bool
     {
         $query = $this->staffClubs()->whereKey($club->id);

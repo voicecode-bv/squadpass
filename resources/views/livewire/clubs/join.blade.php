@@ -10,7 +10,14 @@
             <flux:callout.text>{{ __('This club does not accept online registrations at the moment. Contact the club to become a member.') }}</flux:callout.text>
         </flux:callout>
     @elseif (auth()->check())
-        @if (auth()->user()->isMemberOf($club))
+        @if (auth()->user()->isStaffOf($club))
+            <flux:callout icon="lock-closed" variant="warning">
+                <flux:callout.heading>{{ __('You manage this club') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('Staff cannot sign themselves up as a member of their own club.') }}</flux:callout.text>
+            </flux:callout>
+
+            <flux:button variant="primary" :href="route('clubs.dashboard', $club)" wire:navigate>{{ __('Go to the club dashboard') }}</flux:button>
+        @elseif (auth()->user()->isMemberOf($club))
             <flux:callout icon="check-circle" variant="success">
                 <flux:callout.text>{{ __('You are already a member of this club.') }}</flux:callout.text>
             </flux:callout>

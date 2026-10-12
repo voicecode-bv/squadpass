@@ -17,6 +17,9 @@ class Index extends Component
 {
     public Club $club;
 
+    /** Set while editing an existing room; null means the form creates one. */
+    public ?int $editingRoomId = null;
+
     public string $name = '';
 
     public string $description = '';
@@ -28,39 +31,84 @@ class Index extends Component
         $this->club = $club;
     }
 
-    public function createRoom(): void
+    /**
+     * Open the form for a new room.
+     */
+    public function newRoom(): void
     {
         $this->authorize('manage', $this->club);
+
+        $this->resetValidation();
+        $this->reset('editingRoomId', 'name', 'description');
+
+        Flux::modal('room')->show();
+    }
+
+    /**
+     * Open the form for an existing room.
+     */
+    public function editRoom(int $roomId): void
+    {
+        $this->authorize('manage', $this->club);
+
+        $room = $this->findRoom($roomId);
+
+        $this->resetValidation();
+        $this->editingRoomId = $room->id;
+        $this->name = $room->name;
+        $this->description = $room->description ?? '';
+
+        Flux::modal('room')->show();
+    }
+
+    public function saveRoom(): void
+    {
+        $this->authorize('manage', $this->club);
+
+        $room = $this->editingRoomId ? $this->findRoom($this->editingRoomId) : null;
 
         $validated = $this->validate([
             'name' => [
                 'required', 'string', 'max:255',
-                Rule::unique('rooms')->where('club_id', $this->club->id),
+                Rule::unique('rooms')->where('club_id', $this->club->id)->ignore($room?->id),
             ],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        Room::create([
-            'club_id' => $this->club->id,
+        $attributes = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?: null,
-        ]);
+        ];
 
-        $this->reset('name', 'description');
+        if ($room) {
+            $room->update($attributes);
+        } else {
+            Room::create(['club_id' => $this->club->id, ...$attributes]);
+        }
 
-        Flux::modal('create-room')->close();
-        Flux::toast(variant: 'success', text: __('Room created.'));
+        $this->reset('editingRoomId', 'name', 'description');
+
+        Flux::modal('room')->close();
+        Flux::toast(variant: 'success', text: $room ? __('Room updated.') : __('Room created.'));
     }
 
     public function toggleActive(int $roomId): void
     {
         $this->authorize('manage', $this->club);
 
-        $room = Room::query()
-            ->where('club_id', $this->club->id)
-            ->findOrFail($roomId);
+        $room = $this->findRoom($roomId);
 
         $room->update(['active' => ! $room->active]);
+    }
+
+    /**
+     * Rooms of other clubs are a 404, never an edit target.
+     */
+    private function findRoom(int $roomId): Room
+    {
+        return Room::query()
+            ->where('club_id', $this->club->id)
+            ->findOrFail($roomId);
     }
 
     /**

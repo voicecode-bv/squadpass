@@ -3,6 +3,7 @@
 namespace App\Livewire\CheckIns;
 
 use App\Actions\CheckIns\CheckInMember;
+use App\Actions\CheckIns\CheckInWithCode;
 use App\Enums\LessonOccurrenceStatus;
 use App\Exceptions\CheckInException;
 use App\Models\CheckIn;
@@ -58,6 +59,32 @@ class Desk extends Component
 
         Flux::toast(variant: 'success', text: __(':name checked in (:coverage).', [
             'name' => $membership->user->name,
+            'coverage' => $checkIn->coverageLabel(),
+        ]));
+    }
+
+    /**
+     * Check a member in from the QR code in their app, read by the webcam.
+     *
+     * A scanned check-in is always a free visit, so the lesson picker above
+     * deliberately does not apply here.
+     */
+    public function scanMemberCode(string $code, CheckInWithCode $checkInWithCode): void
+    {
+        $this->authorize('manage', $this->club);
+
+        try {
+            $checkIn = $checkInWithCode->fromMemberCode($this->club, $code, Auth::user());
+        } catch (CheckInException $exception) {
+            Flux::toast(variant: 'danger', text: $exception->getMessage());
+
+            return;
+        }
+
+        unset($this->todayCheckIns);
+
+        Flux::toast(variant: 'success', text: __(':name checked in (:coverage).', [
+            'name' => $checkIn->user->name,
             'coverage' => $checkIn->coverageLabel(),
         ]));
     }

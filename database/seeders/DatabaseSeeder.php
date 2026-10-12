@@ -120,49 +120,50 @@ class DatabaseSeeder extends Seeder
     protected function clubConfigurations(): array
     {
         return [
+            // [
+            //     'name' => 'Padel Club Amsterdam',
+            //     'slug' => 'padel-club-amsterdam',
+            //     'members' => 85,
+            //     'rooms' => ['Baan 1', 'Baan 2', 'Baan 3', 'Baan 4'],
+            //     'monthly_price_cents' => 6900,
+            //     'lessons' => [
+            //         ['name' => 'Padel beginners', 'day_of_week' => 1, 'start_time' => '19:00:00', 'capacity' => 8],
+            //         ['name' => 'Padel gevorderden', 'day_of_week' => 2, 'start_time' => '20:00:00', 'capacity' => 8],
+            //         ['name' => 'Padel clinic', 'day_of_week' => 3, 'start_time' => '19:30:00', 'capacity' => 12],
+            //         ['name' => 'Junioren padel', 'day_of_week' => 4, 'start_time' => '16:30:00', 'capacity' => 10],
+            //         ['name' => 'Damespadel', 'day_of_week' => 5, 'start_time' => '09:30:00', 'capacity' => 8],
+            //         ['name' => 'Competitietraining', 'day_of_week' => 6, 'start_time' => '10:00:00', 'capacity' => 12],
+            //     ],
+            // ],
+            // [
+            //     'name' => 'SquashPoint Utrecht',
+            //     'slug' => 'squashpoint-utrecht',
+            //     'members' => 60,
+            //     'rooms' => ['Baan 1', 'Baan 2', 'Baan 3'],
+            //     'monthly_price_cents' => 5900,
+            //     'lessons' => [
+            //         ['name' => 'Squash beginners', 'day_of_week' => 1, 'start_time' => '18:30:00', 'capacity' => 8],
+            //         ['name' => 'Squash gevorderden', 'day_of_week' => 2, 'start_time' => '19:30:00', 'capacity' => 8],
+            //         ['name' => 'Squash drills', 'day_of_week' => 3, 'start_time' => '20:00:00', 'capacity' => 10],
+            //         ['name' => 'Junioren squash', 'day_of_week' => 4, 'start_time' => '16:00:00', 'capacity' => 10],
+            //         ['name' => 'Conditietraining', 'day_of_week' => 6, 'start_time' => '09:00:00', 'capacity' => 14],
+            //         ['name' => 'Interne competitie', 'day_of_week' => 7, 'start_time' => '11:00:00', 'capacity' => 12],
+            //     ],
+            // ],
             [
-                'name' => 'Padel Club Amsterdam',
-                'slug' => 'padel-club-amsterdam',
-                'members' => 85,
-                'rooms' => ['Baan 1', 'Baan 2', 'Baan 3', 'Baan 4'],
-                'monthly_price_cents' => 6900,
-                'lessons' => [
-                    ['name' => 'Padel beginners', 'day_of_week' => 1, 'start_time' => '19:00:00', 'capacity' => 8],
-                    ['name' => 'Padel gevorderden', 'day_of_week' => 2, 'start_time' => '20:00:00', 'capacity' => 8],
-                    ['name' => 'Padel clinic', 'day_of_week' => 3, 'start_time' => '19:30:00', 'capacity' => 12],
-                    ['name' => 'Junioren padel', 'day_of_week' => 4, 'start_time' => '16:30:00', 'capacity' => 10],
-                    ['name' => 'Damespadel', 'day_of_week' => 5, 'start_time' => '09:30:00', 'capacity' => 8],
-                    ['name' => 'Competitietraining', 'day_of_week' => 6, 'start_time' => '10:00:00', 'capacity' => 12],
-                ],
-            ],
-            [
-                'name' => 'SquashPoint Utrecht',
-                'slug' => 'squashpoint-utrecht',
-                'members' => 60,
-                'rooms' => ['Baan 1', 'Baan 2', 'Baan 3'],
-                'monthly_price_cents' => 5900,
-                'lessons' => [
-                    ['name' => 'Squash beginners', 'day_of_week' => 1, 'start_time' => '18:30:00', 'capacity' => 8],
-                    ['name' => 'Squash gevorderden', 'day_of_week' => 2, 'start_time' => '19:30:00', 'capacity' => 8],
-                    ['name' => 'Squash drills', 'day_of_week' => 3, 'start_time' => '20:00:00', 'capacity' => 10],
-                    ['name' => 'Junioren squash', 'day_of_week' => 4, 'start_time' => '16:00:00', 'capacity' => 10],
-                    ['name' => 'Conditietraining', 'day_of_week' => 6, 'start_time' => '09:00:00', 'capacity' => 14],
-                    ['name' => 'Interne competitie', 'day_of_week' => 7, 'start_time' => '11:00:00', 'capacity' => 12],
-                ],
-            ],
-            [
-                'name' => 'FitFabriek Rotterdam',
-                'slug' => 'fitfabriek-rotterdam',
+                'name' => 'Perfect Performance',
+                'slug' => 'perfect-performance',
                 'members' => 45,
-                'rooms' => ['Zaal A', 'Zaal B', 'Spinningzaal'],
+                'rooms' => ['Zaal A', 'Zaal B'],
                 'monthly_price_cents' => 4900,
                 'lessons' => [
-                    ['name' => 'HIIT', 'day_of_week' => 1, 'start_time' => '07:00:00', 'capacity' => 14],
-                    ['name' => 'Spinning', 'day_of_week' => 2, 'start_time' => '19:00:00', 'capacity' => 16],
-                    ['name' => 'Bootcamp', 'day_of_week' => 3, 'start_time' => '18:30:00', 'capacity' => 14],
-                    ['name' => 'Yoga flow', 'day_of_week' => 4, 'start_time' => '08:00:00', 'capacity' => 12],
-                    ['name' => 'Krachttraining', 'day_of_week' => 5, 'start_time' => '19:30:00', 'capacity' => 10],
-                    ['name' => 'Circuittraining', 'day_of_week' => 6, 'start_time' => '10:30:00', 'capacity' => 14],
+                    ['name' => 'Become an athlete', 'day_of_week' => 1, 'start_time' => '07:00:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 2, 'start_time' => '19:00:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 3, 'start_time' => '18:30:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 4, 'start_time' => '08:00:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 5, 'start_time' => '19:30:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 6, 'start_time' => '10:30:00', 'capacity' => 12],
+                    ['name' => 'Become an athlete', 'day_of_week' => 7, 'start_time' => '10:30:00', 'capacity' => 12],
                 ],
             ],
         ];
@@ -281,24 +282,30 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * Every club offers the same subscription ladder; the club's configured
+     * monthly price only scales its strip card.
+     *
      * @return array{SubscriptionPlan, SubscriptionPlan, StripCardPlan}
      */
     protected function seedPlans(Club $club, int $monthlyPriceCents): array
     {
-        $unlimited = SubscriptionPlan::create([
+        // The subscription ladder every club offers: a session bundle per week,
+        // plus an unlimited plan without credits.
+        $plans = collect([
+            ['name' => '1 sessie per week', 'price_cents' => 6750, 'credits' => 4],
+            ['name' => '2 sessies per week', 'price_cents' => 12250, 'credits' => 8],
+            ['name' => '3 sessies per week', 'price_cents' => 16900, 'credits' => 12],
+            ['name' => 'Onbeperkt', 'price_cents' => 21000, 'credits' => null],
+        ])->map(fn (array $plan): SubscriptionPlan => SubscriptionPlan::create([
             'club_id' => $club->id,
-            'name' => 'Onbeperkt',
-            'price_cents' => $monthlyPriceCents,
+            'name' => $plan['name'],
+            'price_cents' => $plan['price_cents'],
+            'credits' => $plan['credits'],
             'interval' => 'monthly',
-        ]);
+        ]));
 
-        $basic = SubscriptionPlan::create([
-            'club_id' => $club->id,
-            'name' => 'Basis (4 lessen)',
-            'price_cents' => (int) round($monthlyPriceCents * 0.55, -2),
-            'interval' => 'monthly',
-            'credits' => 4,
-        ]);
+        $unlimited = $plans->last();
+        $basic = $plans->first();
 
         $stripCard = StripCardPlan::create([
             'club_id' => $club->id,

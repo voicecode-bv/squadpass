@@ -1,12 +1,13 @@
 <div class="flex w-full flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ $occurrence->lesson->name }}</flux:heading>
-        <flux:text class="mt-1">
-            {{ $occurrence->starts_at->timezone($club->timezone)->isoFormat('dddd D MMMM YYYY') }},
-            {{ $occurrence->starts_at->timezone($club->timezone)->format('H:i') }}–{{ $occurrence->ends_at->timezone($club->timezone)->format('H:i') }}
-            — {{ $occurrence->booked_count }} / {{ $occurrence->effectiveCapacity() }} {{ __('booked') }}
-        </flux:text>
-    </div>
+    @php
+        $occurrenceStart = $occurrence->starts_at->timezone($club->timezone);
+        $occurrenceEnd = $occurrence->ends_at->timezone($club->timezone);
+        $occurrenceSummary = $occurrenceStart->isoFormat('dddd D MMMM YYYY').', '
+            .$occurrenceStart->format('H:i').'–'.$occurrenceEnd->format('H:i')
+            .' — '.$occurrence->booked_count.' / '.$occurrence->effectiveCapacity().' '.__('booked');
+    @endphp
+
+    <x-portal.hero :title="$occurrence->lesson->name" :subtitle="$occurrenceSummary" />
 
     @if ($this->participants->isEmpty())
         <flux:callout icon="users">
@@ -24,7 +25,7 @@
             <flux:table.rows>
                 @foreach ($this->participants as $enrollment)
                     <flux:table.row :key="$enrollment->id">
-                        <flux:table.cell variant="strong"><x-user-chip :user="$enrollment->user" /></flux:table.cell>
+                        <flux:table.cell class="sp-strong">{{ $enrollment->user->name }}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" :color="$enrollment->isFixed() ? 'blue' : 'zinc'">
                                 {{ $enrollment->type->label() }}

@@ -1,14 +1,11 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('Trainers') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-
-        <flux:modal.trigger name="invite-trainer">
-            <flux:button variant="primary" icon="envelope">{{ __('Invite trainer') }}</flux:button>
-        </flux:modal.trigger>
-    </div>
+    <x-portal.hero :title="__('Trainers')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:modal.trigger name="invite-trainer">
+                <flux:button variant="primary" icon="envelope">{{ __('Invite trainer') }}</flux:button>
+            </flux:modal.trigger>
+        </x-slot:actions>
+    </x-portal.hero>
 
     @if ($this->trainers->isEmpty() && $this->pendingInvitations->isEmpty())
         <flux:callout icon="academic-cap">
@@ -23,7 +20,6 @@
             <flux:table.columns>
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Email') }}</flux:table.column>
-                <flux:table.column>{{ __('Bio') }}</flux:table.column>
                 <flux:table.column>{{ __('Lessons') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column></flux:table.column>
@@ -32,9 +28,8 @@
             <flux:table.rows>
                 @foreach ($this->trainers as $trainer)
                     <flux:table.row :key="$trainer->id">
-                        <flux:table.cell variant="strong"><x-user-chip :user="$trainer->user" /></flux:table.cell>
+                        <flux:table.cell class="sp-strong">{{ $trainer->user->name }}</flux:table.cell>
                         <flux:table.cell>{{ $trainer->user->email }}</flux:table.cell>
-                        <flux:table.cell class="max-w-64 truncate">{{ $trainer->bio }}</flux:table.cell>
                         <flux:table.cell>{{ $trainer->lessons_count }}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" :color="$trainer->active ? 'green' : 'zinc'">
@@ -69,7 +64,7 @@
                 <flux:table.rows>
                     @foreach ($this->pendingInvitations as $invitation)
                         <flux:table.row :key="'invitation-'.$invitation->id">
-                            <flux:table.cell variant="strong">{{ $invitation->email }}</flux:table.cell>
+                            <flux:table.cell class="sp-strong">{{ $invitation->email }}</flux:table.cell>
                             <flux:table.cell>{{ $invitation->created_at->timezone($club->timezone)->isoFormat('D MMM YYYY') }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="$invitation->isExpired() ? 'red' : 'yellow'">

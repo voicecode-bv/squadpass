@@ -1,8 +1,5 @@
 <div class="flex w-full flex-col gap-8">
-    <div>
-        <flux:heading size="xl">{{ __('Add-ons') }}</flux:heading>
-        <flux:text class="mt-1">{{ __('Manage the add-ons clubs can buy and set their monthly price. Price changes apply to new purchases only.') }}</flux:text>
-    </div>
+    <x-portal.hero :title="__('Add-ons')" :subtitle="__('Manage the add-ons clubs can buy and set their monthly price. Price changes apply to new purchases only.')" />
 
     <x-table-card>
         <flux:table>
@@ -17,7 +14,7 @@
             <flux:table.rows>
                 @foreach ($this->addons as $addon)
                     <flux:table.row :key="$addon->id">
-                        <flux:table.cell variant="strong">
+                        <flux:table.cell class="sp-strong">
                             <div class="flex items-center gap-3">
                                 <flux:icon :name="$addon->key->icon()" class="size-5 text-zinc-400" />
                                 <div>
@@ -66,7 +63,7 @@
                 <flux:table.rows>
                     @foreach ($this->subscriptions as $subscription)
                         <flux:table.row :key="$subscription->id">
-                            <flux:table.cell variant="strong">
+                            <flux:table.cell class="sp-strong">
                                 <flux:link :href="route('clubs.addons', $subscription->club)" wire:navigate>{{ $subscription->club->name }}</flux:link>
                             </flux:table.cell>
                             <flux:table.cell>{{ $subscription->addon->name }}</flux:table.cell>

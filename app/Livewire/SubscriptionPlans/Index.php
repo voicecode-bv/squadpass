@@ -18,6 +18,9 @@ class Index extends Component
 {
     public Club $club;
 
+    /** Set while editing an existing plan; null means the form creates one. */
+    public ?int $editingPlanId = null;
+
     public string $name = '';
 
     public string $description = '';
@@ -35,9 +38,44 @@ class Index extends Component
         $this->club = $club;
     }
 
-    public function createPlan(): void
+    /**
+     * Open the form for a new plan.
+     */
+    public function newPlan(): void
     {
         $this->authorize('manage', $this->club);
+
+        $this->resetValidation();
+        $this->resetForm();
+
+        Flux::modal('plan')->show();
+    }
+
+    /**
+     * Open the form for an existing plan.
+     */
+    public function editPlan(int $planId): void
+    {
+        $this->authorize('manage', $this->club);
+
+        $plan = $this->findPlan($planId);
+
+        $this->resetValidation();
+        $this->editingPlanId = $plan->id;
+        $this->name = $plan->name;
+        $this->description = $plan->description ?? '';
+        $this->price = number_format($plan->price_cents / 100, 2, '.', '');
+        $this->interval = $plan->interval->value;
+        $this->credits = $plan->credits;
+
+        Flux::modal('plan')->show();
+    }
+
+    public function savePlan(): void
+    {
+        $this->authorize('manage', $this->club);
+
+        $plan = $this->editingPlanId ? $this->findPlan($this->editingPlanId) : null;
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -47,31 +85,49 @@ class Index extends Component
             'credits' => ['nullable', 'integer', 'min:1', 'max:1000'],
         ]);
 
-        SubscriptionPlan::create([
-            'club_id' => $this->club->id,
+        $attributes = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?: null,
             'price_cents' => (int) round($validated['price'] * 100),
             'interval' => $validated['interval'],
             'credits' => $validated['credits'],
-        ]);
+        ];
 
-        $this->reset('name', 'description', 'price', 'credits');
+        if ($plan) {
+            $plan->update($attributes);
+        } else {
+            SubscriptionPlan::create(['club_id' => $this->club->id, ...$attributes]);
+        }
+
+        $this->resetForm();
+
+        Flux::modal('plan')->close();
+        Flux::toast(variant: 'success', text: $plan ? __('Subscription plan updated.') : __('Subscription plan created.'));
+    }
+
+    private function resetForm(): void
+    {
+        $this->reset('editingPlanId', 'name', 'description', 'price', 'credits');
         $this->interval = 'monthly';
-
-        Flux::modal('create-plan')->close();
-        Flux::toast(variant: 'success', text: __('Subscription plan created.'));
     }
 
     public function toggleActive(int $planId): void
     {
         $this->authorize('manage', $this->club);
 
-        $plan = SubscriptionPlan::query()
-            ->where('club_id', $this->club->id)
-            ->findOrFail($planId);
+        $plan = $this->findPlan($planId);
 
         $plan->update(['active' => ! $plan->active]);
+    }
+
+    /**
+     * Plans of other clubs are a 404, never an edit target.
+     */
+    private function findPlan(int $planId): SubscriptionPlan
+    {
+        return SubscriptionPlan::query()
+            ->where('club_id', $this->club->id)
+            ->findOrFail($planId);
     }
 
     /**

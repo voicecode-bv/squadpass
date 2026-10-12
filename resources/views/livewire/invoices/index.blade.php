@@ -1,12 +1,9 @@
 <div class="flex w-full flex-col gap-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-            <flux:heading size="xl">{{ __('Invoices') }}</flux:heading>
-            <flux:text class="mt-1">{{ $club->name }}</flux:text>
-        </div>
-
-        <flux:button wire:click="sync" icon="arrow-path" variant="primary">{{ __('Sync with Moneybird') }}</flux:button>
-    </div>
+    <x-portal.hero :title="__('Invoices')" :subtitle="$club->name">
+        <x-slot:actions>
+            <flux:button wire:click="sync" icon="arrow-path" variant="primary">{{ __('Sync with Moneybird') }}</flux:button>
+        </x-slot:actions>
+    </x-portal.hero>
 
     @unless ($club->hasMoneybirdConfigured())
         <flux:callout icon="exclamation-triangle" color="amber">
@@ -15,7 +12,7 @@
         </flux:callout>
     @endunless
 
-    <x-table-card class="py-5">
+    <div class="sp-panel p-5">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <flux:input wire:model.live.debounce.300ms="member" icon="user" :label="__('Member')" :placeholder="__('Name, email or number')" clearable />
             <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :label="__('Invoice number')" :placeholder="__('e.g. 2026-0012')" clearable />
@@ -59,9 +56,9 @@
         <flux:text>
             {{ trans_choice(':count invoice|:count invoices', $this->totals['count'], ['count' => $this->totals['count']]) }}
             &middot;
-            {{ __('Total') }}: <span class="font-medium text-zinc-900 dark:text-white">&euro; {{ number_format($this->totals['total_cents'] / 100, 2, ',', '.') }}</span>
+            {{ __('Total') }}: <span class="font-normal text-zinc-900 dark:text-white">&euro; {{ number_format($this->totals['total_cents'] / 100, 2, ',', '.') }}</span>
         </flux:text>
-    </x-table-card>
+    </div>
 
     <x-table-card>
         <flux:table :paginate="$this->invoices">
@@ -77,7 +74,7 @@
             <flux:table.rows>
                 @forelse ($this->invoices as $invoice)
                     <flux:table.row :key="$invoice->id">
-                        <flux:table.cell variant="strong">
+                        <flux:table.cell class="sp-strong">
                             <div class="flex items-center gap-2">
                                 <span>{{ $invoice->invoice_number ?? __('Draft') }}</span>
                                 @if ($invoice->is_credit_invoice)
@@ -90,7 +87,7 @@
                         <flux:table.cell>
                             @if ($invoice->membership)
                                 <flux:link :href="route('clubs.members.show', [$club, $invoice->membership])" wire:navigate variant="ghost">
-                                    <x-user-chip :user="$invoice->membership->user" />
+                                    {{ $invoice->membership->user->name }}
                                 </flux:link>
                             @else
                                 <flux:text>{{ __('Unlinked contact') }}</flux:text>
@@ -176,8 +173,8 @@
                             </flux:table.row>
                         @endforeach
                         <flux:table.row>
-                            <flux:table.cell variant="strong">{{ __('Total incl. VAT') }}</flux:table.cell>
-                            <flux:table.cell variant="strong" align="end" class="tabular-nums">{{ $invoice->formattedTotal() }}</flux:table.cell>
+                            <flux:table.cell class="sp-strong">{{ __('Total incl. VAT') }}</flux:table.cell>
+                            <flux:table.cell class="sp-strong" align="end" class="tabular-nums">{{ $invoice->formattedTotal() }}</flux:table.cell>
                         </flux:table.row>
                     </flux:table.rows>
                 </flux:table>

@@ -42,3 +42,17 @@ test('statistics are scoped to the club', function () {
         ->and($instance->newMembersLastMonth)->toBe(0)
         ->and($instance->revenueLastMonthCents)->toBe(1500);
 });
+
+test('the page title names the club', function () {
+    $this->club->update(['name' => 'Perfect Performance']);
+
+    $this->actingAs($this->owner)
+        ->get(route('clubs.dashboard', $this->club))
+        ->assertSee(__('Dashboard').' - Perfect Performance - '.config('app.name'), false);
+});
+
+test('pages outside a club leave the club out of the title', function () {
+    $this->actingAs($this->owner)
+        ->get(route('clubs.index'))
+        ->assertSee(__('My clubs').' - '.config('app.name'), false);
+});

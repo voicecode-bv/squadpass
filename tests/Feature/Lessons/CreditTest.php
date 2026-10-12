@@ -13,6 +13,7 @@ use App\Models\MollieCustomer;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\Lessons\OccurrenceGenerator;
 use App\Services\Mollie\MollieGateway;
 use Tests\Fakes\FakeMollieGateway;
 
@@ -145,4 +146,79 @@ test('the recurring charge refills the credits for the new period', function () 
     app(ChargeSubscription::class)->handle($this->subscription->refresh());
 
     expect($this->subscription->refresh()->credits_remaining)->toBe(4);
+});
+
+test('a newly generated occurrence consumes a credit for a recurring member', function () {
+    $this->lesson->update([
+        'day_of_week' => now($this->club->timezone)->addDays(2)->isoWeekday(),
+        'start_time' => '19:00:00',
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addWeeks(3)->toDateString(),
+    ]);
+
+    app(EnrollFixed::class)->handle($this->member, $this->lesson);
+
+    // Nothing was generated yet, so the enrollment claimed no spots and cost nothing.
+    expect($this->subscription->refresh()->credits_remaining)->toBe(4);
+
+    app(OccurrenceGenerator::class)->generateForLesson($this->lesson->refresh());
+
+    $occurrences = $this->lesson->occurrences()->orderBy('starts_at')->get();
+
+    expect($occurrences)->toHaveCount(3)
+        ->and($occurrences->pluck('booked_count')->unique()->all())->toBe([1])
+        ->and($this->subscription->refresh()->credits_remaining)->toBe(1);
+});
+
+test('a recurring member out of credits is not booked into new occurrences', function () {
+    $this->subscription->update(['credits_remaining' => 1]);
+    $this->lesson->update([
+        'day_of_week' => now($this->club->timezone)->addDays(2)->isoWeekday(),
+        'start_time' => '19:00:00',
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addWeeks(3)->toDateString(),
+    ]);
+
+    app(EnrollFixed::class)->handle($this->member, $this->lesson);
+
+    app(OccurrenceGenerator::class)->generateForLesson($this->lesson->refresh());
+
+    $counts = $this->lesson->occurrences()->orderBy('starts_at')->pluck('booked_count');
+
+    expect($counts->all())->toBe([1, 0, 0])
+        ->and($this->subscription->refresh()->credits_remaining)->toBe(0);
+});
+
+test('an unlimited subscription books new occurrences without credits', function () {
+    $this->subscription->update(['credits_remaining' => null]);
+    $this->lesson->update([
+        'day_of_week' => now($this->club->timezone)->addDays(2)->isoWeekday(),
+        'start_time' => '19:00:00',
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addWeeks(3)->toDateString(),
+    ]);
+
+    app(EnrollFixed::class)->handle($this->member, $this->lesson);
+
+    app(OccurrenceGenerator::class)->generateForLesson($this->lesson->refresh());
+
+    expect($this->lesson->occurrences()->pluck('booked_count')->unique()->all())->toBe([1])
+        ->and($this->subscription->refresh()->credits_remaining)->toBeNull();
+});
+
+test('generating twice does not charge the same week twice', function () {
+    $this->lesson->update([
+        'day_of_week' => now($this->club->timezone)->addDays(2)->isoWeekday(),
+        'start_time' => '19:00:00',
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addWeeks(3)->toDateString(),
+    ]);
+
+    app(EnrollFixed::class)->handle($this->member, $this->lesson);
+
+    app(OccurrenceGenerator::class)->generateForLesson($this->lesson->refresh());
+    app(OccurrenceGenerator::class)->generateForLesson($this->lesson->refresh());
+
+    expect($this->lesson->occurrences()->pluck('booked_count')->unique()->all())->toBe([1])
+        ->and($this->subscription->refresh()->credits_remaining)->toBe(1);
 });

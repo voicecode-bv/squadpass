@@ -253,7 +253,7 @@
                                     </div>
                                     <div class="space-y-1">
                                         <div class="flex items-center gap-2.5">
-                                            <p class="font-medium tracking-tight">{{ $passkey['name'] }}</p>
+                                            <p class="font-normal tracking-tight">{{ $passkey['name'] }}</p>
                                             @if ($passkey['authenticator'])
                                                 <flux:badge size="sm">{{ $passkey['authenticator'] }}</flux:badge>
                                             @endif
@@ -282,7 +282,7 @@
                                 <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
                                     <flux:icon.key class="size-7 text-zinc-400 dark:text-zinc-500" />
                                 </div>
-                                <p class="font-medium">{{ __('No passkeys yet') }}</p>
+                                <p class="font-normal">{{ __('No passkeys yet') }}</p>
                                 <flux:text class="mt-1">{{ __('Add a passkey to sign in without a password') }}</flux:text>
                             </div>
                         @endforelse

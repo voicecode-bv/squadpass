@@ -35,17 +35,17 @@ class ScheduleController extends Controller
             ->orderBy('starts_at')
             ->get();
 
-        $singleOccurrenceIds = LessonEnrollment::query()
+        // Keyed by occurrence / lesson so the app can cancel straight from the
+        // schedule, without first fetching the enrollment list to find the id.
+        $singleEnrollmentIds = LessonEnrollment::query()
             ->where('user_id', $user->id)
             ->where('type', EnrollmentType::Single)
-            ->pluck('lesson_occurrence_id')
-            ->flip();
+            ->pluck('id', 'lesson_occurrence_id');
 
-        $fixedLessonIds = LessonEnrollment::query()
+        $fixedEnrollmentIds = LessonEnrollment::query()
             ->where('user_id', $user->id)
             ->where('type', EnrollmentType::Fixed)
-            ->pluck('lesson_id')
-            ->flip();
+            ->pluck('id', 'lesson_id');
 
         $absentOccurrenceIds = EnrollmentAbsence::query()
             ->whereHas('enrollment', fn ($query) => $query->where('user_id', $user->id))
@@ -53,9 +53,11 @@ class ScheduleController extends Controller
             ->flip();
 
         $occurrences->each(fn (LessonOccurrence $occurrence) => $occurrence->setAttribute('enrollment_state', [
-            'enrolled_single' => $singleOccurrenceIds->has($occurrence->id),
-            'enrolled_fixed' => $fixedLessonIds->has($occurrence->lesson_id),
+            'enrolled_single' => $singleEnrollmentIds->has($occurrence->id),
+            'enrolled_fixed' => $fixedEnrollmentIds->has($occurrence->lesson_id),
             'absent' => $absentOccurrenceIds->has($occurrence->id),
+            'enrollment_id' => $singleEnrollmentIds->get($occurrence->id)
+                ?? $fixedEnrollmentIds->get($occurrence->lesson_id),
         ]));
 
         return LessonOccurrenceResource::collection($occurrences);

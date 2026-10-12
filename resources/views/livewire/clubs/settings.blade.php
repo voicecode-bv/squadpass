@@ -1,13 +1,37 @@
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ __('Club settings') }}</flux:heading>
-        <flux:text class="mt-1">{{ $club->name }}</flux:text>
-    </div>
+<div class="flex w-full flex-col gap-6">
+    <x-portal.hero :title="__('Club settings')" :subtitle="$club->name" />
 
     <form wire:submit="save" class="space-y-6">
         <flux:input wire:model="name" :label="__('Club name')" required />
 
-        <flux:input wire:model="timezone" :label="__('Timezone')" required />
+        <flux:field>
+            <flux:label>{{ __('Club photo') }}</flux:label>
+
+            {{-- A picked file only previews when it is an image; anything else falls back to the stored photo. --}}
+            @php($photoPreview = $photo?->isPreviewable() ? $photo->temporaryUrl() : $club->photoUrl())
+
+            <div class="flex flex-wrap items-center gap-4">
+                @if ($photoPreview)
+                    <img src="{{ $photoPreview }}" alt="{{ $club->name }}"
+                         class="h-24 w-40 rounded-xl object-cover" />
+                @else
+                    <div class="flex h-24 w-40 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-400 dark:bg-zinc-800">
+                        {{ __('No photo yet') }}
+                    </div>
+                @endif
+
+                <div class="flex flex-col gap-2">
+                    <flux:input type="file" wire:model="photo" accept="image/*" :label="__('Upload a photo')" label:sr-only />
+
+                    @if ($club->photoUrl())
+                        <flux:button type="button" variant="ghost" size="sm" wire:click="deletePhoto">{{ __('Remove photo') }}</flux:button>
+                    @endif
+                </div>
+            </div>
+
+            <flux:description>{{ __('Shown on the club card under My clubs. JPG or PNG, up to 4 MB.') }}</flux:description>
+            <flux:error name="photo" />
+        </flux:field>
 
         @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
             <flux:field>

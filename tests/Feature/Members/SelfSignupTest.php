@@ -97,3 +97,27 @@ test('the owner can toggle self signup in club settings', function () {
 
     expect($this->club->refresh()->self_signup)->toBeFalse();
 });
+
+test('staff cannot sign themselves up as a member of their own club', function () {
+    $owner = User::factory()->create();
+    $this->club->addStaff($owner, StaffRole::Owner);
+
+    Livewire::actingAs($owner)
+        ->test(Join::class, ['club' => $this->club])
+        ->call('join')
+        ->assertForbidden();
+
+    expect($owner->isMemberOf($this->club))->toBeFalse()
+        ->and($this->club->memberships()->count())->toBe(0);
+});
+
+test('the join page offers staff the club instead of a membership', function () {
+    $owner = User::factory()->create();
+    $this->club->addStaff($owner, StaffRole::Owner);
+
+    $this->actingAs($owner)
+        ->get(route('clubs.join', $this->club))
+        ->assertOk()
+        ->assertSee(__('You manage this club'))
+        ->assertDontSee('wire:click="join"', false);
+});

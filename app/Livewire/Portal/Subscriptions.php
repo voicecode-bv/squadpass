@@ -6,6 +6,7 @@ use App\Actions\Payments\CancelSubscription;
 use App\Actions\Payments\StartSubscription;
 use App\Enums\MembershipStatus;
 use App\Exceptions\PaymentException;
+use App\Models\Club;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use Flux\Flux;
@@ -45,7 +46,7 @@ class Subscriptions extends Component
 
         $cancelSubscription->handle($subscription);
 
-        unset($this->subscriptions, $this->availablePlans);
+        unset($this->subscriptions, $this->availablePlans, $this->payableClubIds);
 
         Flux::toast(variant: 'success', text: __('Subscription cancelled. You keep access until the end of the paid period.'));
     }
@@ -87,6 +88,23 @@ class Subscriptions extends Component
             ->orderBy('club_id')
             ->orderBy('price_cents')
             ->get();
+    }
+
+    /**
+     * Clubs from the offered plans that can actually take an online payment.
+     * Without it the member would only find out after being sent to checkout.
+     *
+     * @return array<int, true>
+     */
+    #[Computed]
+    public function payableClubIds(): array
+    {
+        return $this->availablePlans
+            ->pluck('club')
+            ->unique('id')
+            ->filter(fn (Club $club): bool => $club->acceptsOnlinePayments())
+            ->mapWithKeys(fn (Club $club): array => [$club->id => true])
+            ->all();
     }
 
     public function render(): View

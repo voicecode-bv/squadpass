@@ -125,3 +125,30 @@ test('a member cannot cancel someone elses enrollment', function () {
 
     expect(LessonEnrollment::query()->count())->toBe(1);
 });
+
+test('a member can open the detail of an occurrence', function () {
+    Livewire::actingAs($this->member)
+        ->test(Schedule::class)
+        ->call('showOccurrence', $this->occurrence->id)
+        ->assertSet('selectedOccurrenceId', $this->occurrence->id);
+});
+
+test('an occurrence of another club cannot be opened', function () {
+    $otherClubOccurrence = LessonOccurrence::factory()->create([
+        'starts_at' => now()->addDays(2),
+        'ends_at' => now()->addDays(2)->addHour(),
+    ]);
+
+    Livewire::actingAs($this->member)
+        ->test(Schedule::class)
+        ->call('showOccurrence', $otherClubOccurrence->id)
+        ->assertSet('selectedOccurrenceId', null);
+});
+
+test('enrolling closes the detail modal', function () {
+    Livewire::actingAs($this->member)
+        ->test(Schedule::class)
+        ->call('showOccurrence', $this->occurrence->id)
+        ->call('enrollSingle', $this->occurrence->id)
+        ->assertSet('selectedOccurrenceId', null);
+});

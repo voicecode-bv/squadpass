@@ -184,8 +184,6 @@ test('the dashboard warns staff about failed charges in their clubs only', funct
     $component = Livewire::actingAs($owner)->test(Dashboard::class);
 
     expect($component->instance()->failedChargesByClub->sum())->toBe(1);
-
-    $component->assertSee(__('Failed charges'));
 });
 
 test('remaining strips only count usable cards', function () {

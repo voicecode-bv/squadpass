@@ -16,6 +16,7 @@ use App\Models\LessonOccurrence;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -24,6 +25,24 @@ use Livewire\Component;
 #[Title('Lesson schedule')]
 class Schedule extends Component
 {
+    public ?int $selectedOccurrenceId = null;
+
+    /**
+     * Open the detail modal for an occurrence the member is allowed to see.
+     */
+    public function showOccurrence(int $occurrenceId): void
+    {
+        if (! $this->occurrences->contains('id', $occurrenceId)) {
+            return;
+        }
+
+        $this->selectedOccurrenceId = $occurrenceId;
+
+        unset($this->selectedOccurrence);
+
+        Flux::modal('occurrence')->show();
+    }
+
     public function enrollSingle(int $occurrenceId, EnrollSingle $enrollSingle): void
     {
         $occurrence = $this->findOccurrence($occurrenceId);
@@ -117,12 +136,8 @@ class Schedule extends Component
     #[Computed]
     public function occurrences(): Collection
     {
-        $clubIds = Auth::user()->memberships()
-            ->where('status', MembershipStatus::Active)
-            ->pluck('club_id');
-
         return LessonOccurrence::query()
-            ->whereIn('club_id', $clubIds)
+            ->whereIn('club_id', $this->memberClubIds())
             ->where('status', LessonOccurrenceStatus::Scheduled)
             ->whereBetween('starts_at', [now(), now()->addWeeks(4)])
             ->with(['lesson.trainers.user', 'lesson.room', 'club'])
@@ -171,6 +186,20 @@ class Schedule extends Component
         return array_fill_keys($ids->map(fn ($id): int => (int) $id)->all(), true);
     }
 
+    /**
+     * The occurrence shown in the detail modal, taken from the loaded list so
+     * the modal costs no extra queries.
+     */
+    #[Computed]
+    public function selectedOccurrence(): ?LessonOccurrence
+    {
+        if ($this->selectedOccurrenceId === null) {
+            return null;
+        }
+
+        return $this->occurrences->firstWhere('id', $this->selectedOccurrenceId);
+    }
+
     public function render(): View
     {
         return view('livewire.portal.schedule');
@@ -181,8 +210,25 @@ class Schedule extends Component
         return LessonOccurrence::query()->with(['lesson', 'club'])->findOrFail($occurrenceId);
     }
 
+    /**
+     * @return SupportCollection<int, int>
+     */
+    protected function memberClubIds(): SupportCollection
+    {
+        return Auth::user()->memberships()
+            ->where('status', MembershipStatus::Active)
+            ->pluck('club_id');
+    }
+
+    /**
+     * Refresh the computed lists and close the detail modal after a successful action.
+     */
     protected function refreshLists(): void
     {
-        unset($this->occurrences, $this->singleEnrolledOccurrenceIds, $this->fixedEnrolledLessonIds, $this->absentOccurrenceIds);
+        unset($this->occurrences, $this->singleEnrolledOccurrenceIds, $this->fixedEnrolledLessonIds, $this->absentOccurrenceIds, $this->selectedOccurrence);
+
+        $this->selectedOccurrenceId = null;
+
+        Flux::modal('occurrence')->close();
     }
 }

@@ -60,5 +60,6 @@ test('guests get 401 on protected endpoints', function (string $uri) {
     'strip cards' => '/api/v1/strip-cards',
     'subscriptions' => '/api/v1/subscriptions',
     'visits' => '/api/v1/visits',
+    'check-in code' => '/api/v1/check-in-code',
     'tickets' => '/api/v1/tickets',
 ]);

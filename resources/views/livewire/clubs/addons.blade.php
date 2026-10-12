@@ -1,8 +1,5 @@
 <div class="flex w-full flex-col gap-8">
-    <div>
-        <flux:heading size="xl">{{ __('Add-ons') }}</flux:heading>
-        <flux:text class="mt-1">{{ __('Extend :club with extra features. Add-ons are billed monthly via direct debit and can be cancelled monthly.', ['club' => $club->name]) }}</flux:text>
-    </div>
+    <x-portal.hero :title="__('Add-ons')" :subtitle="__('Extend :club with extra features. Add-ons are billed monthly via direct debit and can be cancelled monthly.', ['club' => $club->name])" />
 
     @if ($this->addons->isEmpty())
         <flux:callout icon="puzzle-piece">
@@ -15,7 +12,7 @@
                 @php($subscription = $this->subscriptions->get($addon->id))
                 @php($status = $subscription?->status)
                 @php($unlocked = $subscription?->isCurrent() ?? false)
-                <div wire:key="addon-{{ $addon->id }}" class="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm dark:bg-zinc-900">
+                <div wire:key="addon-{{ $addon->id }}" class="sp-panel flex flex-col gap-4 p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="flex size-11 items-center justify-center rounded-xl {{ $unlocked ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' }}">
                             <flux:icon :name="$addon->key->icon()" class="size-5" />
@@ -32,9 +29,9 @@
                     </div>
 
                     <div>
-                        <flux:heading size="lg">{{ $addon->name }}</flux:heading>
+                        <flux:heading class="sp-card-title">{{ $addon->name }}</flux:heading>
                         @if ($addon->description)
-                            <flux:text class="mt-1 text-sm">{{ $addon->description }}</flux:text>
+                            <flux:text class="sp-card-subtitle mt-1">{{ $addon->description }}</flux:text>
                         @endif
                     </div>
 
@@ -83,7 +80,7 @@
 
     @if ($this->payments->isNotEmpty())
         <div>
-            <flux:heading size="lg">{{ __('Payment history') }}</flux:heading>
+            <flux:heading class="sp-card-title">{{ __('Payment history') }}</flux:heading>
         </div>
 
         <x-table-card>
@@ -99,7 +96,7 @@
                     @foreach ($this->payments as $payment)
                         <flux:table.row :key="$payment->id">
                             <flux:table.cell>{{ $payment->created_at->format('d-m-Y') }}</flux:table.cell>
-                            <flux:table.cell variant="strong">{{ $payment->subscription->addon->name }}</flux:table.cell>
+                            <flux:table.cell class="sp-strong">{{ $payment->subscription->addon->name }}</flux:table.cell>
                             <flux:table.cell>{{ $payment->formattedAmount() }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="match($payment->status) {

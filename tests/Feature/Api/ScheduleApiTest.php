@@ -87,3 +87,19 @@ test('a member can mark an absence for their fixed enrollment', function () {
 
     expect(EnrollmentAbsence::query()->where('lesson_occurrence_id', $this->occurrence->id)->exists())->toBeTrue();
 });
+
+test('the schedule carries the enrollment id, so cancelling needs no second request', function () {
+    $this->postJson('/api/v1/enrollments/single', ['occurrence_id' => $this->occurrence->id]);
+    $enrollment = LessonEnrollment::query()->where('user_id', $this->member->id)->firstOrFail();
+
+    $this->getJson('/api/v1/schedule')
+        ->assertOk()
+        ->assertJsonPath('data.0.enrollment.enrolled_single', true)
+        ->assertJsonPath('data.0.enrollment.enrollment_id', $enrollment->id);
+});
+
+test('an occurrence the member has nothing to do with carries no enrollment id', function () {
+    $this->getJson('/api/v1/schedule')
+        ->assertOk()
+        ->assertJsonPath('data.0.enrollment.enrollment_id', null);
+});
