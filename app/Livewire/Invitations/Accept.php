@@ -5,6 +5,7 @@ namespace App\Livewire\Invitations;
 use App\Actions\Invitations\AcceptClubInvitation;
 use App\Enums\ClubInvitationRole;
 use App\Exceptions\ClubInvitationException;
+use App\Exceptions\ClubPlanException;
 use App\Models\ClubInvitation;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -33,7 +34,7 @@ class Accept extends Component
 
         try {
             $acceptClubInvitation->handle($this->invitation, Auth::user());
-        } catch (ClubInvitationException $exception) {
+        } catch (ClubInvitationException|ClubPlanException $exception) {
             Flux::toast(variant: 'danger', text: $exception->getMessage());
 
             return;

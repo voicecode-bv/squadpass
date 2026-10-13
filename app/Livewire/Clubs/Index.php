@@ -2,13 +2,12 @@
 
 namespace App\Livewire\Clubs;
 
-use App\Enums\StaffRole;
+use App\Actions\Clubs\CreateClub;
 use App\Models\Club;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -42,12 +41,7 @@ class Index extends Component
             }
         }
 
-        $club = Club::create([
-            'name' => $validated['name'],
-            'slug' => $this->generateSlug($validated['name']),
-        ]);
-
-        $club->addStaff($owner, StaffRole::Owner);
+        $club = app(CreateClub::class)->handle($validated['name'], $owner);
 
         $this->redirectRoute('clubs.onboarding', ['club' => $club], navigate: true);
     }
@@ -68,17 +62,5 @@ class Index extends Component
     public function render(): View
     {
         return view('livewire.clubs.index');
-    }
-
-    protected function generateSlug(string $name): string
-    {
-        $base = Str::slug($name);
-        $slug = $base;
-
-        while (Club::query()->where('slug', $slug)->exists()) {
-            $slug = $base.'-'.Str::lower(Str::random(4));
-        }
-
-        return $slug;
     }
 }

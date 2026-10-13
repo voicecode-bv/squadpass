@@ -8,6 +8,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Actions/Addons/** | .ai/rules/addons.md |
 | app/Http/Controllers/Api/** | .ai/rules/api.md |
 | app/{Services/CheckIns,Actions/CheckIns}/** | .ai/rules/check-ins.md |
+| app/{Actions/ClubSubscriptions,Livewire/Members,Livewire/Clubs}/**, app/Models/Club.php | .ai/rules/clubs.md |
 | app/{Events,Livewire/CheckIns}/** | .ai/rules/events-livewire-check-ins.md |
 | app/{Livewire/Forms,Actions/Forms,Livewire/Portal,Services/Forms}/** | .ai/rules/forms.md |
 | **/*.php | .ai/rules/general.md |

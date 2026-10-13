@@ -4,6 +4,7 @@ namespace App\Actions\Invitations;
 
 use App\Enums\ClubInvitationRole;
 use App\Exceptions\ClubInvitationException;
+use App\Exceptions\ClubPlanException;
 use App\Models\ClubInvitation;
 use App\Models\Trainer;
 use App\Models\User;
@@ -15,6 +16,8 @@ class AcceptClubInvitation
      * Link the accepting user in the invited role. Whoever holds a valid
      * invitation link may accept it, so people can register with a
      * different email than the one that was invited.
+     *
+     * @throws ClubInvitationException|ClubPlanException
      */
     public function handle(ClubInvitation $invitation, User $user): void
     {

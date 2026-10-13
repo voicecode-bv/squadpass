@@ -49,12 +49,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('clubs', Clubs\Index::class)->name('clubs.index');
 
     Route::livewire('admin/addons', Admin\Addons::class)->name('admin.addons');
+    Route::livewire('admin/club-plans', Admin\ClubPlans::class)->name('admin.club-plans');
 
     Route::prefix('clubs/{club}')->scopeBindings()->group(function () {
         Route::livewire('dashboard', Clubs\Dashboard::class)->name('clubs.dashboard');
         Route::livewire('onboarding', Clubs\Onboarding::class)->name('clubs.onboarding');
         Route::livewire('settings', Clubs\Settings::class)->name('clubs.settings');
         Route::livewire('addons', Clubs\Addons::class)->name('clubs.addons');
+        Route::livewire('plan', Clubs\Plan::class)->name('clubs.plan');
         Route::livewire('moneybird', Clubs\Moneybird::class)->name('clubs.moneybird');
         Route::livewire('members', Members\Index::class)->name('clubs.members');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');

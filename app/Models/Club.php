@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\AddonKey;
+use App\Enums\ClubPlan;
 use App\Enums\MembershipStatus;
 use App\Enums\MoneybirdInvoiceDelivery;
 use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
+use App\Exceptions\ClubPlanException;
 use App\Jobs\SyncMoneybirdContact;
 use App\Services\Mollie\MollieAccount;
 use Database\Factories\ClubFactory;
@@ -44,13 +46,14 @@ use Illuminate\Support\Facades\Storage;
  * @property int $next_ticket_number
  * @property bool $self_signup
  * @property Carbon|null $onboarded_at
+ * @property Carbon|null $trial_ends_at last day a club without a plan may still add members
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
     'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at',
-    'self_signup', 'onboarded_at',
+    'self_signup', 'onboarded_at', 'trial_ends_at',
 ])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
 class Club extends Model implements MollieAccount
@@ -76,6 +79,21 @@ class Club extends Model implements MollieAccount
      */
     protected ?array $activeAddonKeys = null;
 
+    /**
+     * The plan in force, resolved once per instance.
+     */
+    protected ?ClubSubscription $currentSubscription = null;
+
+    protected bool $currentSubscriptionResolved = false;
+
+    protected static function booted(): void
+    {
+        // Every new club starts with a trial, however it is created.
+        static::creating(function (Club $club): void {
+            $club->trial_ends_at ??= today()->addDays(ClubPlan::TRIAL_DAYS);
+        });
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -96,6 +114,7 @@ class Club extends Model implements MollieAccount
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
             'onboarded_at' => 'datetime',
+            'trial_ends_at' => 'date',
         ];
     }
 
@@ -271,31 +290,137 @@ class Club extends Model implements MollieAccount
     }
 
     /**
-     * Add a user as a member, or reactivate their previous membership.
+     * Add a user as a member, or reactivate their previous membership. Requires a
+     * trial or plan with room for another active member.
+     *
+     * @throws ClubPlanException
      */
     public function addMember(User $user): Membership
     {
         $membership = $this->memberships()->where('user_id', $user->id)->first();
 
-        if ($membership) {
-            $membership->update([
-                'status' => MembershipStatus::Active,
-                'ended_at' => null,
-            ]);
-        } else {
-            $membership = $this->memberships()->create([
+        if ($membership?->status === MembershipStatus::Active) {
+            return $membership;
+        }
+
+        $membership = DB::transaction(function () use ($user, $membership): Membership {
+            // Lock the club row so concurrent sign-ups cannot slip past the member limit.
+            self::query()->whereKey($this->id)->lockForUpdate()->first();
+
+            $this->ensureCanAddMembers();
+
+            if ($membership) {
+                $membership->update([
+                    'status' => MembershipStatus::Active,
+                    'ended_at' => null,
+                ]);
+
+                return $membership;
+            }
+
+            return $this->memberships()->create([
                 'user_id' => $user->id,
                 'membership_number' => $this->allocateMembershipNumber(),
                 'status' => MembershipStatus::Active,
                 'joined_at' => now()->toDateString(),
             ]);
-        }
+        });
 
         if ($this->syncsMoneybirdContacts()) {
             SyncMoneybirdContact::dispatch($membership)->afterCommit();
         }
 
         return $membership;
+    }
+
+    /**
+     * @return HasMany<ClubSubscription, $this>
+     */
+    public function clubSubscriptions(): HasMany
+    {
+        return $this->hasMany(ClubSubscription::class);
+    }
+
+    /**
+     * The SquadPass plan in force: active, or cancelled but paid up until its end date.
+     */
+    public function currentSubscription(): ?ClubSubscription
+    {
+        if (! $this->currentSubscriptionResolved) {
+            $this->currentSubscription = $this->clubSubscriptions()
+                ->where(function ($query): void {
+                    $query->where('status', SubscriptionStatus::Active)
+                        ->orWhere(function ($query): void {
+                            $query->where('status', SubscriptionStatus::Cancelled)
+                                ->whereDate('ends_at', '>=', today());
+                        });
+                })
+                ->latest('id')
+                ->first();
+
+            $this->currentSubscriptionResolved = true;
+        }
+
+        return $this->currentSubscription;
+    }
+
+    public function forgetSubscriptionCache(): void
+    {
+        $this->currentSubscription = null;
+        $this->currentSubscriptionResolved = false;
+    }
+
+    public function isOnTrial(): bool
+    {
+        return $this->trial_ends_at !== null && $this->trial_ends_at->gte(today());
+    }
+
+    /**
+     * Whether the club may have members at all right now: a plan in force or a running trial.
+     */
+    public function hasMemberAccess(): bool
+    {
+        return $this->currentSubscription() !== null || $this->isOnTrial();
+    }
+
+    /**
+     * Maximum number of active members right now; null means unlimited.
+     */
+    public function memberLimit(): ?int
+    {
+        if ($subscription = $this->currentSubscription()) {
+            return $subscription->plan->memberLimit();
+        }
+
+        return $this->isOnTrial() ? ClubPlan::TRIAL_MEMBER_LIMIT : 0;
+    }
+
+    public function activeMemberCount(): int
+    {
+        return $this->memberships()->where('status', MembershipStatus::Active)->count();
+    }
+
+    public function canAddMembers(): bool
+    {
+        if (! $this->hasMemberAccess()) {
+            return false;
+        }
+
+        $limit = $this->memberLimit();
+
+        return $limit === null || $this->activeMemberCount() < $limit;
+    }
+
+    /**
+     * @throws ClubPlanException
+     */
+    public function ensureCanAddMembers(): void
+    {
+        throw_unless($this->hasMemberAccess(), ClubPlanException::planRequired());
+
+        $limit = $this->memberLimit();
+
+        throw_if($limit !== null && $this->activeMemberCount() >= $limit, ClubPlanException::memberLimitReached($limit ?? 0));
     }
 
     /**

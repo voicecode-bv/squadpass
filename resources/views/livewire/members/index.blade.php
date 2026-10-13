@@ -1,11 +1,31 @@
 <div class="flex w-full flex-col gap-6">
     <x-portal.hero :title="__('Members')" :subtitle="$club->name">
         <x-slot:actions>
-            <flux:modal.trigger name="add-member">
-                <flux:button variant="primary" icon="user-plus">{{ __('Add member') }}</flux:button>
-            </flux:modal.trigger>
+            @if ($this->canAddMembers)
+                <flux:modal.trigger name="add-member">
+                    <flux:button variant="primary" icon="user-plus">{{ __('Add member') }}</flux:button>
+                </flux:modal.trigger>
+            @else
+                <flux:button variant="primary" icon="user-plus" disabled>{{ __('Add member') }}</flux:button>
+            @endif
         </x-slot:actions>
     </x-portal.hero>
+
+    @unless ($this->canAddMembers)
+        <flux:callout icon="lock-closed" variant="warning">
+            <flux:callout.heading>{{ $club->hasMemberAccess() ? __('Member limit reached') : __('No active SquadPass plan') }}</flux:callout.heading>
+            <flux:callout.text>
+                {{ $club->hasMemberAccess()
+                    ? __('Your plan allows :limit active members. Upgrade the plan to add more members.', ['limit' => number_format($club->memberLimit() ?? 0, 0, ',', '.')])
+                    : __('Choose a plan to add members again. Existing members keep their access.') }}
+            </flux:callout.text>
+            @can('update', $club)
+                <x-slot name="actions">
+                    <flux:button size="sm" variant="primary" :href="route('clubs.plan', $club)" wire:navigate>{{ __('View plans') }}</flux:button>
+                </x-slot>
+            @endcan
+        </flux:callout>
+    @endunless
 
     <div class="flex flex-col gap-3 sm:flex-row">
         <flux:input class="flex-1" wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name or email...')" clearable />

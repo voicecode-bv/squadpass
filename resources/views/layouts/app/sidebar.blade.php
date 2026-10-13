@@ -11,7 +11,7 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="gap-6">
-                <flux:sidebar.group :heading="__('Platform')" expandable data-sidebar-group="platform" class="grid">
+                <flux:sidebar.group :heading="__('Platform')" expandable :expanded="false" data-sidebar-group="platform" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
@@ -24,11 +24,14 @@
                         <flux:sidebar.item icon="puzzle-piece" :href="route('admin.addons')" :current="request()->routeIs('admin.addons')" wire:navigate>
                             {{ __('Add-ons') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="credit-card" :href="route('admin.club-plans')" :current="request()->routeIs('admin.club-plans')" wire:navigate>
+                            {{ __('SquadPass plans') }}
+                        </flux:sidebar.item>
                     @endif
                 </flux:sidebar.group>
 
                 @if (auth()->user()->trainerProfiles()->exists())
-                    <flux:sidebar.group :heading="__('Trainer')" expandable data-sidebar-group="trainer" class="grid">
+                    <flux:sidebar.group :heading="__('Trainer')" expandable :expanded="false" data-sidebar-group="trainer" class="grid">
                         <flux:sidebar.item icon="academic-cap" :href="route('trainer.lessons')" :current="request()->routeIs('trainer.lessons')" wire:navigate>
                             {{ __('My lessons') }}
                         </flux:sidebar.item>
@@ -36,7 +39,7 @@
                 @endif
 
                 @if (auth()->user()->memberships()->exists())
-                    <flux:sidebar.group :heading="__('Lessons')" expandable data-sidebar-group="lessons" class="grid">
+                    <flux:sidebar.group :heading="__('Lessons')" expandable :expanded="false" data-sidebar-group="lessons" class="grid">
                         <flux:sidebar.item icon="calendar-days" :href="route('portal.schedule')" :current="request()->routeIs('portal.schedule')" wire:navigate>
                             {{ __('Lesson schedule') }}
                         </flux:sidebar.item>
@@ -45,7 +48,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('My membership')" expandable data-sidebar-group="membership" class="grid">
+                    <flux:sidebar.group :heading="__('My membership')" expandable :expanded="false" data-sidebar-group="membership" class="grid">
                         <flux:sidebar.item icon="ticket" :href="route('portal.cards')" :current="request()->routeIs('portal.cards*')" wire:navigate>
                             {{ __('My strip cards') }}
                         </flux:sidebar.item>
@@ -60,7 +63,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Support')" expandable data-sidebar-group="support" class="grid">
+                    <flux:sidebar.group :heading="__('Support')" expandable :expanded="false" data-sidebar-group="support" class="grid">
                         <flux:sidebar.item icon="lifebuoy" :href="route('portal.tickets')" :current="request()->routeIs('portal.tickets*')" wire:navigate>
                             {{ __('Support tickets') }}
                         </flux:sidebar.item>
@@ -68,13 +71,16 @@
                 @endif
 
                 @if (($currentClub = request()->route('club')) instanceof \App\Models\Club && auth()->user()->can('view', $currentClub))
-                    <flux:sidebar.group :heading="$currentClub->name" expandable data-sidebar-group="club" class="grid">
+                    <flux:sidebar.group :heading="$currentClub->name" expandable :expanded="false" data-sidebar-group="club" class="grid">
                         <flux:sidebar.item icon="chart-bar" :href="route('clubs.dashboard', $currentClub)" :current="request()->routeIs('clubs.dashboard')" wire:navigate>
                             {{ __('Dashboard') }}
                         </flux:sidebar.item>
                         @can('update', $currentClub)
                             <flux:sidebar.item icon="cog-6-tooth" :href="route('clubs.settings', $currentClub)" :current="request()->routeIs('clubs.settings')" wire:navigate>
                                 {{ __('Settings') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="credit-card" :href="route('clubs.plan', $currentClub)" :current="request()->routeIs('clubs.plan')" wire:navigate>
+                                {{ __('SquadPass plan') }}
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="puzzle-piece" :href="route('clubs.addons', $currentClub)" :current="request()->routeIs('clubs.addons')" wire:navigate>
                                 {{ __('Add-ons') }}
@@ -87,7 +93,7 @@
                         @endcan
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Members')" expandable data-sidebar-group="club-members" class="grid">
+                    <flux:sidebar.group :heading="__('Members')" expandable :expanded="false" data-sidebar-group="club-members" class="grid">
                         <flux:sidebar.item icon="users" :href="route('clubs.members', $currentClub)" :current="request()->routeIs('clubs.members')" wire:navigate>
                             {{ __('Members') }}
                         </flux:sidebar.item>
@@ -102,7 +108,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Lessons')" expandable data-sidebar-group="club-lessons" class="grid">
+                    <flux:sidebar.group :heading="__('Lessons')" expandable :expanded="false" data-sidebar-group="club-lessons" class="grid">
                         <flux:sidebar.item icon="calendar" :href="route('clubs.lessons', $currentClub)" :current="request()->routeIs('clubs.lessons*')" wire:navigate>
                             {{ __('Lessons') }}
                         </flux:sidebar.item>
@@ -114,7 +120,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Billing')" expandable data-sidebar-group="club-billing" class="grid">
+                    <flux:sidebar.group :heading="__('Billing')" expandable :expanded="false" data-sidebar-group="club-billing" class="grid">
                         <flux:sidebar.item icon="ticket" :href="route('clubs.strip-cards', $currentClub)" :current="request()->routeIs('clubs.strip-cards')" wire:navigate>
                             {{ __('Strip cards') }}
                         </flux:sidebar.item>
@@ -129,7 +135,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Support')" expandable data-sidebar-group="club-support" class="grid">
+                    <flux:sidebar.group :heading="__('Support')" expandable :expanded="false" data-sidebar-group="club-support" class="grid">
                         <flux:sidebar.item icon="lifebuoy" :href="route('clubs.tickets', $currentClub)" :current="request()->routeIs('clubs.tickets*')" wire:navigate>
                             {{ __('Tickets') }}
                         </flux:sidebar.item>
@@ -140,19 +146,20 @@
             {{-- No flux:spacer: the nav grows and scrolls, this stays pinned to the bottom. --}}
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
 
-            {{-- Runs before @fluxScripts upgrades <ui-disclosure>, so a collapsed group never flashes open. --}}
+            {{-- Runs before @fluxScripts upgrades <ui-disclosure>, so a group never flashes open or shut.
+                 Groups start collapsed; a remembered choice wins, and the group holding the current page always opens. --}}
             <script>
                 document.querySelectorAll('[data-sidebar-group]').forEach((group) => {
                     try {
-                        const stored = localStorage.getItem('sidebar-group:' + group.dataset.sidebarGroup);
-
-                        if (stored === 'closed') {
-                            group.removeAttribute('open');
-                        } else if (stored === 'open') {
+                        if (localStorage.getItem('sidebar-group:' + group.dataset.sidebarGroup) === 'open') {
                             group.setAttribute('open', '');
                         }
                     } catch (error) {
                         // Private mode or blocked storage: keep the server-rendered state.
+                    }
+
+                    if (group.querySelector('[data-current]')) {
+                        group.setAttribute('open', '');
                     }
                 });
             </script>

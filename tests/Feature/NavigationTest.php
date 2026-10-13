@@ -20,6 +20,18 @@ test('the sidebar groups are collapsible and carry a stable storage key', functi
         ->assertSee("localStorage.getItem('sidebar-group:'", escape: false);
 });
 
+test('the sidebar groups are collapsed by default', function () {
+    $club = Club::factory()->create();
+    $staff = User::factory()->create();
+    $club->addStaff($staff, StaffRole::Owner);
+
+    $content = $this->actingAs($staff)->get(route('clubs.members', $club))->assertOk()->getContent();
+
+    // The inline script opens the group holding the current page client-side.
+    expect($content)->toContain('data-sidebar-group="club-members"')
+        ->and($content)->not->toMatch('/<ui-disclosure[^>]*\sopen[\s>]/');
+});
+
 test('the header follows the sidebar so the logo sits next to the search bar', function () {
     $user = User::factory()->create();
 

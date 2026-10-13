@@ -45,11 +45,9 @@
                             <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white">
                                 {{ __('Log in') }}
                             </a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
-                                    {{ __('Register') }}
-                                </a>
-                            @endif
+                            <a href="#signup" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
+                                {{ __('Register') }}
+                            </a>
                         @endauth
                     </nav>
                 @endif
@@ -74,11 +72,11 @@
                         </p>
 
                         <div class="flex flex-wrap items-center gap-4">
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
+                            @guest
+                                <a href="#signup" class="rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
                                     {{ __('Get started') }}
                                 </a>
-                            @endif
+                            @endguest
                             <a href="{{ route('login') }}" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-300 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
                                 {{ __('Log in') }}
                             </a>
@@ -162,26 +160,12 @@
                     </div>
 
                     <div class="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
-                        @foreach ([
-                            [
-                                'title' => __('Up to 500 members'),
-                                'text' => __('For clubs that want their member administration in order.'),
-                                'price_cents' => 9900,
-                                'featured' => true,
-                            ],
-                            [
-                                'title' => __('Up to 1,000 members'),
-                                'text' => __('For growing clubs with several trainers and rooms.'),
-                                'price_cents' => 18000,
-                                'featured' => false,
-                            ],
-                            [
-                                'title' => __('More than 1,000 members'),
-                                'text' => __('A price tailored to large clubs and associations.'),
-                                'price_cents' => null,
-                                'featured' => false,
-                            ],
-                        ] as $plan)
+                        @foreach (collect(\App\Enums\ClubPlan::cases())->map(fn (\App\Enums\ClubPlan $clubPlan) => [
+                            'title' => $clubPlan->label(),
+                            'text' => $clubPlan->description(),
+                            'price_cents' => $clubPlan->priceCents(),
+                            'featured' => $clubPlan === \App\Enums\ClubPlan::Starter,
+                        ]) as $plan)
                             <div class="relative flex h-full flex-col overflow-hidden rounded-3xl p-8 {{ $plan['featured'] ? 'bg-linear-to-br from-blue-600/20 to-indigo-700/10 ring-1 ring-blue-400/40' : 'bg-white/5 ring-1 ring-white/10' }}">
                                 @if ($plan['featured'])
                                     <div class="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true"></div>
@@ -200,7 +184,7 @@
                                 </p>
 
                                 @if ($plan['price_cents'] !== null)
-                                    <a href="{{ Route::has('register') ? route('register') : route('login') }}" class="relative mt-8 rounded-xl px-6 py-3 text-center text-base font-semibold transition {{ $plan['featured'] ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 hover:from-blue-400 hover:to-indigo-500' : 'text-zinc-300 ring-1 ring-white/15 hover:bg-white/5 hover:text-white' }}">
+                                    <a href="#signup" class="relative mt-8 rounded-xl px-6 py-3 text-center text-base font-semibold transition {{ $plan['featured'] ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 hover:from-blue-400 hover:to-indigo-500' : 'text-zinc-300 ring-1 ring-white/15 hover:bg-white/5 hover:text-white' }}">
                                         {{ __('Get started') }}
                                     </a>
                                 @else
@@ -299,7 +283,7 @@
                                     <p class="mt-2 leading-relaxed text-zinc-400">{{ $item['text'] }}</p>
                                 </div>
 
-                                <div class="relative flex flex-wrap gap-2">
+                                <div class="relative flex flex-col items-start gap-2">
                                     @foreach ($item['badges'] as $badge)
                                         <span class="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-200 ring-1 ring-blue-400/20">
                                             <flux:icon.check variant="micro" class="size-3.5" />
@@ -317,7 +301,7 @@
                                             <p class="text-sm font-medium text-zinc-300">{{ __('Coming soon') }}</p>
                                         @endif
                                     </div>
-                                    <a href="{{ Route::has('register') ? route('register') : route('login') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-300 transition hover:text-white">
+                                    <a href="#signup" class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-300 transition hover:text-white">
                                         {{ __('Activate in your club') }}
                                         <flux:icon.arrow-right variant="micro" class="size-4" />
                                     </a>
@@ -345,17 +329,28 @@
                     </div>
                 </section>
 
-                {{-- CTA --}}
-                <section class="pb-24">
-                    <div class="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600 to-indigo-700 px-8 py-16 text-center shadow-2xl shadow-blue-950/50">
+                {{-- CTA: signup with account and club in one step --}}
+                <section id="signup" class="scroll-mt-8 pb-24">
+                    <div class="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600 to-indigo-700 px-6 py-12 shadow-2xl shadow-blue-950/50 sm:px-12 lg:py-16">
                         <div class="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-white/15 blur-3xl" aria-hidden="true"></div>
-                        <h2 class="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Ready to get started?') }}</h2>
-                        <p class="relative mx-auto mt-4 max-w-xl text-lg text-blue-100">{{ __('Create your club in minutes and invite your members today.') }}</p>
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="relative mt-8 inline-block rounded-xl bg-white px-6 py-3 text-base font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50">
-                                {{ __('Create your club') }}
-                            </a>
-                        @endif
+                        @guest
+                            <div class="relative grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+                                <div class="text-center lg:text-left">
+                                    <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Ready to get started?') }}</h2>
+                                    <p class="mt-4 text-lg text-blue-100">{{ __('Create your club in minutes and invite your members today.') }}</p>
+                                </div>
+
+                                <livewire:clubs.signup />
+                            </div>
+                        @else
+                            <div class="relative text-center">
+                                <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Ready to get started?') }}</h2>
+                                <p class="mx-auto mt-4 max-w-xl text-lg text-blue-100">{{ __('Create your club in minutes and invite your members today.') }}</p>
+                                <a href="{{ route('dashboard') }}" class="mt-8 inline-block rounded-xl bg-white px-6 py-3 text-base font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50">
+                                    {{ __('Dashboard') }}
+                                </a>
+                            </div>
+                        @endguest
                     </div>
                 </section>
             </main>
@@ -365,5 +360,7 @@
                 <span>{{ __('Made for clubs that keep moving.') }}</span>
             </footer>
         </div>
+
+        @fluxScripts
     </body>
 </html>

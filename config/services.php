@@ -34,6 +34,12 @@ return [
         'currency' => env('MOLLIE_CURRENCY', 'EUR'),
     ],
 
+    'turnstile' => [
+        // Cloudflare Turnstile bot check on the public signup forms; skipped when unset.
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

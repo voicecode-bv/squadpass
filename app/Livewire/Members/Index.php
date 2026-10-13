@@ -6,6 +6,7 @@ use App\Actions\Invitations\InviteToClub;
 use App\Enums\ClubInvitationRole;
 use App\Enums\MembershipStatus;
 use App\Exceptions\ClubInvitationException;
+use App\Exceptions\ClubPlanException;
 use App\Models\Club;
 use App\Models\ClubInvitation;
 use App\Models\Membership;
@@ -52,6 +53,14 @@ class Index extends Component
             'email' => ['required', 'email'],
         ]);
 
+        try {
+            $this->club->ensureCanAddMembers();
+        } catch (ClubPlanException $exception) {
+            $this->addError('email', $exception->getMessage());
+
+            return;
+        }
+
         $user = User::query()->where('email', $validated['email'])->first();
 
         // An existing account is linked directly; anyone else gets an email invitation.
@@ -62,7 +71,13 @@ class Index extends Component
                 return;
             }
 
-            $membership = $this->club->addMember($user);
+            try {
+                $membership = $this->club->addMember($user);
+            } catch (ClubPlanException $exception) {
+                $this->addError('email', $exception->getMessage());
+
+                return;
+            }
 
             $this->reset('email');
             $this->resetPage();
@@ -101,8 +116,10 @@ class Index extends Component
             ->findOrFail($invitationId);
 
         try {
+            $this->club->ensureCanAddMembers();
+
             $inviteToClub->handle($this->club, $invitation->email, ClubInvitationRole::Member, Auth::user());
-        } catch (ClubInvitationException $exception) {
+        } catch (ClubInvitationException|ClubPlanException $exception) {
             Flux::toast(variant: 'danger', text: $exception->getMessage());
 
             return;
@@ -138,10 +155,21 @@ class Index extends Component
 
         $status = MembershipStatus::from($status);
 
-        $membership->update([
-            'status' => $status,
-            'ended_at' => $status === MembershipStatus::Ended ? now()->toDateString() : null,
-        ]);
+        if ($status === MembershipStatus::Active) {
+            // Reactivating counts towards the plan's member limit, just like adding someone new.
+            try {
+                $this->club->addMember($membership->user);
+            } catch (ClubPlanException $exception) {
+                Flux::toast(variant: 'danger', text: $exception->getMessage());
+
+                return;
+            }
+        } else {
+            $membership->update([
+                'status' => $status,
+                'ended_at' => $status === MembershipStatus::Ended ? now()->toDateString() : null,
+            ]);
+        }
 
         Flux::toast(variant: 'success', text: __('Membership updated.'));
     }
@@ -176,6 +204,15 @@ class Index extends Component
             })
             ->orderBy('membership_number')
             ->paginate(25);
+    }
+
+    /**
+     * Whether the club's trial or plan leaves room for another active member.
+     */
+    #[Computed]
+    public function canAddMembers(): bool
+    {
+        return $this->club->canAddMembers();
     }
 
     /**

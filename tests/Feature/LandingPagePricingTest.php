@@ -6,11 +6,11 @@ test('the landing page shows a monthly price per club size', function () {
     $this->get(route('home'))
         ->assertOk()
         ->assertSee(__('One price per month, based on your club size'))
-        ->assertSee(__('Up to 500 members'))
+        ->assertSee(__('Up to :count members', ['count' => '500']))
         ->assertSee('€ 99,00')
-        ->assertSee(__('Up to 1,000 members'))
+        ->assertSee(__('Up to :count members', ['count' => '1.000']))
         ->assertSee('€ 180,00')
-        ->assertSee(__('More than 1,000 members'))
+        ->assertSee(__('More than :count members', ['count' => '1.000']))
         ->assertSee(__('On request'));
 });
 

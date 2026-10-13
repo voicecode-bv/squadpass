@@ -5,9 +5,10 @@ import jsQR from 'jsqr';
 const SIDEBAR_GROUP_KEY = 'sidebar-group:';
 
 /**
- * Remember which sidebar groups are collapsed. The inline script in the layout
- * sets the initial state before Flux upgrades <ui-disclosure>; this keeps it in
- * sync afterwards, including across wire:navigate page swaps.
+ * Remember which sidebar groups are opened. Groups start collapsed, and the one
+ * holding the current page always opens. The inline script in the layout sets
+ * the initial state before Flux upgrades <ui-disclosure>; this keeps it in sync
+ * afterwards, including across wire:navigate page swaps.
  */
 function rememberSidebarGroups() {
     document.querySelectorAll('[data-sidebar-group]').forEach((group) => {
@@ -20,9 +21,11 @@ function rememberSidebarGroups() {
             return;
         }
 
+        const shouldBeOpen = stored === 'open' || group.querySelector('[data-current]') !== null;
+
         // After a navigation the element is already booted, so toggling has to
         // go through the button instead of the `open` attribute.
-        if (stored !== null && (stored === 'open') !== group.hasAttribute('data-open')) {
+        if (shouldBeOpen !== group.hasAttribute('data-open')) {
             group.querySelector('button')?.click();
         }
 

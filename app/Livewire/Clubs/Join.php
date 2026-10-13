@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Clubs;
 
+use App\Exceptions\ClubPlanException;
 use App\Models\Club;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -35,7 +36,14 @@ class Join extends Component
             return;
         }
 
-        $membership = $this->club->addMember(Auth::user());
+        try {
+            $membership = $this->club->addMember(Auth::user());
+        } catch (ClubPlanException) {
+            // The reason (plan or member limit) is the club's business, not the visitor's.
+            Flux::toast(variant: 'danger', text: __('This club cannot accept new members right now. Please contact the club.'));
+
+            return;
+        }
 
         Flux::toast(variant: 'success', text: __('Welcome! You are now a member of :club (#:number).', [
             'club' => $this->club->name,

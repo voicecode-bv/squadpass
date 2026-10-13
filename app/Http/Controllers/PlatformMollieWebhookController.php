@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Addons\ApplyAddonPaymentStatus;
+use App\Actions\ClubSubscriptions\ApplyClubSubscriptionPaymentStatus;
 use App\Models\AddonPayment;
+use App\Models\ClubSubscriptionPayment;
 use App\Services\Mollie\MollieGateway;
 use App\Services\Mollie\PlatformMollieAccount;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Webhook for payments on the platform's own Mollie account (add-on billing).
+ * Webhook for payments on the platform's own Mollie account: add-ons and SquadPass plans.
  */
 class PlatformMollieWebhookController extends Controller
 {
@@ -19,19 +21,23 @@ class PlatformMollieWebhookController extends Controller
         MollieGateway $gateway,
         PlatformMollieAccount $platform,
         ApplyAddonPaymentStatus $applyAddonPaymentStatus,
+        ApplyClubSubscriptionPaymentStatus $applyClubSubscriptionPaymentStatus,
     ): Response {
         $molliePaymentId = $request->input('id');
 
         abort_unless(is_string($molliePaymentId) && $molliePaymentId !== '', 400);
 
-        $payment = AddonPayment::query()->where('mollie_payment_id', $molliePaymentId)->first();
+        $payment = AddonPayment::query()->where('mollie_payment_id', $molliePaymentId)->first()
+            ?? ClubSubscriptionPayment::query()->where('mollie_payment_id', $molliePaymentId)->first();
 
         abort_unless($payment !== null, 404);
 
         // The webhook payload only carries an id; always verify the state server-side.
         $result = $gateway->getPayment($platform, $molliePaymentId);
 
-        $applyAddonPaymentStatus->handle($payment, $result);
+        $payment instanceof AddonPayment
+            ? $applyAddonPaymentStatus->handle($payment, $result)
+            : $applyClubSubscriptionPaymentStatus->handle($payment, $result);
 
         return response()->noContent();
     }
