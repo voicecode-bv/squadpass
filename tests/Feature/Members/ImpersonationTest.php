@@ -136,3 +136,67 @@ test('the member show page offers the impersonate action to owners only', functi
         ->assertOk()
         ->assertDontSee(__('View as member'));
 });
+
+test('a superadmin can view the app as a club owner and return to the clubs overview', function () {
+    $superadmin = User::factory()->superadmin()->create();
+
+    $this->actingAs($superadmin)
+        ->post(route('clubs.owners.impersonate', [$this->club, $this->owner]))
+        ->assertRedirect(route('clubs.dashboard', $this->club));
+
+    expect(auth()->id())->toBe($this->owner->id)
+        ->and(session(Impersonation::SESSION_KEY))->toBe($superadmin->id);
+
+    $this->post(route('impersonate.stop'))
+        ->assertRedirect(route('clubs.index'));
+
+    expect(auth()->id())->toBe($superadmin->id);
+});
+
+test('only superadmins can impersonate club owners', function () {
+    $coOwner = User::factory()->create();
+    $this->club->addStaff($coOwner, StaffRole::Owner);
+
+    $this->actingAs($coOwner)
+        ->post(route('clubs.owners.impersonate', [$this->club, $this->owner]))
+        ->assertForbidden();
+
+    expect(auth()->id())->toBe($coOwner->id);
+});
+
+test('a superadmin can only impersonate owners of the club in the route', function () {
+    $superadmin = User::factory()->superadmin()->create();
+    $admin = User::factory()->create();
+    $this->club->addStaff($admin, StaffRole::Admin);
+
+    $this->actingAs($superadmin)
+        ->post(route('clubs.owners.impersonate', [$this->club, $admin]))
+        ->assertNotFound();
+
+    $this->post(route('clubs.owners.impersonate', [Club::factory()->create(), $this->owner]))
+        ->assertNotFound();
+});
+
+test('a superadmin cannot impersonate an owner who is a superadmin', function () {
+    $superadmin = User::factory()->superadmin()->create();
+    $superadminOwner = User::factory()->superadmin()->create();
+    $this->club->addStaff($superadminOwner, StaffRole::Owner);
+
+    $this->actingAs($superadmin)
+        ->post(route('clubs.owners.impersonate', [$this->club, $superadminOwner]))
+        ->assertForbidden();
+});
+
+test('the clubs overview offers superadmins to view the app as each owner', function () {
+    $this->owner->update(['name' => 'Clubeigenaar Kees']);
+
+    $this->actingAs(User::factory()->superadmin()->create())
+        ->get(route('clubs.index'))
+        ->assertOk()
+        ->assertSee(__('View as :name', ['name' => 'Clubeigenaar Kees']));
+
+    $this->actingAs($this->owner)
+        ->get(route('clubs.index'))
+        ->assertOk()
+        ->assertDontSee(__('View as :name', ['name' => 'Clubeigenaar Kees']));
+});

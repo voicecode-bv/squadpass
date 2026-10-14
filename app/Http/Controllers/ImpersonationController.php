@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Club;
 use App\Models\Membership;
+use App\Models\User;
 use App\Services\Impersonation\Impersonation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,22 @@ class ImpersonationController extends Controller
         Impersonation::start($target, route('clubs.members.show', [$club, $membership]));
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Start browsing the app as one of the club's owners. Superadmin only.
+     */
+    public function storeOwner(Request $request, Club $club, User $owner): RedirectResponse
+    {
+        Gate::authorize('manage-platform');
+
+        abort_if(Impersonation::isActive(), 403);
+        abort_if($owner->is($request->user()), 403);
+        abort_if($owner->is_superadmin, 403);
+
+        Impersonation::start($owner, route('clubs.index'));
+
+        return redirect()->route('clubs.dashboard', $club);
     }
 
     /**

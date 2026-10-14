@@ -129,6 +129,14 @@ class Club extends Model implements MollieAccount
     }
 
     /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function owners(): BelongsToMany
+    {
+        return $this->staff()->wherePivot('role', StaffRole::Owner->value);
+    }
+
+    /**
      * @return HasMany<Membership, $this>
      */
     public function memberships(): HasMany

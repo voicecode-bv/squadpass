@@ -28,7 +28,8 @@
             </x-slot>
         </flux:callout>
     @elseif ($status === $statuses::Pending)
-        <flux:callout icon="clock">
+        <flux:callout icon="clock" variant="warning">
+            <flux:callout.heading>{{ __('Payment pending') }}</flux:callout.heading>
             <flux:callout.text>{{ __('Waiting for your first payment. Your plan is activated as soon as it is paid.') }}</flux:callout.text>
         </flux:callout>
     @elseif ($current && $status === $statuses::Cancelled)

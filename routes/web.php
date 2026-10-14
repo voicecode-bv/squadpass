@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('members', Members\Index::class)->name('clubs.members');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');
         Route::post('members/{membership}/impersonate', [ImpersonationController::class, 'store'])->name('clubs.members.impersonate');
+        Route::post('owners/{owner}/impersonate', [ImpersonationController::class, 'storeOwner'])->name('clubs.owners.impersonate');
         Route::livewire('trainers', Trainers\Index::class)->name('clubs.trainers');
         Route::livewire('rooms', Rooms\Index::class)->name('clubs.rooms');
         Route::livewire('lessons', Lessons\Index::class)->name('clubs.lessons');

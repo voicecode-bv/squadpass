@@ -53,7 +53,10 @@ class Index extends Component
     public function clubs(): Collection
     {
         if (Auth::user()->is_superadmin) {
-            return Club::query()->orderBy('name')->get();
+            return Club::query()
+                ->with('owners:users.id,users.name,users.is_superadmin')
+                ->orderBy('name')
+                ->get();
         }
 
         return Auth::user()->staffClubs()->orderBy('name')->get();

@@ -210,3 +210,13 @@ test('only superadmins can activate a manually billed plan', function () {
         ->and($subscription->isBilledManually())->toBeTrue()
         ->and($this->club->fresh()->memberLimit())->toBeNull();
 });
+
+test('a pending first payment is highlighted on the plan page', function () {
+    ClubSubscription::factory()->create(['club_id' => $this->club->id, 'status' => SubscriptionStatus::Pending]);
+
+    $this->actingAs($this->owner)
+        ->get(route('clubs.plan', $this->club))
+        ->assertOk()
+        ->assertSee(__('Payment pending'))
+        ->assertSee(__('Waiting for your first payment. Your plan is activated as soon as it is paid.'));
+});

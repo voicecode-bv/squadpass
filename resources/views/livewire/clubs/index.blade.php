@@ -47,6 +47,17 @@
                             @endunless
                         </div>
                     </a>
+
+                    @if (auth()->user()->is_superadmin && $club->relationLoaded('owners'))
+                        @foreach ($club->owners->reject->is_superadmin->reject(fn ($owner) => $owner->is(auth()->user())) as $owner)
+                            <form method="POST" action="{{ route('clubs.owners.impersonate', [$club, $owner]) }}" class="px-4 pb-4">
+                                @csrf
+                                <flux:button type="submit" size="sm" icon="eye">
+                                    {{ __('View as :name', ['name' => $owner->name]) }}
+                                </flux:button>
+                            </form>
+                        @endforeach
+                    @endif
                 </x-portal.card>
             @endforeach
         </div>
