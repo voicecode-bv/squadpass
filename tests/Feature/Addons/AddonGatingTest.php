@@ -2,6 +2,7 @@
 
 use App\Enums\AddonKey;
 use App\Enums\StaffRole;
+use App\Livewire\Clubs\AddonCta;
 use App\Livewire\Clubs\Settings;
 use App\Livewire\Portal\Subscriptions as PortalSubscriptions;
 use App\Models\Club;
@@ -51,7 +52,7 @@ test('club settings hide and ignore the Mollie key without the Mollie add-on', f
 
     Livewire::actingAs($owner)
         ->test(Settings::class, ['club' => $club])
-        ->assertSee(__('Activate the Mollie add-on to let members pay online for strip cards and subscriptions.'))
+        ->assertSeeLivewire(AddonCta::class)
         ->assertDontSee(__('Mollie API key'))
         ->set('mollie_api_key', 'test_sneaky')
         ->call('save')

@@ -4,6 +4,7 @@ use App\Enums\AddonKey;
 use App\Enums\MoneybirdInvoiceDelivery;
 use App\Enums\StaffRole;
 use App\Jobs\CreateMoneybirdInvoice;
+use App\Livewire\Clubs\AddonCta;
 use App\Livewire\Clubs\Moneybird;
 use App\Models\Club;
 use App\Models\Payment;
@@ -35,7 +36,7 @@ test('the page asks to activate the add-on when the club does not have it', func
 
     Livewire::actingAs($this->owner)
         ->test(Moneybird::class, ['club' => $club])
-        ->assertSee(__('Activate the Moneybird add-on to sync members as contacts and invoice paid payments automatically.'))
+        ->assertSeeLivewire(AddonCta::class)
         ->set('access_token', 'a-valid-looking-token-value')
         ->call('connect')
         ->assertForbidden();

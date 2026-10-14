@@ -44,3 +44,6 @@ Animaties komen uit resources/css/app.css: utilities `animate-rise|fade|slide-in
 Blade vervangt raw PHP-blokken met een non-greedy regex op `@php ... @endphp`. Staat er ergens een inline `@php($x = 1)` vóór een blok-`@endphp` verderop in hetzelfde bestand, dan slikt de compiler alles daartussen op als PHP-code en krijg je "syntax error, unexpected token @" in de gecompileerde view.
 
 Kies per bestand één vorm. Heeft een view een `@php ... @endphp`-blok nodig (bijv. meerdere statements in een loop), gebruik dan ook blokvorm voor de enkele toewijzingen erboven.
+
+## Ontbrekende add-on: altijd de AddonCta, geen callout
+Waar een feature achter een add-on zit die de club nog niet heeft, toon `<livewire:clubs.addon-cta :club="$club" :addon-key="AddonKey::X" wire:key="addon-cta-X" />` in plaats van een flux:callout. Het component (App\Livewire\Clubs\AddonCta) toont pitch, voordelen (AddonKey::pitch()/benefits()), maandprijs uit de Addon-rij en laat owners direct kopen via PurchaseAddon; admins zien "vraag de eigenaar". Nieuwe AddonKey? Vul pitch() en benefits() aan. Add-on wél actief maar nog niet gekoppeld (bv. Moneybird) is een andere staat: gebruik dan x-portal.empty met een koppelknop.

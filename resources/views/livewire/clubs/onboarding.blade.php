@@ -191,13 +191,7 @@
                 @endif
             </div>
         @else
-            <flux:callout icon="credit-card" variant="secondary">
-                <flux:callout.heading>{{ __('Online payments (Mollie)') }}</flux:callout.heading>
-                <flux:callout.text>{{ __('Online payments are an add-on. Activate it to connect your Mollie account; you can also do this later from the add-ons page.') }}</flux:callout.text>
-                <x-slot name="actions">
-                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
-                </x-slot>
-            </flux:callout>
+            <livewire:clubs.addon-cta :club="$club" :addon-key="\App\Enums\AddonKey::Mollie" wire:key="addon-cta-Mollie" />
         @endif
     @endif
 

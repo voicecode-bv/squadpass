@@ -6,13 +6,7 @@
     </x-portal.hero>
 
     @if (! $this->hasAddon)
-        <flux:callout icon="document-text" variant="secondary">
-            <flux:callout.heading>{{ __('Invoicing (Moneybird)') }}</flux:callout.heading>
-            <flux:callout.text>{{ __('Activate the Moneybird add-on to sync members as contacts and invoice paid payments automatically.') }}</flux:callout.text>
-            <x-slot name="actions">
-                <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
-            </x-slot>
-        </flux:callout>
+        <livewire:clubs.addon-cta :club="$club" :addon-key="\App\Enums\AddonKey::Moneybird" wire:key="addon-cta-Moneybird" />
     @elseif (! $this->isConnected)
         {{-- Step 1 / 2: connect --}}
         <div class="flex flex-col gap-6 rounded-xl bg-white p-6 shadow-sm dark:bg-zinc-900">

@@ -6,6 +6,7 @@
 
         <flux:field>
             <flux:label>{{ __('Club photo') }}</flux:label>
+            <flux:description>{{ __('Shown on the club card under My clubs. JPG or PNG, up to 4 MB.') }}</flux:description>
 
             {{-- A picked file only previews when it is an image; anything else falls back to the stored photo. --}}
             @php($photoPreview = $photo?->isPreviewable() ? $photo->temporaryUrl() : $club->photoUrl())
@@ -29,37 +30,24 @@
                 </div>
             </div>
 
-            <flux:description>{{ __('Shown on the club card under My clubs. JPG or PNG, up to 4 MB.') }}</flux:description>
             <flux:error name="photo" />
         </flux:field>
 
         @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
-            <flux:field>
-                <flux:input
-                    wire:model="mollie_api_key"
-                    :label="__('Mollie API key')"
-                    type="password"
-                    viewable
-                    placeholder="test_..."
-                />
-                <flux:description>
-                    @if (str_starts_with($mollie_api_key, 'live_'))
-                        {{ __('Live mode: real payments will be processed.') }}
-                    @elseif (str_starts_with($mollie_api_key, 'test_'))
-                        {{ __('Test mode: no real payments will be processed.') }}
-                    @else
-                        {{ __('Members can only pay online once a Mollie API key is set.') }}
-                    @endif
-                </flux:description>
-            </flux:field>
+            <flux:input
+                wire:model="mollie_api_key"
+                :label="__('Mollie API key')"
+                :description="match (true) {
+                    str_starts_with($mollie_api_key, 'live_') => __('Live mode: real payments will be processed.'),
+                    str_starts_with($mollie_api_key, 'test_') => __('Test mode: no real payments will be processed.'),
+                    default => __('Members can only pay online once a Mollie API key is set.'),
+                }"
+                type="password"
+                viewable
+                placeholder="test_..."
+            />
         @else
-            <flux:callout icon="credit-card" variant="secondary">
-                <flux:callout.heading>{{ __('Online payments (Mollie)') }}</flux:callout.heading>
-                <flux:callout.text>{{ __('Activate the Mollie add-on to let members pay online for strip cards and subscriptions.') }}</flux:callout.text>
-                <x-slot name="actions">
-                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
-                </x-slot>
-            </flux:callout>
+            <livewire:clubs.addon-cta :club="$club" :addon-key="\App\Enums\AddonKey::Mollie" wire:key="addon-cta-Mollie" />
         @endif
 
         <flux:separator />
@@ -76,13 +64,7 @@
                 </x-slot>
             </flux:callout>
         @else
-            <flux:callout icon="document-text" variant="secondary">
-                <flux:callout.heading>{{ __('Invoicing (Moneybird)') }}</flux:callout.heading>
-                <flux:callout.text>{{ __('Activate the Moneybird add-on to sync members as contacts and invoice paid payments automatically.') }}</flux:callout.text>
-                <x-slot name="actions">
-                    <flux:button :href="route('clubs.addons', $club)" wire:navigate size="sm">{{ __('View add-ons') }}</flux:button>
-                </x-slot>
-            </flux:callout>
+            <livewire:clubs.addon-cta :club="$club" :addon-key="\App\Enums\AddonKey::Moneybird" wire:key="addon-cta-Moneybird" />
         @endif
 
         <flux:separator />
@@ -90,10 +72,19 @@
         <flux:switch wire:model="self_signup" :label="__('Open for online registration')" :description="__('Anyone with the join link below can become a member directly.')" />
 
         @if ($self_signup)
-            <flux:field>
-                <flux:input :value="route('clubs.join', $club)" :label="__('Join link')" readonly copyable />
-                <flux:description>{{ __('Share this link (or a QR code of it) so people can become a member themselves.') }}</flux:description>
-            </flux:field>
+            <flux:input
+                :value="route('clubs.join', $club)"
+                :label="__('Join link')"
+                :description="__('Share this link (or a QR code of it) so people can become a member themselves.')"
+                readonly
+                copyable
+            />
+
+            <div>
+                <flux:button type="button" size="sm" icon="qr-code" wire:click="downloadJoinQrCode">
+                    {{ __('Download QR code') }}
+                </flux:button>
+            </div>
         @endif
 
         <div class="flex justify-end">

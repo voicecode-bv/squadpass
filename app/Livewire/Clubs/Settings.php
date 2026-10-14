@@ -4,6 +4,7 @@ namespace App\Livewire\Clubs;
 
 use App\Enums\AddonKey;
 use App\Models\Club;
+use App\Services\CheckIns\QrCodeRenderer;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Title('Club settings')]
 class Settings extends Component
@@ -72,6 +74,24 @@ class Settings extends Component
         $this->photo = null;
 
         Flux::toast(variant: 'success', text: __('Club settings saved.'));
+    }
+
+    /**
+     * The join link as a print-ready QR code, for posters and flyers.
+     */
+    public function downloadJoinQrCode(QrCodeRenderer $renderer): StreamedResponse
+    {
+        $this->authorize('update', $this->club);
+
+        $png = $renderer->png(route('clubs.join', $this->club), moduleSize: 20, quietZone: 4);
+
+        return response()->streamDownload(
+            function () use ($png): void {
+                echo $png;
+            },
+            'qr-'.$this->club->slug.'.png',
+            ['Content-Type' => 'image/png'],
+        );
     }
 
     public function deletePhoto(): void

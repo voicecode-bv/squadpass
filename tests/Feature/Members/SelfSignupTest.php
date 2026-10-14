@@ -121,3 +121,25 @@ test('the join page offers staff the club instead of a membership', function () 
         ->assertSee(__('You manage this club'))
         ->assertDontSee('wire:click="join"', false);
 });
+
+test('an owner can download the join link as a QR code', function () {
+    $owner = User::factory()->create();
+    $this->club->addStaff($owner, StaffRole::Owner);
+
+    Livewire::actingAs($owner)
+        ->test(Settings::class, ['club' => $this->club])
+        ->assertSee(__('Download QR code'))
+        ->call('downloadJoinQrCode')
+        ->assertFileDownloaded('qr-'.$this->club->slug.'.png', contentType: 'image/png');
+});
+
+test('the QR download is re-authorized when the owner lost their role meanwhile', function () {
+    $owner = User::factory()->create();
+    $this->club->addStaff($owner, StaffRole::Owner);
+
+    $component = Livewire::actingAs($owner)->test(Settings::class, ['club' => $this->club]);
+
+    $this->club->addStaff($owner, StaffRole::Admin);
+
+    $component->call('downloadJoinQrCode')->assertForbidden();
+});

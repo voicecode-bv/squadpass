@@ -73,10 +73,13 @@
                 @endforeach
             </flux:select>
 
-            <flux:field>
-                <flux:input wire:model="credits" :label="__('Lesson credits per period')" type="number" min="1" />
-                <flux:description>{{ __('Leave empty for unlimited. Every lesson reservation (one-time or recurring) uses 1 credit.') }}</flux:description>
-            </flux:field>
+            <flux:input
+                wire:model="credits"
+                :label="__('Lesson credits per period')"
+                :description="__('Leave empty for unlimited. Every lesson reservation (one-time or recurring) uses 1 credit.')"
+                type="number"
+                min="1"
+            />
 
             <div class="flex justify-end">
                 <flux:button type="submit" variant="primary">{{ $editingPlanId ? __('Save changes') : __('Create plan') }}</flux:button>
