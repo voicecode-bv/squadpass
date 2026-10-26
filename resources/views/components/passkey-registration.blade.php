@@ -51,7 +51,7 @@
                 this.showForm = false;
                 await $wire.loadPasskeys();
             } catch (e) {
-                if (e.constructor?.name !== 'UserCancelledError') {
+                if (e.name !== 'UserCancelledError') {
                     this.error = e.message;
                 }
             } finally {
