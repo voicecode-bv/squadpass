@@ -32,3 +32,11 @@ test('the pricing section omits the add-on price without add-ons for sale', func
         ->assertSee(__('Add-ons such as online payments, invoicing and your own mobile app are optional and billed separately.'))
         ->assertDontSee('€ 15,00');
 });
+
+test('the landing page answers the most asked questions', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee(__('Frequently asked questions'))
+        ->assertSee(__('How long before I can start?'))
+        ->assertSee(__('Every new club gets a free trial of :days days with all features. You only choose a plan once you want to keep going.', ['days' => 14]));
+});

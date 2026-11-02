@@ -37,6 +37,9 @@
                         <a href="#add-ons" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
                             {{ __('Add-ons') }}
                         </a>
+                        <a href="#faq" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
+                            {{ __('FAQ') }}
+                        </a>
                         @auth
                             <a href="{{ route('dashboard') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
                                 {{ __('Dashboard') }}
@@ -325,6 +328,39 @@
                                     <p class="mt-1 text-sm leading-relaxed text-zinc-400">{{ $point['text'] }}</p>
                                 </div>
                             </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- Frequently asked questions --}}
+                <section id="faq" class="scroll-mt-8 py-16 lg:py-24">
+                    <div class="mx-auto max-w-2xl text-center">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-white/10">
+                            {{ __('Frequently asked questions') }}
+                        </span>
+                        <h2 class="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Good to know before you start') }}</h2>
+                        <p class="mt-4 text-lg text-zinc-400">
+                            {{ __('The questions new clubs ask us most. Is yours not listed?') }}
+                            <a href="mailto:{{ config('mail.from.address') }}" class="font-semibold text-blue-300 transition hover:text-white">{{ __('Send us an email') }}</a>
+                        </p>
+                    </div>
+
+                    <div class="mx-auto mt-14 max-w-3xl space-y-4">
+                        @foreach ([
+                            ['question' => __('How do I get started?'), 'answer' => __('Create your club with the form below. A setup wizard guides you through your schedule, strip cards and subscriptions, and then you invite your members. You can start right away, no demo or quote needed.')],
+                            ['question' => __('How long before I can start?'), 'answer' => __('You can start immediately: your club is ready the moment you create it. Want your own branded app in the App Store and Google Play? It takes about 7 days from your request until your app is live.')],
+                            ['question' => __('Can I try SquadPass first?'), 'answer' => __('Every new club gets a free trial of :days days with all features. You only choose a plan once you want to keep going.', ['days' => \App\Enums\ClubPlan::TRIAL_DAYS])],
+                            ['question' => __('How long am I tied to SquadPass?'), 'answer' => __('No long contracts or small print. Your plan and add-ons run per month and can be cancelled monthly. After cancelling you keep using everything until the end of the paid month.')],
+                            ['question' => __('Can I import my current members?'), 'answer' => __('Yes. Upload your existing member list as a CSV file, for example an export from Excel or your current system. Names, email addresses, membership numbers, member since, phone numbers and dates of birth come along, and you choose whether members get an invitation right away.')],
+                            ['question' => __('How do you offer support?'), 'answer' => __('The setup wizard and product tour help you on your way. Still have a question? Create a support ticket from your dashboard or send us an email, and we will get back to you as soon as possible.')],
+                        ] as $faq)
+                            <details class="group rounded-2xl bg-white/5 ring-1 ring-white/10 transition open:bg-white/[0.07]">
+                                <summary class="flex cursor-pointer list-none items-center justify-between gap-6 px-6 py-5 text-left font-semibold text-white [&::-webkit-details-marker]:hidden">
+                                    {{ $faq['question'] }}
+                                    <flux:icon.plus class="size-5 shrink-0 text-blue-300 transition group-open:rotate-45" />
+                                </summary>
+                                <p class="px-6 pb-6 leading-relaxed text-zinc-400">{{ $faq['answer'] }}</p>
+                            </details>
                         @endforeach
                     </div>
                 </section>
