@@ -106,6 +106,20 @@ class MoneybirdInvoice extends Model
     }
 
     /**
+     * Whether the given Moneybird invoice was fully processed for the payment:
+     * the invoice actions mirror it with the payment link as their last step.
+     * Uses the (club_id, moneybird_id) unique index.
+     */
+    public static function isRecordedFor(Payment $payment, string $moneybirdId): bool
+    {
+        return self::query()
+            ->where('club_id', $payment->club_id)
+            ->where('moneybird_id', $moneybirdId)
+            ->where('payment_id', $payment->id)
+            ->exists();
+    }
+
+    /**
      * Only a regular invoice that has not been credited yet can be turned into
      * a credit invoice. Uses an eager loaded count or relation when the caller
      * provided one, so a listing does not query per row.

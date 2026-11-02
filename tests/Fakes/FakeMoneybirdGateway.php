@@ -125,11 +125,13 @@ class FakeMoneybirdGateway implements MoneybirdGateway
     public function sendInvoice(Club $club, string $invoiceId, MoneybirdInvoiceDelivery $delivery): void
     {
         $this->sentInvoices[] = ['club' => $club->id, 'invoice_id' => $invoiceId, 'delivery' => $delivery];
+        $this->setInvoiceState($invoiceId, 'open');
     }
 
     public function registerPayment(Club $club, string $invoiceId, int $amountCents, CarbonInterface $paidAt): void
     {
         $this->registeredPayments[] = ['club' => $club->id, 'invoice_id' => $invoiceId, 'amount_cents' => $amountCents, 'paid_at' => $paidAt->toDateString()];
+        $this->setInvoiceState($invoiceId, 'paid');
     }
 
     public function createCreditInvoice(Club $club, string $invoiceId): string
@@ -159,5 +161,16 @@ class FakeMoneybirdGateway implements MoneybirdGateway
     public function settleCreditInvoice(Club $club, string $creditInvoiceId): void
     {
         $this->settledCreditInvoices[] = $creditInvoiceId;
+        $this->setInvoiceState($creditInvoiceId, 'paid');
+    }
+
+    /**
+     * Mirror Moneybird's state transitions for invoices this fake knows about.
+     */
+    protected function setInvoiceState(string $invoiceId, string $state): void
+    {
+        if (isset($this->invoices[$invoiceId])) {
+            $this->invoices[$invoiceId]['state'] = $state;
+        }
     }
 }

@@ -18,7 +18,11 @@ use App\Models\Payment;
 use App\Models\StripCardPlan;
 use App\Models\User;
 use App\Services\Mollie\MolliePaymentResult;
+use App\Services\Moneybird\HttpMoneybirdGateway;
 use App\Services\Moneybird\MoneybirdGateway;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\Fakes\FakeMoneybirdGateway;
@@ -126,6 +130,42 @@ test('with email delivery the invoice is sent and the Mollie payment is register
         ->and($this->gateway->registeredPayments[0]['paid_at'])->toBe(now()->subDays(2)->toDateString());
 });
 
+test('a retry after a partial run finishes the invoice without creating, sending or paying it twice', function () {
+    $this->club->update(['moneybird_invoice_delivery' => MoneybirdInvoiceDelivery::Email]);
+    $payment = Payment::factory()->for($this->club)->paid()->create(['user_id' => $this->member->id, 'amount_cents' => 3950]);
+    $action = app(CreateInvoiceForPayment::class);
+
+    // First run: the invoice was created and sent, then Moneybird rate-limited registering the payment.
+    $action->handle($payment);
+    MoneybirdInvoice::query()->delete();
+    $this->gateway->invoices['mb_invoice_2']['state'] = 'open';
+    $this->gateway->registeredPayments = [];
+
+    expect($action->handle($payment->refresh()))->toBe('mb_invoice_2')
+        ->and($this->gateway->createdInvoices)->toHaveCount(1)
+        ->and($this->gateway->sentInvoices)->toHaveCount(1)
+        ->and($this->gateway->registeredPayments)->toHaveCount(1)
+        ->and(MoneybirdInvoice::query()->sole()->state)->toBe(MoneybirdInvoiceState::Paid);
+
+    // Fully processed now: nothing left to do.
+    expect($action->handle($payment->refresh()))->toBeNull()
+        ->and($this->gateway->registeredPayments)->toHaveCount(1);
+});
+
+test('a retry finalizes an invoice that was left as a draft', function () {
+    $this->club->update(['moneybird_invoice_delivery' => MoneybirdInvoiceDelivery::Manual]);
+    $payment = Payment::factory()->for($this->club)->paid()->create(['user_id' => $this->member->id]);
+    $this->gateway->createInvoice($this->club, 'mb_contact_x', [['description' => 'Les', 'price_cents' => 1000]]);
+    $payment->update(['moneybird_invoice_id' => 'mb_invoice_1']);
+
+    app(CreateInvoiceForPayment::class)->handle($payment);
+
+    expect($this->gateway->createdInvoices)->toHaveCount(1)
+        ->and($this->gateway->sentInvoices[0]['invoice_id'])->toBe('mb_invoice_1')
+        ->and($this->gateway->registeredPayments[0]['invoice_id'])->toBe('mb_invoice_1')
+        ->and(MoneybirdInvoice::query()->sole()->payment_id)->toBe($payment->id);
+});
+
 test('unpaid payments and clubs without Moneybird are skipped', function () {
     $openPayment = Payment::factory()->for($this->club)->create(['user_id' => $this->member->id]);
 
@@ -183,6 +223,22 @@ test('a refund creates a credit invoice that is finalized and settled when invoi
 
     // The credit invoice is mirrored locally too.
     expect(MoneybirdInvoice::query()->where('moneybird_id', 'mb_credit_1')->firstOrFail()->is_credit_invoice)->toBeTrue();
+});
+
+test('a retry finalizes a credit invoice that was left as a draft', function () {
+    $this->club->update(['moneybird_invoice_delivery' => MoneybirdInvoiceDelivery::Manual]);
+    $payment = Payment::factory()->for($this->club)->create([
+        'user_id' => $this->member->id,
+        'status' => PaymentStatus::Refunded,
+        'moneybird_invoice_id' => 'mb_invoice_9',
+    ]);
+    $creditInvoiceId = $this->gateway->createCreditInvoice($this->club, 'mb_invoice_9');
+    $payment->update(['moneybird_credit_invoice_id' => $creditInvoiceId]);
+
+    expect(app(CreateCreditInvoiceForPayment::class)->handle($payment))->toBe($creditInvoiceId)
+        ->and($this->gateway->createdCreditInvoices)->toHaveCount(1)
+        ->and($this->gateway->sentInvoices[0]['invoice_id'])->toBe($creditInvoiceId)
+        ->and($this->gateway->settledCreditInvoices)->toBe([$creditInvoiceId]);
 });
 
 test('a refund of a payment that was never invoiced creates no credit invoice', function () {
@@ -257,6 +313,43 @@ test('a failed invoice job records the error on the club', function () {
     (new CreateMoneybirdInvoice($payment))->failed(new RuntimeException('HTTP 422 Unprocessable Entity'));
 
     expect($this->club->refresh()->moneybird_last_error)->toBe('HTTP 422 Unprocessable Entity');
+});
+
+/**
+ * Run a queued job through its middleware the way the queue worker does.
+ */
+function runThroughMiddleware(object $job): void
+{
+    (new Pipeline(app()))
+        ->send($job)
+        ->through($job->middleware())
+        ->then(fn (object $job) => app()->call([$job, 'handle']));
+}
+
+test('a Moneybird rate limit releases the invoice job until the Retry-After delay instead of failing it', function () {
+    $this->app->bind(MoneybirdGateway::class, HttpMoneybirdGateway::class);
+    Http::fake(['moneybird.com/*' => Http::response('Retry later', 429, ['Retry-After' => '120'])]);
+    $payment = Payment::factory()->for($this->club)->paid()->create(['user_id' => $this->member->id]);
+
+    $job = (new CreateMoneybirdInvoice($payment))->withFakeQueueInteractions();
+
+    runThroughMiddleware($job);
+
+    $job->assertReleased(delay: 120)->assertNotFailed();
+    expect($job->retryUntil())->toBeInstanceOf(DateTimeInterface::class)
+        ->and($job->maxExceptions)->toBe(3)
+        ->and($payment->refresh()->moneybird_invoice_id)->toBeNull();
+});
+
+test('other Moneybird errors still throw from the invoice job', function () {
+    $this->app->bind(MoneybirdGateway::class, HttpMoneybirdGateway::class);
+    Http::fake(['moneybird.com/*' => Http::response('Unprocessable', 422)]);
+    $payment = Payment::factory()->for($this->club)->paid()->create(['user_id' => $this->member->id]);
+
+    $job = (new CreateMoneybirdInvoice($payment))->withFakeQueueInteractions();
+
+    expect(fn () => runThroughMiddleware($job))->toThrow(RequestException::class);
+    $job->assertNotReleased();
 });
 
 test('the member page links to the Moneybird invoice', function () {

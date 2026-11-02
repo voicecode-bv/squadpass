@@ -23,6 +23,14 @@ enum MoneybirdInvoiceState: string
         return self::tryFrom((string) $state) ?? self::Unknown;
     }
 
+    /**
+     * Finalized invoices on which a payment can still be registered.
+     */
+    public function awaitsPayment(): bool
+    {
+        return in_array($this, [self::Open, self::Scheduled, self::PendingPayment, self::Reminded, self::Late], true);
+    }
+
     public function label(): string
     {
         return match ($this) {
