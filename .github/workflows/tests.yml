@@ -31,11 +31,16 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Add Flux Pro credentials
-        run: composer config --global http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"
+      # Private packages: Flux Pro, and voicecode/monitoring-client from a private
+      # GitHub repository that the default GITHUB_TOKEN cannot read.
+      - name: Add private package credentials
+        run: |
+          composer config --global http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"
+          composer config --global github-oauth.github.com "$COMPOSER_GITHUB_TOKEN"
         env:
           FLUX_USERNAME: ${{ secrets.FLUX_USERNAME }}
           FLUX_LICENSE_KEY: ${{ secrets.FLUX_LICENSE_KEY }}
+          COMPOSER_GITHUB_TOKEN: ${{ secrets.COMPOSER_GITHUB_TOKEN }}
 
       - name: Setup Application
         run: composer setup
