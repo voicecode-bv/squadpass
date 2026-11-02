@@ -34,6 +34,15 @@ class ClubPolicy
     }
 
     /**
+     * Mollie and Moneybird credentials follow the settings rule, except on a demo
+     * club: there only superadmins (via the global Gate::before hook) may change them.
+     */
+    public function manageIntegrations(User $user, Club $club): bool
+    {
+        return ! $club->is_demo && $this->update($user, $club);
+    }
+
+    /**
      * Owners and admins handle day-to-day administration.
      */
     public function manage(User $user, Club $club): bool

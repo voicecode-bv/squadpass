@@ -39,14 +39,31 @@ class ClubFactory extends Factory
     }
 
     /**
-     * A club with Moneybird credentials and the Moneybird add-on active.
+     * A club with Moneybird credentials, the setup wizard finished and the Moneybird add-on active.
      */
     public function withMoneybird(string $token = 'mb_token', string $administrationId = '123456'): static
     {
         return $this->state([
             'moneybird_access_token' => $token,
             'moneybird_administration_id' => $administrationId,
+            'moneybird_setup_completed_at' => now(),
         ])->withAddon(AddonKey::Moneybird);
+    }
+
+    /**
+     * Connected to Moneybird, but the owner has not finished the setup wizard yet.
+     */
+    public function withUnfinishedMoneybirdSetup(): static
+    {
+        return $this->withMoneybird()->state(['moneybird_setup_completed_at' => null]);
+    }
+
+    /**
+     * A demo club: every add-on unlocked without a subscription.
+     */
+    public function demo(): static
+    {
+        return $this->state(['is_demo' => true]);
     }
 
     /**

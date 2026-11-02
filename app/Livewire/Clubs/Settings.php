@@ -7,6 +7,7 @@ use App\Models\Club;
 use App\Services\CheckIns\QrCodeRenderer;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -30,14 +31,22 @@ class Settings extends Component
 
     public bool $self_signup = true;
 
+    /** Demo club flag, only editable by superadmins. */
+    public bool $is_demo = false;
+
     public function mount(Club $club): void
     {
         $this->authorize('update', $club);
 
         $this->club = $club;
         $this->name = $club->name;
-        $this->mollie_api_key = $club->mollie_api_key ?? '';
         $this->self_signup = $club->self_signup ?? true;
+        $this->is_demo = $club->is_demo;
+
+        // Never ship the key to the browser of someone who may not change it.
+        if (Gate::allows('manageIntegrations', $club)) {
+            $this->mollie_api_key = $club->mollie_api_key ?? '';
+        }
     }
 
     public function save(): void
@@ -49,6 +58,7 @@ class Settings extends Component
             'photo' => ['nullable', 'image', 'max:4096'],
             'mollie_api_key' => ['nullable', 'string', 'starts_with:test_,live_'],
             'self_signup' => ['boolean'],
+            'is_demo' => ['boolean'],
         ]);
 
         $attributes = [
@@ -64,12 +74,17 @@ class Settings extends Component
             $attributes['photo_path'] = $this->photo->store('club-photos', 'public');
         }
 
-        // Integration credentials can only be edited while the matching add-on is unlocked.
-        if ($this->club->hasAddon(AddonKey::Mollie)) {
+        // Integration credentials can only be edited while the matching add-on is unlocked,
+        // and on a demo club only by superadmins.
+        if ($this->club->hasAddon(AddonKey::Mollie) && Gate::allows('manageIntegrations', $this->club)) {
             $attributes['mollie_api_key'] = $validated['mollie_api_key'] ?: null;
         }
 
-        $this->club->update($attributes);
+        if (Gate::allows('manage-platform')) {
+            $this->club->is_demo = $validated['is_demo'];
+        }
+
+        $this->club->fill($attributes)->save();
 
         $this->photo = null;
 

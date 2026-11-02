@@ -42,9 +42,11 @@ use Illuminate\Support\Facades\Storage;
  * @property bool $moneybird_sync_contacts
  * @property string|null $moneybird_last_error
  * @property Carbon|null $moneybird_last_synced_at
+ * @property Carbon|null $moneybird_setup_completed_at set when the owner finishes the Moneybird setup wizard
  * @property int $next_membership_number
  * @property int $next_ticket_number
  * @property bool $self_signup
+ * @property bool $is_demo demo club: every add-on unlocked, integrations managed by superadmins only
  * @property Carbon|null $onboarded_at
  * @property Carbon|null $trial_ends_at last day a club without a plan may still add members
  * @property Carbon|null $created_at
@@ -52,7 +54,7 @@ use Illuminate\Support\Facades\Storage;
  */
 #[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
-    'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at',
+    'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at', 'moneybird_setup_completed_at',
     'self_signup', 'onboarded_at', 'trial_ends_at',
 ])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
@@ -70,6 +72,7 @@ class Club extends Model implements MollieAccount
     protected $attributes = [
         'moneybird_invoice_delivery' => 'draft',
         'moneybird_sync_contacts' => true,
+        'is_demo' => false,
     ];
 
     /**
@@ -110,9 +113,11 @@ class Club extends Model implements MollieAccount
             'moneybird_invoice_delivery' => MoneybirdInvoiceDelivery::class,
             'moneybird_sync_contacts' => 'boolean',
             'moneybird_last_synced_at' => 'datetime',
+            'moneybird_setup_completed_at' => 'datetime',
             'next_membership_number' => 'integer',
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
+            'is_demo' => 'boolean',
             'onboarded_at' => 'datetime',
             'trial_ends_at' => 'date',
         ];
@@ -198,6 +203,10 @@ class Club extends Model implements MollieAccount
      */
     public function hasAddon(AddonKey $key): bool
     {
+        if ($this->is_demo) {
+            return true;
+        }
+
         if ($this->activeAddonKeys === null) {
             $this->activeAddonKeys = AddonSubscription::query()
                 ->where('addon_subscriptions.club_id', $this->id)

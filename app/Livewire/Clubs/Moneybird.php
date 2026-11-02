@@ -14,20 +14,35 @@ use App\Services\Moneybird\MoneybirdGateway;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Throwable;
 
 /**
  * Connect a club to its Moneybird administration and configure how paid
- * payments are invoiced there.
+ * payments are invoiced there. A step-by-step wizard guides the owner until
+ * the setup is finished; after that the page shows the overview.
  */
 #[Title('Moneybird')]
 class Moneybird extends Component
 {
+    public const int LAST_STEP = 5;
+
     public Club $club;
+
+    /** Current wizard step; 0 shows the overview of a finished setup. */
+    #[Locked]
+    public int $step = 0;
+
+    /** Wizard finish: queue invoices for paid payments that have none yet. */
+    public bool $invoice_existing_payments = true;
+
+    /** Wizard finish: push all active members to Moneybird as contacts. */
+    public bool $sync_existing_members = true;
 
     public string $access_token = '';
 
@@ -53,7 +68,6 @@ class Moneybird extends Component
         $this->authorize('update', $club);
 
         $this->club = $club;
-        $this->access_token = $club->moneybird_access_token ?? '';
         $this->administration_id = $club->moneybird_administration_id ?? '';
         $this->ledger_account_id = $club->moneybird_ledger_account_id ?? '';
         $this->tax_rate_id = $club->moneybird_tax_rate_id ?? '';
@@ -61,6 +75,19 @@ class Moneybird extends Component
         $this->document_style_id = $club->moneybird_document_style_id ?? '';
         $this->invoice_delivery = $club->moneybird_invoice_delivery->value;
         $this->sync_contacts = $club->moneybird_sync_contacts;
+
+        // Never ship the token to the browser of someone who may not change it.
+        if (Gate::allows('manageIntegrations', $club)) {
+            $this->access_token = $club->moneybird_access_token ?? '';
+
+            if ($club->hasAddon(AddonKey::Moneybird)) {
+                $this->step = match (true) {
+                    ! $club->hasMoneybirdConfigured() => 1,
+                    $club->moneybird_setup_completed_at === null => 3,
+                    default => 0,
+                };
+            }
+        }
     }
 
     /**
@@ -68,7 +95,7 @@ class Moneybird extends Component
      */
     public function connect(MoneybirdGateway $gateway): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageIntegrations', $this->club);
         $this->ensureAddon();
 
         $this->validate(['access_token' => ['required', 'string', 'min:20']]);
@@ -97,6 +124,8 @@ class Moneybird extends Component
         if (! collect($this->administrations)->contains('id', $this->administration_id)) {
             $this->administration_id = '';
         }
+
+        $this->step = 2;
     }
 
     /**
@@ -104,7 +133,7 @@ class Moneybird extends Component
      */
     public function selectAdministration(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageIntegrations', $this->club);
         $this->ensureAddon();
 
         $this->validate([
@@ -114,12 +143,104 @@ class Moneybird extends Component
         $this->saveConnection();
     }
 
+    /**
+     * Wizard step 3: where the revenue is booked and which VAT rate applies.
+     */
+    public function saveAccounting(): void
+    {
+        $this->ensureCanConfigure();
+
+        $validated = $this->validate([
+            'ledger_account_id' => ['nullable', 'string', 'max:30'],
+            'tax_rate_id' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $this->club->update([
+            'moneybird_ledger_account_id' => $validated['ledger_account_id'] ?: null,
+            'moneybird_tax_rate_id' => $validated['tax_rate_id'] ?: null,
+        ]);
+
+        $this->step = 4;
+    }
+
+    /**
+     * Wizard step 4: what happens with an invoice and how it looks.
+     */
+    public function saveInvoicing(): void
+    {
+        $this->ensureCanConfigure();
+
+        $validated = $this->validate([
+            'invoice_delivery' => ['required', Rule::enum(MoneybirdInvoiceDelivery::class)],
+            'workflow_id' => ['nullable', 'string', 'max:30'],
+            'document_style_id' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $this->club->update([
+            'moneybird_invoice_delivery' => $validated['invoice_delivery'],
+            'moneybird_workflow_id' => $validated['workflow_id'] ?: null,
+            'moneybird_document_style_id' => $validated['document_style_id'] ?: null,
+        ]);
+
+        $this->step = 5;
+    }
+
+    /**
+     * Wizard step 5: contact sync, optional catch-up of existing data, done.
+     */
+    public function finishSetup(): void
+    {
+        $this->ensureCanConfigure();
+
+        $validated = $this->validate([
+            'sync_contacts' => ['boolean'],
+            'invoice_existing_payments' => ['boolean'],
+            'sync_existing_members' => ['boolean'],
+        ]);
+
+        $this->club->update([
+            'moneybird_sync_contacts' => $validated['sync_contacts'],
+            'moneybird_setup_completed_at' => now(),
+        ]);
+
+        if ($validated['invoice_existing_payments']) {
+            $this->queueMissingInvoices();
+        }
+
+        if ($validated['sync_existing_members']) {
+            $this->queueContactSyncs();
+        }
+
+        $this->step = 0;
+
+        Flux::toast(variant: 'success', text: __('Moneybird is set up.'));
+    }
+
+    public function previousStep(): void
+    {
+        $this->authorize('manageIntegrations', $this->club);
+
+        if ($this->step === 2) {
+            $this->reset('administrations');
+            $this->step = 1;
+        } elseif ($this->step > 3) {
+            $this->step--;
+        }
+    }
+
+    /**
+     * Walk through the settings again from the overview.
+     */
+    public function restartSetup(): void
+    {
+        $this->ensureCanConfigure();
+
+        $this->step = 3;
+    }
+
     public function saveSettings(): void
     {
-        $this->authorize('update', $this->club);
-        $this->ensureAddon();
-
-        abort_unless($this->club->hasMoneybirdConfigured(), 403);
+        $this->ensureCanConfigure();
 
         $validated = $this->validate([
             'ledger_account_id' => ['nullable', 'string', 'max:30'],
@@ -144,7 +265,7 @@ class Moneybird extends Component
 
     public function disconnect(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageIntegrations', $this->club);
 
         $this->club->update([
             'moneybird_access_token' => null,
@@ -154,10 +275,12 @@ class Moneybird extends Component
             'moneybird_workflow_id' => null,
             'moneybird_document_style_id' => null,
             'moneybird_last_error' => null,
+            'moneybird_setup_completed_at' => null,
         ]);
 
         $this->forgetOptionCaches();
         $this->reset('access_token', 'administration_id', 'administrations', 'ledger_account_id', 'tax_rate_id', 'workflow_id', 'document_style_id');
+        $this->step = 1;
 
         Flux::toast(variant: 'success', text: __('Moneybird disconnected.'));
     }
@@ -181,16 +304,7 @@ class Moneybird extends Component
 
         abort_unless($this->club->hasMoneybirdConfigured(), 403);
 
-        $count = 0;
-
-        $this->missingInvoicesQuery()->chunkById(200, function ($payments) use (&$count): void {
-            foreach ($payments as $payment) {
-                CreateMoneybirdInvoice::dispatch($payment);
-                $count++;
-            }
-        });
-
-        unset($this->missingInvoiceCount);
+        $count = $this->queueMissingInvoices();
 
         Flux::toast(variant: 'success', text: trans_choice(':count invoice queued.|:count invoices queued.', $count));
     }
@@ -204,16 +318,7 @@ class Moneybird extends Component
 
         abort_unless($this->club->hasMoneybirdConfigured(), 403);
 
-        $count = 0;
-
-        $this->club->memberships()
-            ->where('status', MembershipStatus::Active)
-            ->chunkById(200, function ($memberships) use (&$count): void {
-                foreach ($memberships as $membership) {
-                    SyncMoneybirdContact::dispatch($membership);
-                    $count++;
-                }
-            });
+        $count = $this->queueContactSyncs();
 
         Flux::toast(variant: 'success', text: trans_choice(':count contact sync queued.|:count contact syncs queued.', $count));
     }
@@ -225,9 +330,30 @@ class Moneybird extends Component
     }
 
     #[Computed]
+    public function canManageIntegrations(): bool
+    {
+        return Gate::allows('manageIntegrations', $this->club);
+    }
+
+    #[Computed]
     public function isConnected(): bool
     {
         return $this->club->hasMoneybirdConfigured();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    #[Computed]
+    public function stepLabels(): array
+    {
+        return [
+            1 => __('Connect'),
+            2 => __('Administration'),
+            3 => __('Bookkeeping'),
+            4 => __('Invoices'),
+            5 => __('Finish'),
+        ];
     }
 
     #[Computed]
@@ -291,6 +417,7 @@ class Moneybird extends Component
 
         $this->forgetOptionCaches();
         unset($this->isConnected);
+        $this->step = 3;
 
         Flux::toast(variant: 'success', text: __('Moneybird connected.'));
     }
@@ -298,6 +425,56 @@ class Moneybird extends Component
     protected function ensureAddon(): void
     {
         abort_unless($this->club->hasAddon(AddonKey::Moneybird), 403);
+    }
+
+    /**
+     * Changing invoice settings requires the right to manage integrations, the
+     * add-on and a working connection.
+     */
+    protected function ensureCanConfigure(): void
+    {
+        $this->authorize('manageIntegrations', $this->club);
+        $this->ensureAddon();
+
+        abort_unless($this->club->hasMoneybirdConfigured(), 403);
+    }
+
+    /**
+     * Queue an invoice for every paid payment that has none yet.
+     */
+    protected function queueMissingInvoices(): int
+    {
+        $count = 0;
+
+        $this->missingInvoicesQuery()->chunkById(200, function ($payments) use (&$count): void {
+            foreach ($payments as $payment) {
+                CreateMoneybirdInvoice::dispatch($payment);
+                $count++;
+            }
+        });
+
+        unset($this->missingInvoiceCount);
+
+        return $count;
+    }
+
+    /**
+     * Queue a contact sync for every active member.
+     */
+    protected function queueContactSyncs(): int
+    {
+        $count = 0;
+
+        $this->club->memberships()
+            ->where('status', MembershipStatus::Active)
+            ->chunkById(200, function ($memberships) use (&$count): void {
+                foreach ($memberships as $membership) {
+                    SyncMoneybirdContact::dispatch($membership);
+                    $count++;
+                }
+            });
+
+        return $count;
     }
 
     /**

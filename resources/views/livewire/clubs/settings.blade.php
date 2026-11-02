@@ -33,7 +33,12 @@
             <flux:error name="photo" />
         </flux:field>
 
-        @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
+        @if ($club->hasAddon(\App\Enums\AddonKey::Mollie) && ! auth()->user()->can('manageIntegrations', $club))
+            <flux:callout icon="lock-closed" variant="secondary">
+                <flux:callout.heading>{{ __('Mollie') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('This is a demo club: SquadPass manages the Mollie and Moneybird settings.') }}</flux:callout.text>
+            </flux:callout>
+        @elseif ($club->hasAddon(\App\Enums\AddonKey::Mollie))
             <flux:input
                 wire:model="mollie_api_key"
                 :label="__('Mollie API key')"
@@ -68,6 +73,12 @@
         @endif
 
         <flux:separator />
+
+        @can('manage-platform')
+            <flux:switch wire:model="is_demo" :label="__('Demo club')" :description="__('Unlocks every add-on without a subscription. Only superadmins can change the Mollie and Moneybird settings of a demo club.')" />
+
+            <flux:separator />
+        @endcan
 
         <flux:switch wire:model="self_signup" :label="__('Open for online registration')" :description="__('Anyone with the join link below can become a member directly.')" />
 

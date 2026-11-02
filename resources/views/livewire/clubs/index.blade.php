@@ -42,6 +42,9 @@
                                 @endunless
                             </div>
                             <flux:text class="sp-card-subtitle mt-1">{{ $club->slug }}</flux:text>
+                            @if ($club->is_demo)
+                                <flux:badge size="sm" color="sky" class="mt-2">{{ __('Demo club') }}</flux:badge>
+                            @endif
                             @unless ($club->isOnboarded())
                                 <flux:badge size="sm" color="yellow" class="mt-2">{{ __('Finish setup') }}</flux:badge>
                             @endunless
