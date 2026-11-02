@@ -24,7 +24,8 @@
         "pusher/pusher-php-server": "*",
         "spatie/laravel-login-link": "^1.6",
         "symfony/http-client": "^8.1",
-        "symfony/postmark-mailer": "^8.1"
+        "symfony/postmark-mailer": "^8.1",
+        "voicecode/monitoring-client": "^1.15"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
@@ -121,5 +122,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [{
+        "name": "monitoring",
+        "type": "vcs",
+        "url": "https://github.com/voicecode-bv/monitoring-client"
+    }]
 }
