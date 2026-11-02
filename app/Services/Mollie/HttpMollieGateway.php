@@ -3,6 +3,7 @@
 namespace App\Services\Mollie;
 
 use App\Enums\PaymentStatus;
+use BackedEnum;
 use InvalidArgumentException;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Resources\Payment as MolliePayment;
@@ -67,7 +68,8 @@ class HttpMollieGateway implements MollieGateway
             throw new InvalidArgumentException("Mollie account [{$account->mollieAccountLabel()}] has no API key configured.");
         }
 
-        $client = new MollieApiClient;
+        // Resolved from the container so tests can swap in Mollie's MockMollieClient.
+        $client = app(MollieApiClient::class);
         $client->setApiKey($account->mollieApiKey());
 
         return $client;
@@ -75,10 +77,13 @@ class HttpMollieGateway implements MollieGateway
 
     protected function toResult(MolliePayment $payment): MolliePaymentResult
     {
+        // Since mollie-api-php v4 a known status is a Mollie enum; unknown ones stay a string.
+        $mollieStatus = $payment->status instanceof BackedEnum ? $payment->status->value : $payment->status;
+
         // Mollie's transient statuses (pending, authorized) stay Open on our side.
-        $status = match ($payment->status) {
+        $status = match ($mollieStatus) {
             'pending', 'authorized' => PaymentStatus::Open,
-            default => PaymentStatus::from($payment->status),
+            default => PaymentStatus::from($mollieStatus),
         };
 
         return new MolliePaymentResult(
