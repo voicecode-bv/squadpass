@@ -5,6 +5,7 @@ use App\Enums\StaffRole;
 use App\Livewire\Invoices\Index;
 use App\Models\Club;
 use App\Models\MoneybirdInvoice;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\Moneybird\MoneybirdGateway;
 use Livewire\Livewire;
@@ -198,6 +199,28 @@ test('staff can sync invoices from Moneybird and they are linked to the member',
         ->and($invoice->state)->toBe(MoneybirdInvoiceState::Paid)
         ->and($invoice->is_credit_invoice)->toBeFalse()
         ->and($invoice->lines[0]['description'])->toBe('Strippenkaart');
+});
+
+test('syncing keeps the payment an invoice was created for', function () {
+    $payment = Payment::factory()->for($this->club)->paid()->create(['user_id' => $this->member->id]);
+    $invoice = MoneybirdInvoice::factory()->for($this->club)->create([
+        'moneybird_id' => 'mb_invoice_1',
+        'payment_id' => $payment->id,
+        'state' => MoneybirdInvoiceState::Open,
+    ]);
+    $this->gateway->invoices['mb_invoice_1'] = [
+        'id' => 'mb_invoice_1',
+        'state' => 'paid',
+        'total_price_incl_tax' => '75.00',
+        'updated_at' => '2026-05-02T10:00:00.000Z',
+    ];
+
+    Livewire::actingAs($this->staff)
+        ->test(Index::class, ['club' => $this->club])
+        ->call('sync');
+
+    expect($invoice->refresh()->payment_id)->toBe($payment->id)
+        ->and($invoice->state)->toBe(MoneybirdInvoiceState::Paid);
 });
 
 test('a second sync only asks Moneybird for invoices changed since the last one', function () {

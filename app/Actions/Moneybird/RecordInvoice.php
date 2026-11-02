@@ -25,27 +25,33 @@ class RecordInvoice
         $originalInvoiceId = isset($payload['original_sales_invoice_id']) ? (string) $payload['original_sales_invoice_id'] : null;
         $totalCents = $this->toCents($payload['total_price_incl_tax'] ?? 0);
 
+        $attributes = [
+            'membership_id' => $this->membershipId($club, $contactId, $membershipIdsByContact),
+            'credited_invoice_id' => $this->creditedInvoiceId($club, $originalInvoiceId),
+            'moneybird_contact_id' => $contactId,
+            'invoice_number' => filled($payload['invoice_id'] ?? null) ? (string) $payload['invoice_id'] : null,
+            'reference' => filled($payload['reference'] ?? null) ? (string) $payload['reference'] : null,
+            'state' => MoneybirdInvoiceState::fromApi($payload['state'] ?? null),
+            'invoice_date' => $payload['invoice_date'] ?? null,
+            'total_price_incl_tax_cents' => $totalCents,
+            'currency' => $payload['currency'] ?? $club->currency,
+            'is_credit_invoice' => $originalInvoiceId !== null || $totalCents < 0,
+            'lines' => $this->lines($payload['details'] ?? []),
+            'moneybird_updated_at' => $payload['updated_at'] ?? null,
+            'synced_at' => now(),
+        ];
+
+        // A sync has no payment at hand; it must not wipe the link the invoice actions stored.
+        if ($payment !== null) {
+            $attributes['payment_id'] = $payment->id;
+        }
+
         return MoneybirdInvoice::query()->updateOrCreate(
             [
                 'club_id' => $club->id,
                 'moneybird_id' => (string) $payload['id'],
             ],
-            [
-                'membership_id' => $this->membershipId($club, $contactId, $membershipIdsByContact),
-                'payment_id' => $payment?->id,
-                'credited_invoice_id' => $this->creditedInvoiceId($club, $originalInvoiceId),
-                'moneybird_contact_id' => $contactId,
-                'invoice_number' => filled($payload['invoice_id'] ?? null) ? (string) $payload['invoice_id'] : null,
-                'reference' => filled($payload['reference'] ?? null) ? (string) $payload['reference'] : null,
-                'state' => MoneybirdInvoiceState::fromApi($payload['state'] ?? null),
-                'invoice_date' => $payload['invoice_date'] ?? null,
-                'total_price_incl_tax_cents' => $totalCents,
-                'currency' => $payload['currency'] ?? $club->currency,
-                'is_credit_invoice' => $originalInvoiceId !== null || $totalCents < 0,
-                'lines' => $this->lines($payload['details'] ?? []),
-                'moneybird_updated_at' => $payload['updated_at'] ?? null,
-                'synced_at' => now(),
-            ],
+            $attributes,
         );
     }
 
