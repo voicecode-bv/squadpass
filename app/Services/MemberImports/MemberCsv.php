@@ -17,7 +17,7 @@ class MemberCsv
      *
      * @var list<string>
      */
-    public const array FIELDS = ['name', 'first_name', 'last_name', 'email', 'membership_number', 'joined_at', 'phone', 'date_of_birth'];
+    public const array FIELDS = ['name', 'first_name', 'name_prefix', 'last_name', 'email', 'membership_number', 'joined_at', 'phone', 'date_of_birth'];
 
     /**
      * Header texts (normalised) that map to a field automatically.
@@ -27,6 +27,7 @@ class MemberCsv
     protected const array HEADER_ALIASES = [
         'name' => ['name', 'full name', 'naam', 'volledige naam'],
         'first_name' => ['first name', 'firstname', 'given name', 'voornaam', 'roepnaam'],
+        'name_prefix' => ['name prefix', 'prefix', 'infix', 'tussenvoegsel', 'tussenvoegsels', 'voorvoegsel', 'voorvoegsels'],
         'last_name' => ['last name', 'lastname', 'surname', 'family name', 'achternaam'],
         'email' => ['email', 'e mail', 'email address', 'e mail address', 'mail', 'e mailadres', 'emailadres'],
         'membership_number' => ['membership number', 'member number', 'member id', 'lidnummer', 'lid nummer', 'relatienummer'],
@@ -81,6 +82,7 @@ class MemberCsv
         return match ($field) {
             'name' => __('Full name'),
             'first_name' => __('First name'),
+            'name_prefix' => __('Name prefix'),
             'last_name' => __('Last name'),
             'email' => __('Email'),
             'membership_number' => __('Membership number'),

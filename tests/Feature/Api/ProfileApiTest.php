@@ -23,6 +23,27 @@ test('a member can update their own name and email', function () {
         ->and($this->member->email_verified_at)->toBeNull();
 });
 
+test('a member can update their name in parts', function () {
+    $this->patchJson('/api/v1/profile', [
+        'first_name' => 'Sanne',
+        'name_prefix' => 'van der',
+        'last_name' => 'Berg',
+        'email' => 'sanne@example.com',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Sanne van der Berg')
+        ->assertJsonPath('data.first_name', 'Sanne')
+        ->assertJsonPath('data.name_prefix', 'van der')
+        ->assertJsonPath('data.last_name', 'Berg');
+});
+
+test('older app versions sending one name get it split into parts', function () {
+    $this->patchJson('/api/v1/profile', ['name' => 'Sanne van Dijk', 'email' => 'sanne@example.com'])
+        ->assertOk()
+        ->assertJsonPath('data.name_prefix', 'van')
+        ->assertJsonPath('data.last_name', 'Dijk');
+});
+
 test('an email address already in use is refused', function () {
     User::factory()->create(['email' => 'bezet@example.com']);
 

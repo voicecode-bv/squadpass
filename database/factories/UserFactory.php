@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Services\PersonName;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -25,8 +26,12 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->firstName().' '.fake()->lastName(),
+            'first_name' => fake()->firstName(),
+            'name_prefix' => null,
+            'last_name' => fake()->lastName(),
+            'name' => fn (array $attributes): string => PersonName::compose($attributes['first_name'], $attributes['name_prefix'], $attributes['last_name']),
             'email' => fake()->unique()->safeEmail(),
+            'name_confirmed_at' => now(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -44,6 +49,14 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * A name that was split automatically and still needs checking.
+     */
+    public function unconfirmedName(): static
+    {
+        return $this->state(['name_confirmed_at' => null]);
     }
 
     public function superadmin(): static

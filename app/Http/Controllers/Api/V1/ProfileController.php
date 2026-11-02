@@ -19,13 +19,19 @@ class ProfileController extends Controller
     use ProfileValidationRules;
 
     /**
-     * Update the member's own name and email address.
+     * Update the member's own name and email address. App versions from
+     * before the name was split still send a single "name"; the User model
+     * splits it into first name, prefix and last name.
      */
     public function update(Request $request): UserResource
     {
         $user = $request->user();
 
-        $validated = $request->validate($this->profileRules($user->id));
+        $usesLegacyName = $request->has('name') && ! $request->has('first_name');
+
+        $validated = $request->validate($usesLegacyName
+            ? ['name' => ['required', 'string', 'max:255'], 'email' => $this->emailRules($user->id)]
+            : $this->profileRules($user->id));
 
         $user->fill($validated);
 
@@ -33,7 +39,12 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
-        $contactDetailsChanged = $user->isDirty(['name', 'email']);
+        $contactDetailsChanged = $user->isDirty(['name', 'first_name', 'name_prefix', 'last_name', 'email']);
+
+        // A name sent in parts was entered by the member; a single legacy name is still split by us.
+        if (! $usesLegacyName) {
+            $user->name_confirmed_at = now();
+        }
 
         $user->save();
 

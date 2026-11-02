@@ -19,7 +19,8 @@ test('new users can register', function () {
     $this->travel(SpamProtection::MINIMUM_SECONDS)->seconds();
 
     $response = $this->post(route('register.store'), [
-        'name' => 'John Doe',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -34,7 +35,8 @@ test('new users can register', function () {
 
 test('registrations from bots are rejected', function (array $botFields) {
     $response = $this->post(route('register.store'), [
-        'name' => 'John Doe',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',

@@ -154,8 +154,8 @@ class Import extends Component
     {
         $this->authorize('update', $this->club);
 
-        $fields = ['first_name', 'last_name', 'email', 'membership_number', 'joined_at', 'phone', 'date_of_birth'];
-        $example = ['Anna', 'de Vries', 'anna@example.com', '101', '01-09-2024', '0612345678', '14-03-1990'];
+        $fields = ['first_name', 'name_prefix', 'last_name', 'email', 'membership_number', 'joined_at', 'phone', 'date_of_birth'];
+        $example = ['Anna', 'de', 'Vries', 'anna@example.com', '101', '01-09-2024', '0612345678', '14-03-1990'];
 
         return response()->streamDownload(function () use ($fields, $example): void {
             $output = fopen('php://output', 'wb');

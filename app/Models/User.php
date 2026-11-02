@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\MembershipStatus;
 use App\Enums\StaffRole;
+use App\Services\PersonName;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -23,7 +24,11 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
- * @property string $name
+ * @property string $name full name, composed from the parts below by the model
+ * @property string $first_name
+ * @property string|null $name_prefix "tussenvoegsel" such as "van der"
+ * @property string $last_name
+ * @property Carbon|null $name_confirmed_at when the person last saved their own name; empty after an automatic split
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -37,12 +42,36 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'avatar_path'])]
+#[Fillable(['name', 'first_name', 'name_prefix', 'last_name', 'name_confirmed_at', 'email', 'password', 'avatar_path'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * Keep the full name and its parts in sync. Changing the parts recomposes
+     * the name; setting only the name (older app versions, seeders) splits it.
+     * When both change and disagree, the explicitly set name wins.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            $partsChanged = $user->isDirty(['first_name', 'name_prefix', 'last_name']);
+            $composed = PersonName::compose($user->first_name, $user->name_prefix, $user->last_name);
+
+            if ($partsChanged && (! $user->isDirty('name') || $user->name === $composed)) {
+                $user->name_prefix = filled($user->name_prefix) ? trim($user->name_prefix) : null;
+                $user->name = $composed;
+
+                return;
+            }
+
+            if ($user->isDirty('name')) {
+                $user->forceFill(PersonName::split($user->name));
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -53,10 +82,20 @@ class User extends Authenticatable implements PasskeyUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'name_confirmed_at' => 'datetime',
             'password' => 'hashed',
             'is_superadmin' => 'boolean',
             'product_tour_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether the name was split automatically (existing account or imported
+     * member) and the person has not checked it yet.
+     */
+    public function needsNameReview(): bool
+    {
+        return $this->name_confirmed_at === null;
     }
 
     /**

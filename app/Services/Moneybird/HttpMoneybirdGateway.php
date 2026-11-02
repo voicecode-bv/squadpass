@@ -78,6 +78,22 @@ class HttpMoneybirdGateway implements MoneybirdGateway
         return (string) $response->throw()->json('id');
     }
 
+    public function findContactByCustomerId(Club $club, string $customerId): ?array
+    {
+        $response = $this->clientFor($club)->get('contacts/customer_id/'.rawurlencode($customerId).'.json');
+
+        if ($response->notFound()) {
+            return null;
+        }
+
+        $contact = $response->throw()->json();
+
+        return [
+            'id' => (string) $contact['id'],
+            'email' => ($contact['email'] ?? null) ?: ($contact['send_invoices_to_email'] ?? null),
+        ];
+    }
+
     public function createInvoice(Club $club, string $contactId, array $lines, array $attributes = []): string
     {
         $response = $this->clientFor($club)->post('sales_invoices.json', [

@@ -21,7 +21,11 @@ class Profile extends Component
 {
     use ProfileValidationRules, WithFileUploads;
 
-    public string $name = '';
+    public string $first_name = '';
+
+    public string $name_prefix = '';
+
+    public string $last_name = '';
 
     public string $email = '';
 
@@ -32,7 +36,9 @@ class Profile extends Component
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
+        $this->first_name = Auth::user()->first_name;
+        $this->name_prefix = Auth::user()->name_prefix ?? '';
+        $this->last_name = Auth::user()->last_name;
         $this->email = Auth::user()->email;
     }
 
@@ -51,7 +57,10 @@ class Profile extends Component
             $user->email_verified_at = null;
         }
 
-        $contactDetailsChanged = $user->isDirty(['name', 'email']);
+        $contactDetailsChanged = $user->isDirty(['first_name', 'name_prefix', 'last_name', 'email']);
+
+        // Saving the form means the person looked at their name.
+        $user->name_confirmed_at = now();
 
         $user->save();
 

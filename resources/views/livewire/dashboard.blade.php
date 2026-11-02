@@ -4,6 +4,16 @@
         :title="$this->greeting.', '.auth()->user()->name"
     />
 
+    @if (auth()->user()->needsNameReview())
+        <flux:callout icon="information-circle" variant="secondary">
+            <flux:callout.heading>{{ __('Check your name') }}</flux:callout.heading>
+            <flux:callout.text>{{ __('We split your name into first name, name prefix and last name. Check that it is right.') }}</flux:callout.text>
+            <x-slot name="actions">
+                <flux:button size="sm" :href="route('profile.edit')" wire:navigate>{{ __('Check my name') }}</flux:button>
+            </x-slot>
+        </flux:callout>
+    @endif
+
     {{-- KPI band --}}
     @if ($this->isMember)
         <x-portal.kpi-band :items="[

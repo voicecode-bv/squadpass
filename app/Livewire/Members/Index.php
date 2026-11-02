@@ -36,6 +36,10 @@ class Index extends Component
     #[Url]
     public string $status = MembershipStatus::Active->value;
 
+    /** List order: 'number' (membership number) or 'last_name'. */
+    #[Url]
+    public string $sort = 'number';
+
     public string $email = '';
 
     public function mount(Club $club): void
@@ -184,6 +188,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedSort(): void
+    {
+        $this->resetPage();
+    }
+
     /**
      * @return LengthAwarePaginator<int, Membership>
      */
@@ -199,10 +208,21 @@ class Index extends Component
             ->when($this->search !== '', function ($query) {
                 $query->whereHas('user', function ($userQuery) {
                     $userQuery->where('name', 'like', $this->search.'%')
+                        ->orWhere('last_name', 'like', $this->search.'%')
                         ->orWhere('email', 'like', $this->search.'%');
                 });
             })
-            ->orderBy('membership_number')
+            ->when(
+                $this->sort === 'last_name',
+                // Sorted on the (last_name, first_name) index; the prefix is ignored, as in a Dutch phone book.
+                fn ($query) => $query
+                    ->select('memberships.*')
+                    ->join('users', 'users.id', '=', 'memberships.user_id')
+                    ->orderBy('users.last_name')
+                    ->orderBy('users.first_name')
+                    ->orderBy('memberships.id'),
+                fn ($query) => $query->orderBy('membership_number'),
+            )
             ->paginate(25);
     }
 

@@ -28,7 +28,11 @@ class Signup extends Component
 
     public string $club_name = '';
 
-    public string $name = '';
+    public string $first_name = '';
+
+    public string $name_prefix = '';
+
+    public string $last_name = '';
 
     public string $email = '';
 
@@ -78,7 +82,10 @@ class Signup extends Component
 
         [$user, $club] = DB::transaction(function () use ($validated, $createClub): array {
             $user = User::create([
-                'name' => $validated['name'],
+                'first_name' => $validated['first_name'],
+                'name_prefix' => $validated['name_prefix'],
+                'last_name' => $validated['last_name'],
+                'name_confirmed_at' => now(),
                 'email' => $validated['email'],
                 'password' => $validated['password'],
             ]);

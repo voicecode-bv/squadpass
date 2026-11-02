@@ -9,6 +9,7 @@ use App\Mail\ImportedMemberMail;
 use App\Models\Club;
 use App\Models\Membership;
 use App\Models\User;
+use App\Services\PersonName;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -41,7 +42,7 @@ class ImportMemberRow
             throw InvalidMemberImportRow::because(__('":email" is not a valid email address.', ['email' => $email]));
         }
 
-        $name = $this->name($values);
+        $nameParts = $this->nameParts($values);
         $details = $this->membershipDetails($club, $values);
 
         $user = User::query()->where('email', $email)->first();
@@ -52,9 +53,9 @@ class ImportMemberRow
 
         $isNewAccount = $user === null;
 
-        $membership = DB::transaction(function () use ($club, $user, $email, $name, $details): Membership {
+        $membership = DB::transaction(function () use ($club, $user, $email, $nameParts, $details): Membership {
             // A random password nobody knows: the member sets their own one via the reset flow.
-            $user ??= User::query()->create(['name' => $name, 'email' => $email, 'password' => Str::random(64)]);
+            $user ??= User::query()->create([...$nameParts, 'email' => $email, 'password' => Str::random(64)]);
 
             $membership = $club->addMember($user);
 
@@ -78,21 +79,30 @@ class ImportMemberRow
     }
 
     /**
+     * First name, prefix and last name from separate columns, or split from a
+     * full name column when the list has no separate first and last name.
+     *
      * @param  array<string, string>  $values
+     * @return array{first_name: string, name_prefix: string|null, last_name: string}
      */
-    protected function name(array $values): string
+    protected function nameParts(array $values): array
     {
-        $name = trim($values['name'] ?? '');
+        $firstName = trim($values['first_name'] ?? '');
+        $lastName = trim($values['last_name'] ?? '');
 
-        if ($name === '') {
-            $name = trim(trim($values['first_name'] ?? '').' '.trim($values['last_name'] ?? ''));
-        }
+        $parts = $firstName !== '' || $lastName !== ''
+            ? ['first_name' => $firstName, 'name_prefix' => trim($values['name_prefix'] ?? '') ?: null, 'last_name' => $lastName]
+            : PersonName::split($values['name'] ?? '');
 
-        if ($name === '') {
+        if ($parts['first_name'] === '' && $parts['last_name'] === '') {
             throw InvalidMemberImportRow::because(__('The name is missing.'));
         }
 
-        return mb_substr($name, 0, 255);
+        return [
+            'first_name' => mb_substr($parts['first_name'], 0, 100),
+            'name_prefix' => $parts['name_prefix'] !== null ? mb_substr($parts['name_prefix'], 0, 50) : null,
+            'last_name' => mb_substr($parts['last_name'], 0, 100),
+        ];
     }
 
     /**

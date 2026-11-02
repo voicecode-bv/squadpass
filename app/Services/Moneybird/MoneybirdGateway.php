@@ -52,6 +52,13 @@ interface MoneybirdGateway
     public function upsertContact(Club $club, ?string $contactId, array $attributes): string;
 
     /**
+     * The contact that already has this customer id in Moneybird, or null.
+     *
+     * @return array{id: string, email: string|null}|null
+     */
+    public function findContactByCustomerId(Club $club, string $customerId): ?array;
+
+    /**
      * Create a draft sales invoice for a contact and return its Moneybird id.
      *
      * @param  list<array{description: string, price_cents: int, tax_rate_id?: string|null, ledger_account_id?: string|null}>  $lines

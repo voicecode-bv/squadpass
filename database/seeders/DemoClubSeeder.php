@@ -72,7 +72,7 @@ class DemoClubSeeder extends Seeder
     {
         // The state closure is rebound to the factory, so resolve the helper statically.
         return User::factory($count)->state(fn (array $attributes): array => [
-            'email' => self::squadpassEmail($attributes['name']),
+            'email' => self::squadpassEmail($attributes['first_name'].' '.$attributes['last_name']),
         ]);
     }
 

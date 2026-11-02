@@ -5,6 +5,7 @@ namespace App\Livewire\Members;
 use App\Actions\Moneybird\SyncMemberContact;
 use App\Enums\FormAudience;
 use App\Enums\SubscriptionStatus;
+use App\Exceptions\MoneybirdContactConflict;
 use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\Form;
@@ -61,7 +62,13 @@ class Show extends Component
             return;
         }
 
-        $syncMemberContact->handle($this->membership);
+        try {
+            $syncMemberContact->handle($this->membership);
+        } catch (MoneybirdContactConflict $exception) {
+            Flux::toast(variant: 'danger', text: $exception->getMessage());
+
+            return;
+        }
 
         $this->membership = $this->club->memberships()->with('user')->findOrFail($this->membership->id);
 

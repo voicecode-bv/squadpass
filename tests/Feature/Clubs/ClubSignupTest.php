@@ -19,7 +19,8 @@ function filledClubSignup(): Testable
 {
     $component = Livewire::test(Signup::class)
         ->set('club_name', 'Padel Club Amsterdam')
-        ->set('name', 'Alex Janssen')
+        ->set('first_name', 'Alex')
+        ->set('last_name', 'Janssen')
         ->set('email', 'alex@example.com')
         ->set('password', 'password');
 
@@ -63,7 +64,8 @@ test('signing up requires a club name and a unique email', function () {
     User::factory()->create(['email' => 'taken@example.com']);
 
     Livewire::test(Signup::class)
-        ->set('name', 'Alex Janssen')
+        ->set('first_name', 'Alex')
+        ->set('last_name', 'Janssen')
         ->set('email', 'taken@example.com')
         ->set('password', 'password')
         ->call('signup')
@@ -98,7 +100,8 @@ test('a signup with the honeypot filled in is rejected', function () {
 test('a signup submitted faster than a person can type is rejected', function () {
     Livewire::test(Signup::class)
         ->set('club_name', 'Padel Club Amsterdam')
-        ->set('name', 'Alex Janssen')
+        ->set('first_name', 'Alex')
+        ->set('last_name', 'Janssen')
         ->set('email', 'alex@example.com')
         ->set('password', 'password')
         ->call('signup')

@@ -16,6 +16,9 @@ class FakeMoneybirdGateway implements MoneybirdGateway
     /** @var array<int, array{club: int, contact_id: string, lines: array<int, array<string, mixed>>, attributes: array<string, mixed>, id: string}> */
     public array $createdInvoices = [];
 
+    /** @var array<string, array{id: string, email: string|null}> contacts already in Moneybird, keyed by customer id */
+    public array $existingContacts = [];
+
     /** @var array<int, array{club: int, invoice_id: string, delivery: MoneybirdInvoiceDelivery}> */
     public array $sentInvoices = [];
 
@@ -79,6 +82,11 @@ class FakeMoneybirdGateway implements MoneybirdGateway
         $this->upsertedContacts[] = ['club' => $club->id, 'contact_id' => $contactId, 'attributes' => $attributes, 'id' => $id];
 
         return $id;
+    }
+
+    public function findContactByCustomerId(Club $club, string $customerId): ?array
+    {
+        return $this->existingContacts[$customerId] ?? null;
     }
 
     public function createInvoice(Club $club, string $contactId, array $lines, array $attributes = []): string

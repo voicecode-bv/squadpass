@@ -40,7 +40,18 @@
         </div>
 
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            @if (auth()->user()->needsNameReview())
+                <flux:callout icon="information-circle" variant="secondary">
+                    <flux:callout.heading>{{ __('Check your name') }}</flux:callout.heading>
+                    <flux:callout.text>{{ __('We now store first name, name prefix and last name separately and split your name automatically. Check that it is right and save.') }}</flux:callout.text>
+                </flux:callout>
+            @endif
+
+            <div class="grid gap-4 sm:grid-cols-[2fr_1fr_2fr]">
+                <flux:input wire:model="first_name" :label="__('First name')" type="text" required autofocus autocomplete="given-name" />
+                <flux:input wire:model="name_prefix" :label="__('Name prefix')" type="text" autocomplete="additional-name" :placeholder="__('e.g. van der')" />
+                <flux:input wire:model="last_name" :label="__('Last name')" type="text" required autocomplete="family-name" />
+            </div>
 
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />

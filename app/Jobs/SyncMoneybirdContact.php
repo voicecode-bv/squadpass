@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Actions\Moneybird\SyncMemberContact;
+use App\Exceptions\MoneybirdContactConflict;
 use App\Jobs\Middleware\ReleaseWhenMoneybirdRateLimited;
 use App\Models\Membership;
 use DateTimeInterface;
@@ -33,7 +34,12 @@ class SyncMoneybirdContact implements ShouldBeUnique, ShouldQueue
 
     public function handle(SyncMemberContact $syncMemberContact): void
     {
-        $syncMemberContact->handle($this->membership->fresh());
+        try {
+            $syncMemberContact->handle($this->membership->fresh());
+        } catch (MoneybirdContactConflict $exception) {
+            // Retrying cannot fix a customer number that belongs to someone else.
+            $this->fail($exception);
+        }
     }
 
     /**

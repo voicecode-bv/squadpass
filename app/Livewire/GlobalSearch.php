@@ -101,6 +101,7 @@ class GlobalSearch extends Component
             ->with(['user', 'club'])
             ->whereHas('user', function ($query) use ($prefix) {
                 $query->where('name', 'like', $prefix)
+                    ->orWhere('last_name', 'like', $prefix)
                     ->orWhere('email', 'like', $prefix);
             })
             ->limit(self::PER_GROUP)

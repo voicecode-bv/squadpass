@@ -51,6 +51,52 @@ test('staff can sync a member as Moneybird contact', function () {
         ->and($this->club->refresh()->moneybird_last_synced_at)->not->toBeNull();
 });
 
+test('the name prefix is sent to Moneybird in front of the last name', function () {
+    $this->member->update(['first_name' => 'Sanne', 'name_prefix' => 'van der', 'last_name' => 'Berg']);
+
+    Livewire::actingAs($this->owner)
+        ->test(Show::class, ['club' => $this->club, 'membership' => $this->membership])
+        ->call('syncMoneybird');
+
+    expect($this->gateway->upsertedContacts[0]['attributes']['firstname'])->toBe('Sanne')
+        ->and($this->gateway->upsertedContacts[0]['attributes']['lastname'])->toBe('van der Berg');
+});
+
+test('a member is linked to the existing Moneybird contact with their customer number instead of creating a duplicate', function () {
+    $this->gateway->existingContacts[(string) $this->membership->membership_number] = ['id' => 'mb_existing', 'email' => strtoupper($this->member->email)];
+
+    Livewire::actingAs($this->owner)
+        ->test(Show::class, ['club' => $this->club, 'membership' => $this->membership])
+        ->call('syncMoneybird');
+
+    expect($this->membership->refresh()->moneybird_contact_id)->toBe('mb_existing')
+        ->and($this->gateway->upsertedContacts[0]['contact_id'])->toBe('mb_existing');
+});
+
+test('a customer number taken by someone else in Moneybird is reported, not overwritten', function () {
+    $this->gateway->existingContacts[(string) $this->membership->membership_number] = ['id' => 'mb_someone_else', 'email' => 'iemand.anders@example.com'];
+
+    Livewire::actingAs($this->owner)
+        ->test(Show::class, ['club' => $this->club, 'membership' => $this->membership])
+        ->call('syncMoneybird')
+        ->assertOk();
+
+    expect($this->membership->refresh()->moneybird_contact_id)->toBeNull()
+        ->and($this->gateway->upsertedContacts)->toBeEmpty()
+        ->and($this->club->refresh()->moneybird_last_error)->toContain('iemand.anders@example.com');
+});
+
+test('the gateway looks up a contact by customer number and treats an unknown number as none', function () {
+    Http::fake([
+        'moneybird.com/api/v2/123456/contacts/customer_id/7.json' => Http::response(['id' => 42, 'email' => '', 'send_invoices_to_email' => 'mo@example.com']),
+        'moneybird.com/api/v2/123456/contacts/customer_id/8.json' => Http::response(['error' => 'Contact not found'], 404),
+    ]);
+    $gateway = app(HttpMoneybirdGateway::class);
+
+    expect($gateway->findContactByCustomerId($this->club, '7'))->toBe(['id' => '42', 'email' => 'mo@example.com'])
+        ->and($gateway->findContactByCustomerId($this->club, '8'))->toBeNull();
+});
+
 test('syncing without Moneybird configuration does nothing', function () {
     $this->club->update(['moneybird_access_token' => null, 'moneybird_administration_id' => null]);
 
@@ -274,7 +320,7 @@ test('changing your name resyncs your Moneybird contacts', function () {
 
     Livewire::actingAs($this->member)
         ->test(Profile::class)
-        ->set('name', 'Mo Neybird-Jansen')
+        ->set('last_name', 'Neybird-Jansen')
         ->set('email', $this->member->email)
         ->call('updateProfileInformation')
         ->assertHasNoErrors();

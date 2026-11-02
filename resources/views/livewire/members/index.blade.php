@@ -31,13 +31,18 @@
     @endunless
 
     <div class="flex flex-col gap-3 sm:flex-row">
-        <flux:input class="flex-1" wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name or email...')" clearable />
+        <flux:input class="flex-1" wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name, last name or email...')" clearable />
 
         <flux:select wire:model.live="status" class="sm:max-w-56" :label="__('Status')" label:sr-only>
             <flux:select.option value="all">{{ __('All statuses') }}</flux:select.option>
             @foreach (\App\Enums\MembershipStatus::cases() as $statusOption)
                 <flux:select.option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</flux:select.option>
             @endforeach
+        </flux:select>
+
+        <flux:select wire:model.live="sort" class="sm:max-w-48" :label="__('Sort by')" label:sr-only>
+            <flux:select.option value="number">{{ __('Membership number') }}</flux:select.option>
+            <flux:select.option value="last_name">{{ __('Last name') }}</flux:select.option>
         </flux:select>
     </div>
 

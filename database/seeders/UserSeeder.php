@@ -32,6 +32,7 @@ class UserSeeder extends Seeder
         if (! $user->exists) {
             $user->forceFill([
                 'name' => $name,
+                'name_confirmed_at' => now(),
                 'password' => 'password',
                 'email_verified_at' => now(),
                 'is_superadmin' => $isSuperadmin,

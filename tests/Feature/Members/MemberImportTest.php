@@ -88,6 +88,17 @@ test('an import creates accounts, links existing ones and skips current members'
         ->and(Storage::exists('member-imports/list.csv'))->toBeFalse();
 });
 
+test('imported names keep their prefix, from separate columns or split from a full name', function () {
+    runMemberImport(memberImportFor($this->club, "Voornaam,Tussenvoegsel,Achternaam,E-mail\nAnna,van der,Berg,anna@example.com", ['first_name' => 0, 'name_prefix' => 1, 'last_name' => 2, 'email' => 3]));
+    runMemberImport(memberImportFor($this->club, "Naam,E-mail\nJan Willem de Vries,jan@example.com", ['name' => 0, 'email' => 1]));
+
+    $anna = User::query()->where('email', 'anna@example.com')->sole();
+    $jan = User::query()->where('email', 'jan@example.com')->sole();
+
+    expect([$anna->first_name, $anna->name_prefix, $anna->last_name, $anna->name])->toBe(['Anna', 'van der', 'Berg', 'Anna van der Berg'])
+        ->and([$jan->first_name, $jan->name_prefix, $jan->last_name])->toBe(['Jan Willem', 'de', 'Vries']);
+});
+
 test('invalid rows are reported and do not stop the import', function () {
     Membership::query()->where('club_id', $this->club->id)->delete();
     $taken = $this->club->addMember(User::factory()->create());
