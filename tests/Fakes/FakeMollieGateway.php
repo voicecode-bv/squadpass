@@ -6,6 +6,7 @@ use App\Enums\PaymentStatus;
 use App\Services\Mollie\MollieAccount;
 use App\Services\Mollie\MollieGateway;
 use App\Services\Mollie\MolliePaymentResult;
+use App\Services\Mollie\MollieProfile;
 use RuntimeException;
 
 class FakeMollieGateway implements MollieGateway
@@ -19,7 +20,17 @@ class FakeMollieGateway implements MollieGateway
     /** @var array<string, MolliePaymentResult> */
     protected array $payments = [];
 
+    /** @var list<string> API keys Mollie rejects in fetchProfile() */
+    public array $rejectedKeys = [];
+
+    public MollieProfile $profile;
+
     protected int $sequence = 0;
+
+    public function __construct()
+    {
+        $this->profile = new MollieProfile(id: 'pfl_fake', name: 'Fake Sportschool');
+    }
 
     public function createCustomer(MollieAccount $account, string $name, string $email): string
     {
@@ -81,5 +92,10 @@ class FakeMollieGateway implements MollieGateway
             mandateId: $mandateId ?? $current->mandateId,
             metadata: $current->metadata,
         );
+    }
+
+    public function fetchProfile(string $apiKey): ?MollieProfile
+    {
+        return in_array($apiKey, $this->rejectedKeys, true) ? null : $this->profile;
     }
 }

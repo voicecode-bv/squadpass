@@ -4,7 +4,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
 use App\Livewire\Clubs\Dashboard;
-use App\Livewire\Subscriptions\Index;
+use App\Livewire\Clubs\Mollie;
 use App\Models\Club;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -31,24 +31,29 @@ function failedRecurringPayment(Club $club, Subscription $subscription, array $a
     ]);
 }
 
-test('staff see failed recurring charges on the subscriptions page', function () {
+test('staff see failed recurring charges in the Mollie payment overview', function () {
+    $this->club->forceFill(['is_demo' => true])->save();
     $this->subscription->user->update(['name' => 'Wanbetalend Lid']);
     failedRecurringPayment($this->club, $this->subscription, ['amount_cents' => 5900]);
+    Payment::factory()->for($this->club)->paid()->create(['amount_cents' => 1234]);
 
     Livewire::actingAs($this->owner)
-        ->test(Index::class, ['club' => $this->club])
-        ->assertSee(__('Failed charges'))
+        ->withQueryParams(['tab' => 'payments', 'status' => 'failed'])
+        ->test(Mollie::class, ['club' => $this->club])
         ->assertSee('Wanbetalend Lid')
-        ->assertSee('59,00');
+        ->assertSee('59,00')
+        ->assertDontSee('12,34');
 });
 
-test('paid and non-recurring payments are not listed as failed charges', function () {
-    Payment::factory()->for($this->club)->paid()->create(['metadata' => ['purpose' => 'subscription_recurring']]);
+test('the payments tab counts recently failed recurring charges', function () {
+    $this->club->forceFill(['is_demo' => true])->save();
+    failedRecurringPayment($this->club, $this->subscription);
+    failedRecurringPayment($this->club, $this->subscription);
     Payment::factory()->for($this->club)->create(['status' => PaymentStatus::Failed, 'metadata' => ['purpose' => 'strip_card']]);
 
-    $component = Livewire::actingAs($this->owner)->test(Index::class, ['club' => $this->club]);
+    $component = Livewire::actingAs($this->owner)->test(Mollie::class, ['club' => $this->club]);
 
-    expect($component->instance()->failedCharges)->toHaveCount(0);
+    expect($component->instance()->failedChargeCount)->toBe(2);
 });
 
 test('the club dashboard warns about failed charges of the last 30 days', function () {

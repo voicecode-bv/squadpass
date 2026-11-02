@@ -16,4 +16,14 @@ interface MollieAccount
      * Human readable identifier used in error messages and logs.
      */
     public function mollieAccountLabel(): string;
+
+    /**
+     * Remember a failed Mollie request so it can be shown to the account owner.
+     */
+    public function recordMollieError(string $message): void;
+
+    /**
+     * Forget a previously recorded failure after a successful request.
+     */
+    public function recordMollieSuccess(): void;
 }

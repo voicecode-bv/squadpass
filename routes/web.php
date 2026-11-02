@@ -58,7 +58,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('addons', Clubs\Addons::class)->name('clubs.addons');
         Route::livewire('plan', Clubs\Plan::class)->name('clubs.plan');
         Route::livewire('moneybird', Clubs\Moneybird::class)->name('clubs.moneybird');
+        Route::livewire('mollie', Clubs\Mollie::class)->name('clubs.mollie');
         Route::livewire('members', Members\Index::class)->name('clubs.members');
+        Route::livewire('members/import', Members\Import::class)->name('clubs.members.import');
         Route::livewire('members/{membership}', Members\Show::class)->name('clubs.members.show');
         Route::post('members/{membership}/impersonate', [ImpersonationController::class, 'store'])->name('clubs.members.impersonate');
         Route::post('owners/{owner}/impersonate', [ImpersonationController::class, 'storeOwner'])->name('clubs.owners.impersonate');

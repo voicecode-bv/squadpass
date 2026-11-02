@@ -45,7 +45,7 @@ test('moneybird counts as configured only when the Moneybird add-on is active', 
         ->and($withAddon->hasAddon(AddonKey::Mollie))->toBeFalse();
 });
 
-test('club settings hide and ignore the Mollie key without the Mollie add-on', function () {
+test('club settings pitch the Mollie add-on until the club has it', function () {
     $club = Club::factory()->create();
     $owner = User::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
@@ -53,25 +53,16 @@ test('club settings hide and ignore the Mollie key without the Mollie add-on', f
     Livewire::actingAs($owner)
         ->test(Settings::class, ['club' => $club])
         ->assertSeeLivewire(AddonCta::class)
-        ->assertDontSee(__('Mollie API key'))
-        ->set('mollie_api_key', 'test_sneaky')
-        ->call('save')
-        ->assertHasNoErrors();
-
-    expect($club->refresh()->mollie_api_key)->toBeNull();
+        ->assertDontSee(route('clubs.mollie', $club));
 });
 
-test('club settings show the Mollie key field once the add-on is active', function () {
+test('club settings link to the Mollie page once the add-on is active', function () {
     $club = Club::factory()->withMollieKey()->create();
     $owner = User::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
 
     Livewire::actingAs($owner)
         ->test(Settings::class, ['club' => $club])
-        ->assertSee(__('Mollie API key'))
-        ->set('mollie_api_key', 'test_new_key')
-        ->call('save')
-        ->assertHasNoErrors();
-
-    expect($club->refresh()->mollie_api_key)->toBe('test_new_key');
+        ->assertSee(route('clubs.mollie', $club))
+        ->assertSee(__('Connected in test mode.'));
 });

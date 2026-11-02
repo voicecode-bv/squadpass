@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\AddonKey;
 use App\Enums\StaffRole;
 use App\Livewire\Clubs\Index;
 use App\Livewire\Clubs\Settings;
@@ -47,20 +46,20 @@ test('club slugs are unique even for identical names', function () {
 
 test('an owner can update club settings', function () {
     $owner = User::factory()->create();
-    $club = Club::factory()->withAddon(AddonKey::Mollie)->create();
+    $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
 
     Livewire::actingAs($owner)
         ->test(Settings::class, ['club' => $club])
         ->set('name', 'Renamed Club')
-        ->set('mollie_api_key', 'test_abc123')
+        ->set('self_signup', false)
         ->call('save')
         ->assertHasNoErrors();
 
     $club->refresh();
 
     expect($club->name)->toBe('Renamed Club')
-        ->and($club->mollie_api_key)->toBe('test_abc123');
+        ->and($club->self_signup)->toBeFalse();
 });
 
 test('an admin cannot access club settings', function () {
@@ -82,16 +81,19 @@ test('a non-staff user cannot access club settings', function () {
         ->assertForbidden();
 });
 
-test('a mollie api key must start with test_ or live_', function () {
+test('a validation error on another tab switches to that tab', function () {
     $owner = User::factory()->create();
     $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
 
     Livewire::actingAs($owner)
+        ->withQueryParams(['tab' => 'registration'])
         ->test(Settings::class, ['club' => $club])
-        ->set('mollie_api_key', 'invalid_key')
+        ->assertSet('tab', 'registration')
+        ->set('name', '')
         ->call('save')
-        ->assertHasErrors(['mollie_api_key']);
+        ->assertHasErrors(['name'])
+        ->assertSet('tab', 'general');
 });
 
 test('the mollie api key is stored encrypted', function () {

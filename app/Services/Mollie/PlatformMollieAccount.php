@@ -22,6 +22,13 @@ class PlatformMollieAccount implements MollieAccount
         return 'platform';
     }
 
+    /**
+     * Platform failures are not shown anywhere; they reach the error tracker via report().
+     */
+    public function recordMollieError(string $message): void {}
+
+    public function recordMollieSuccess(): void {}
+
     public function isConfigured(): bool
     {
         return $this->mollieApiKey() !== null;

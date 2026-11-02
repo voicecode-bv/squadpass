@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\PaymentStatus;
+use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
 use App\Livewire\Portal\Subscriptions as PortalSubscriptions;
+use App\Livewire\Subscriptions\Index as SubscriptionsOverview;
 use App\Models\Club;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -206,4 +208,17 @@ test('a plan of a club without online payments is offered without a subscribe bu
         ->assertSee(__('This club has not set up online payments yet. Contact the club to take out a subscription.'))
         ->assertDontSeeHtml('wire:click="subscribe('.$otherPlan->id.')"')
         ->assertSeeHtml('wire:click="subscribe('.$this->plan->id.')"');
+});
+
+test('member names on the subscriptions overview link to the member page', function () {
+    $club = Club::factory()->create();
+    $owner = User::factory()->create();
+    $club->addStaff($owner, StaffRole::Owner);
+    $member = User::factory()->create();
+    $membership = $club->addMember($member);
+    Subscription::factory()->for($club)->create(['user_id' => $member->id]);
+
+    Livewire::actingAs($owner)
+        ->test(SubscriptionsOverview::class, ['club' => $club])
+        ->assertSee(route('clubs.members.show', [$club, $membership]));
 });

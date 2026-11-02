@@ -30,4 +30,10 @@ interface MollieGateway
      * Fetch the current state of a payment from Mollie.
      */
     public function getPayment(MollieAccount $account, string $paymentId): MolliePaymentResult;
+
+    /**
+     * The profile an API key belongs to, or null when Mollie rejects the key.
+     * Used to verify a key before it is stored.
+     */
+    public function fetchProfile(string $apiKey): ?MollieProfile;
 }

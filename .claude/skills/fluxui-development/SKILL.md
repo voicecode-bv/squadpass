@@ -14,7 +14,7 @@ Use `search-docs` for detailed Flux UI patterns and documentation.
 
 ## Basic usage
 
-This project uses the free edition of Flux UI, which includes all free components and variants but not Pro components.
+This project uses the Pro edition of Flux UI, which includes all free and Pro components and variants.
 
 Flux UI is a component library for Livewire built with Tailwind CSS.
 
@@ -25,9 +25,9 @@ Use a Flux UI component when one exists. If no Flux component fits your needs, f
 <flux:button variant="primary">Click me</flux:button>
 ```
 
-## Available components (free edition)
+## Available components (Pro edition)
 
-Available: avatar, badge, brand, breadcrumbs, button, callout, card, checkbox, dropdown, field, heading, icon, input, modal, navbar, otp-input, pagination, profile, progress, radio, select, separator, skeleton, switch, table, text, textarea, toast, tooltip
+Available: accordion, autocomplete, avatar, badge, brand, breadcrumbs, button, calendar, callout, card, chart, checkbox, color-picker, command, composer, context, date-picker, dropdown, editor, field, file-upload, heading, icon, input, kanban, modal, navbar, otp-input, pagination, pillbox, popover, profile, progress, radio, select, separator, skeleton, slider, switch, table, tabs, text, textarea, time-picker, timeline, toast, tooltip
 
 ## Icons
 
@@ -57,14 +57,18 @@ php artisan flux:icon crown grip-vertical github
 </flux:field>
 ```
 
-### Modals
+### Tables
 
-<!-- Modal -->
+<!-- Table -->
 ```blade
-<flux:modal wire:model="showModal">
-    <flux:heading>Title</flux:heading>
-    <p>Content</p>
-</flux:modal>
+<flux:table>
+    <flux:table.columns>
+        <flux:table.cell>Column Name</flux:table.cell>
+    </flux:table.columns>
+    <flux:table.row>
+        <flux:table.cell>Value</flux:table.cell>
+    </flux:table.row>
+</flux:table>
 ```
 
 ## Verification
@@ -75,7 +79,6 @@ php artisan flux:icon crown grip-vertical github
 
 ## Common pitfalls
 
-- Trying to use Pro-only components in the free edition
 - Not checking whether a Flux component exists before building a custom one
 - Forgetting to use the `search-docs` tool for component-specific documentation
 - Not following the project's existing Flux patterns

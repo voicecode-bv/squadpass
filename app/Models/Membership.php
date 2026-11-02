@@ -20,11 +20,13 @@ use Illuminate\Support\Carbon;
  * @property MembershipStatus $status
  * @property Carbon $joined_at
  * @property Carbon|null $ended_at
+ * @property string|null $phone kept by the club, e.g. from an imported member list
+ * @property Carbon|null $date_of_birth kept by the club, e.g. from an imported member list
  * @property string|null $moneybird_contact_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['club_id', 'user_id', 'membership_number', 'status', 'joined_at', 'ended_at', 'moneybird_contact_id'])]
+#[Fillable(['club_id', 'user_id', 'membership_number', 'status', 'joined_at', 'ended_at', 'phone', 'date_of_birth', 'moneybird_contact_id'])]
 class Membership extends Model
 {
     /** @use HasFactory<MembershipFactory> */
@@ -40,6 +42,7 @@ class Membership extends Model
             'status' => MembershipStatus::class,
             'joined_at' => 'date',
             'ended_at' => 'date',
+            'date_of_birth' => 'date',
         ];
     }
 

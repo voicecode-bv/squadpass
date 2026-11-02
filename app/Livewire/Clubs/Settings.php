@@ -2,14 +2,15 @@
 
 namespace App\Livewire\Clubs;
 
-use App\Enums\AddonKey;
 use App\Models\Club;
 use App\Services\CheckIns\QrCodeRenderer;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -27,12 +28,25 @@ class Settings extends Component
 
     public string $name = '';
 
-    public string $mollie_api_key = '';
-
     public bool $self_signup = true;
 
     /** Demo club flag, only editable by superadmins. */
     public bool $is_demo = false;
+
+    /**
+     * The tab each field lives on; the first tab is the default.
+     *
+     * @var array<string, list<string>>
+     */
+    public const array TAB_FIELDS = [
+        'general' => ['name', 'photo', 'is_demo'],
+        'registration' => ['self_signup'],
+        'integrations' => [],
+    ];
+
+    /** Active tab, kept in the URL so a tab can be linked to directly. */
+    #[Url]
+    public string $tab = 'general';
 
     public function mount(Club $club): void
     {
@@ -43,9 +57,8 @@ class Settings extends Component
         $this->self_signup = $club->self_signup ?? true;
         $this->is_demo = $club->is_demo;
 
-        // Never ship the key to the browser of someone who may not change it.
-        if (Gate::allows('manageIntegrations', $club)) {
-            $this->mollie_api_key = $club->mollie_api_key ?? '';
+        if (! array_key_exists($this->tab, self::TAB_FIELDS)) {
+            $this->tab = array_key_first(self::TAB_FIELDS);
         }
     }
 
@@ -53,13 +66,18 @@ class Settings extends Component
     {
         $this->authorize('update', $this->club);
 
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'photo' => ['nullable', 'image', 'max:4096'],
-            'mollie_api_key' => ['nullable', 'string', 'starts_with:test_,live_'],
-            'self_signup' => ['boolean'],
-            'is_demo' => ['boolean'],
-        ]);
+        try {
+            $validated = $this->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'photo' => ['nullable', 'image', 'max:4096'],
+                'self_signup' => ['boolean'],
+                'is_demo' => ['boolean'],
+            ]);
+        } catch (ValidationException $exception) {
+            $this->showTabWithError($exception);
+
+            throw $exception;
+        }
 
         $attributes = [
             'name' => $validated['name'],
@@ -72,12 +90,6 @@ class Settings extends Component
             }
 
             $attributes['photo_path'] = $this->photo->store('club-photos', 'public');
-        }
-
-        // Integration credentials can only be edited while the matching add-on is unlocked,
-        // and on a demo club only by superadmins.
-        if ($this->club->hasAddon(AddonKey::Mollie) && Gate::allows('manageIntegrations', $this->club)) {
-            $attributes['mollie_api_key'] = $validated['mollie_api_key'] ?: null;
         }
 
         if (Gate::allows('manage-platform')) {
@@ -121,6 +133,23 @@ class Settings extends Component
         $this->photo = null;
 
         Flux::toast(variant: 'success', text: __('Club photo removed.'));
+    }
+
+    /**
+     * The form spans several tabs; switch to the tab of the first invalid
+     * field so the error is never hidden on a tab that is not shown.
+     */
+    protected function showTabWithError(ValidationException $exception): void
+    {
+        $firstField = array_key_first($exception->errors());
+
+        foreach (self::TAB_FIELDS as $tab => $fields) {
+            if (in_array($firstField, $fields, true)) {
+                $this->tab = $tab;
+
+                return;
+            }
+        }
     }
 
     public function render(): View

@@ -1,6 +1,9 @@
 <div class="flex w-full flex-col gap-6">
     <x-portal.hero :title="__('Members')" :subtitle="$club->name">
         <x-slot:actions>
+            @can('update', $club)
+                <flux:button :href="route('clubs.members.import', $club)" wire:navigate icon="arrow-down-tray">{{ __('Import members') }}</flux:button>
+            @endcan
             @if ($this->canAddMembers)
                 <flux:modal.trigger name="add-member">
                     <flux:button variant="primary" icon="user-plus">{{ __('Add member') }}</flux:button>

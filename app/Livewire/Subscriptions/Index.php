@@ -2,13 +2,10 @@
 
 namespace App\Livewire\Subscriptions;
 
-use App\Enums\PaymentStatus;
 use App\Models\Club;
-use App\Models\Payment;
+use App\Models\Membership;
 use App\Models\Subscription;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -43,24 +40,19 @@ class Index extends Component
     }
 
     /**
-     * Recurring subscription charges that could not be collected, newest first.
+     * Membership id per user on the current page, so names can link
+     * to the member page. One query on the (club_id, user_id) unique index.
      *
-     * @return Collection<int, Payment>
+     * @return array<int, int>
      */
     #[Computed]
-    public function failedCharges(): Collection
+    public function membershipIdsByUser(): array
     {
-        return Payment::query()
+        return Membership::query()
             ->where('club_id', $this->club->id)
-            ->where('metadata->purpose', 'subscription_recurring')
-            ->whereIn('status', [PaymentStatus::Failed, PaymentStatus::Expired, PaymentStatus::Canceled])
-            ->with([
-                'user',
-                'payable' => fn (MorphTo $morphTo) => $morphTo->morphWith([Subscription::class => ['plan']]),
-            ])
-            ->latest('updated_at')
-            ->limit(20)
-            ->get();
+            ->whereIn('user_id', $this->subscriptions->pluck('user_id')->unique()->values())
+            ->pluck('id', 'user_id')
+            ->all();
     }
 
     public function render(): View

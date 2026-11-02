@@ -18,6 +18,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Title('Member')]
@@ -27,12 +28,27 @@ class Show extends Component
 
     public Membership $membership;
 
+    /**
+     * The tabs of the member page, in display order.
+     *
+     * @var list<string>
+     */
+    public const array TABS = ['membership', 'subscriptions', 'payments', 'forms', 'check-ins'];
+
+    /** Active tab, kept in the URL so a tab can be linked to directly. */
+    #[Url]
+    public string $tab = 'membership';
+
     public function mount(Club $club, Membership $membership): void
     {
         $this->authorize('manage', $club);
 
         $this->club = $club;
         $this->membership = $club->memberships()->with('user')->findOrFail($membership->id);
+
+        if (! in_array($this->tab, self::TABS, true)) {
+            $this->tab = self::TABS[0];
+        }
     }
 
     public function syncMoneybird(SyncMemberContact $syncMemberContact): void

@@ -22,13 +22,13 @@
             @foreach ($schedules as $index => $schedule)
                 <div class="flex items-end gap-3" wire:key="schedule-{{ $index }}">
                     <div class="grid flex-1 gap-3 sm:grid-cols-3">
-                        <flux:select wire:model="schedules.{{ $index }}.day_of_week" :label="__('Day of week')">
+                        <flux:select wire:model="schedules.{{ $index }}.day_of_week" :label="__('Day of week')" :label:sr-only="! $loop->first">
                             @foreach ($this->dayOptions as $value => $label)
                                 <flux:select.option value="{{ $value }}">{{ ucfirst($label) }}</flux:select.option>
                             @endforeach
                         </flux:select>
-                        <flux:input wire:model="schedules.{{ $index }}.start_time" :label="__('Start time')" type="time" required />
-                        <flux:input wire:model="schedules.{{ $index }}.duration_minutes" :label="__('Duration (minutes)')" type="number" min="15" step="15" required />
+                        <flux:input wire:model="schedules.{{ $index }}.start_time" :label="__('Start time')" :label:sr-only="! $loop->first" type="time" required />
+                        <flux:input wire:model="schedules.{{ $index }}.duration_minutes" :label="__('Duration (minutes)')" :label:sr-only="! $loop->first" type="number" min="15" step="15" required />
                     </div>
 
                     @unless ($lesson)

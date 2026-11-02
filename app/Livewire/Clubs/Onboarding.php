@@ -3,6 +3,7 @@
 namespace App\Livewire\Clubs;
 
 use App\Actions\Invitations\InviteToClub;
+use App\Actions\Mollie\ConnectMollieAccount;
 use App\Enums\AddonKey;
 use App\Enums\BillingInterval;
 use App\Enums\ClubInvitationRole;
@@ -247,9 +248,9 @@ class Onboarding extends Component
         unset($this->stripCardPlans);
     }
 
-    public function saveMollieKey(): void
+    public function saveMollieKey(ConnectMollieAccount $connectMollieAccount): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageIntegrations', $this->club);
 
         abort_unless($this->club->hasAddon(AddonKey::Mollie), 403);
 
@@ -257,7 +258,11 @@ class Onboarding extends Component
             'mollie_api_key' => ['required', 'string', 'starts_with:test_,live_'],
         ]);
 
-        $this->club->update(['mollie_api_key' => $validated['mollie_api_key']]);
+        if (! $connectMollieAccount->handle($this->club, $validated['mollie_api_key'])) {
+            $this->addError('mollie_api_key', __('Mollie did not accept this API key. Copy it again from your Mollie dashboard.'));
+
+            return;
+        }
 
         Flux::toast(variant: 'success', text: __('Mollie API key saved.'));
     }

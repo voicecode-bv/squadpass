@@ -3,11 +3,9 @@
 namespace App\Livewire\Clubs;
 
 use App\Enums\MembershipStatus;
-use App\Enums\PaymentStatus;
 use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\Membership;
-use App\Models\Payment;
 use App\Services\ClubStatistics;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
@@ -41,12 +39,7 @@ class Dashboard extends Component
     #[Computed]
     public function failedChargeCount(): int
     {
-        return Payment::query()
-            ->where('club_id', $this->club->id)
-            ->where('metadata->purpose', 'subscription_recurring')
-            ->whereIn('status', [PaymentStatus::Failed, PaymentStatus::Expired, PaymentStatus::Canceled])
-            ->where('updated_at', '>=', now()->subDays(30))
-            ->count();
+        return $this->club->recentFailedChargeCount();
     }
 
     #[Computed]

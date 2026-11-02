@@ -4,20 +4,23 @@ namespace App\Services\Mollie;
 
 use App\Enums\PaymentStatus;
 use BackedEnum;
+use Closure;
 use InvalidArgumentException;
+use Mollie\Api\Exceptions\ForbiddenException;
+use Mollie\Api\Exceptions\InvalidAuthenticationException;
+use Mollie\Api\Exceptions\UnauthorizedException;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Resources\Payment as MolliePayment;
+use Throwable;
 
 class HttpMollieGateway implements MollieGateway
 {
     public function createCustomer(MollieAccount $account, string $name, string $email): string
     {
-        $customer = $this->clientFor($account)->customers->create([
+        return $this->send($account, fn (MollieApiClient $client): string => $client->customers->create([
             'name' => $name,
             'email' => $email,
-        ]);
-
-        return $customer->id;
+        ])->id);
     }
 
     public function createPayment(
@@ -54,12 +57,51 @@ class HttpMollieGateway implements MollieGateway
             $attributes['mandateId'] = $mandateId;
         }
 
-        return $this->toResult($this->clientFor($account)->payments->create($attributes));
+        return $this->send($account, fn (MollieApiClient $client): MolliePaymentResult => $this->toResult($client->payments->create($attributes)));
     }
 
     public function getPayment(MollieAccount $account, string $paymentId): MolliePaymentResult
     {
-        return $this->toResult($this->clientFor($account)->payments->get($paymentId));
+        return $this->send($account, fn (MollieApiClient $client): MolliePaymentResult => $this->toResult($client->payments->get($paymentId)));
+    }
+
+    public function fetchProfile(string $apiKey): ?MollieProfile
+    {
+        try {
+            $client = app(MollieApiClient::class);
+            $client->setApiKey($apiKey);
+
+            $profile = $client->profiles->getCurrent();
+        } catch (InvalidAuthenticationException|UnauthorizedException|ForbiddenException) {
+            // Malformed, revoked or unknown key: the caller turns this into a validation error.
+            return null;
+        }
+
+        return new MollieProfile(id: $profile->id, name: $profile->name);
+    }
+
+    /**
+     * Run a request for an account and record its outcome on the account, so a
+     * club sees the last failure on its Mollie page. Failures are rethrown.
+     *
+     * @template TResult
+     *
+     * @param  Closure(MollieApiClient): TResult  $request
+     * @return TResult
+     */
+    protected function send(MollieAccount $account, Closure $request): mixed
+    {
+        try {
+            $result = $request($this->clientFor($account));
+        } catch (Throwable $exception) {
+            $account->recordMollieError($exception->getMessage());
+
+            throw $exception;
+        }
+
+        $account->recordMollieSuccess();
+
+        return $result;
     }
 
     protected function clientFor(MollieAccount $account): MollieApiClient

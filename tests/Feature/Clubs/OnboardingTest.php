@@ -11,10 +11,14 @@ use App\Models\Room;
 use App\Models\StripCardPlan;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\Mollie\MollieGateway;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
+use Tests\Fakes\FakeMollieGateway;
 
 beforeEach(function () {
+    $this->app->instance(MollieGateway::class, new FakeMollieGateway);
+
     $this->owner = User::factory()->create();
     $this->club = Club::factory()->withAddon(AddonKey::Mollie)->create();
     $this->club->addStaff($this->owner, StaffRole::Owner);

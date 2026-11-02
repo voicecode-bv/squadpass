@@ -78,4 +78,16 @@ class Payment extends Model
     {
         return $this->metadata['purpose'] ?? null;
     }
+
+    /**
+     * What the payment was for, as shown in payment lists.
+     */
+    public function purposeLabel(): string
+    {
+        return match ($this->purpose()) {
+            'strip_card' => __('Strip card'),
+            'subscription_first', 'subscription_recurring' => __('Subscription'),
+            default => __('Payment'),
+        };
+    }
 }

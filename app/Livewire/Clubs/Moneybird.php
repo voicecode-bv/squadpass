@@ -22,6 +22,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Throwable;
 
@@ -66,6 +67,17 @@ class Moneybird extends Component
 
     public bool $sync_contacts = true;
 
+    /**
+     * Tabs of the overview of a finished setup, in display order.
+     *
+     * @var list<string>
+     */
+    public const array TABS = ['settings', 'catch-up'];
+
+    /** Active overview tab, kept in the URL so a tab can be linked to directly. */
+    #[Url]
+    public string $tab = 'settings';
+
     public function mount(Club $club): void
     {
         $this->authorize('update', $club);
@@ -78,6 +90,10 @@ class Moneybird extends Component
         $this->document_style_id = $club->moneybird_document_style_id ?? '';
         $this->invoice_delivery = $club->moneybird_invoice_delivery->value;
         $this->sync_contacts = $club->moneybird_sync_contacts;
+
+        if (! in_array($this->tab, self::TABS, true)) {
+            $this->tab = self::TABS[0];
+        }
 
         // Never ship the token to the browser of someone who may not change it.
         if (Gate::allows('manageIntegrations', $club)) {

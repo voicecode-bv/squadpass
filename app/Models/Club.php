@@ -6,6 +6,7 @@ use App\Enums\AddonKey;
 use App\Enums\ClubPlan;
 use App\Enums\MembershipStatus;
 use App\Enums\MoneybirdInvoiceDelivery;
+use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\ClubPlanException;
@@ -31,6 +32,8 @@ use Illuminate\Support\Facades\Storage;
  * @property string $currency
  * @property string|null $mollie_api_key
  * @property string|null $mollie_profile_id
+ * @property string|null $mollie_profile_name name of the Mollie profile the API key belongs to, fetched when the key is saved
+ * @property string|null $mollie_last_error message of the last failed Mollie request, cleared by the next successful one
  * @property string|null $platform_mollie_customer_id customer on the platform's Mollie account, for add-on billing
  * @property string|null $moneybird_access_token
  * @property string|null $moneybird_administration_id
@@ -52,7 +55,7 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
+#[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'mollie_profile_name', 'mollie_last_error', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
     'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at', 'moneybird_setup_completed_at',
     'self_signup', 'onboarded_at', 'trial_ends_at',
@@ -274,6 +277,43 @@ class Club extends Model implements MollieAccount
     public function mollieApiKey(): ?string
     {
         return $this->mollie_api_key ?: null;
+    }
+
+    /**
+     * Whether the club's Mollie key processes real payments.
+     */
+    public function mollieIsLive(): bool
+    {
+        return str_starts_with((string) $this->mollie_api_key, 'live_');
+    }
+
+    /**
+     * Recurring subscription charges that could not be collected in the past 30 days.
+     */
+    public function recentFailedChargeCount(): int
+    {
+        return Payment::query()
+            ->where('club_id', $this->id)
+            ->where('metadata->purpose', 'subscription_recurring')
+            ->whereIn('status', [PaymentStatus::Failed, PaymentStatus::Expired, PaymentStatus::Canceled])
+            ->where('updated_at', '>=', now()->subDays(30))
+            ->count();
+    }
+
+    public function recordMollieError(string $message): void
+    {
+        $this->forceFill(['mollie_last_error' => mb_substr($message, 0, 1000)])->saveQuietly();
+    }
+
+    /**
+     * Clears a recorded error. Only writes when there is one, so successful
+     * payment requests do not cost an extra query each.
+     */
+    public function recordMollieSuccess(): void
+    {
+        if ($this->mollie_last_error !== null) {
+            $this->forceFill(['mollie_last_error' => null])->saveQuietly();
+        }
     }
 
     public function mollieCurrency(): string

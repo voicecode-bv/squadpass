@@ -2,12 +2,15 @@
 
 use App\Enums\AddonKey;
 use App\Enums\StaffRole;
+use App\Livewire\Clubs\Mollie;
 use App\Livewire\Clubs\Moneybird;
 use App\Livewire\Clubs\Settings;
 use App\Models\Club;
 use App\Models\User;
+use App\Services\Mollie\MollieGateway;
 use App\Services\Moneybird\MoneybirdGateway;
 use Livewire\Livewire;
+use Tests\Fakes\FakeMollieGateway;
 use Tests\Fakes\FakeMoneybirdGateway;
 
 beforeEach(function () {
@@ -71,22 +74,23 @@ test('the owner of a demo club cannot see or change the Mollie key', function ()
     $club = Club::factory()->demo()->create(['mollie_api_key' => 'live_managed_by_squadpass']);
 
     Livewire::actingAs(demoClubOwner($club))
-        ->test(Settings::class, ['club' => $club])
+        ->test(Mollie::class, ['club' => $club])
         ->assertSet('mollie_api_key', '')
         ->assertDontSee('live_managed_by_squadpass')
         ->assertSee(__('This is a demo club: SquadPass manages the Mollie and Moneybird settings.'))
         ->set('mollie_api_key', 'test_owner_override')
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertForbidden();
 
     expect($club->refresh()->mollie_api_key)->toBe('live_managed_by_squadpass');
 });
 
 test('a superadmin can change the Mollie key of a demo club', function () {
     $club = Club::factory()->demo()->create();
+    $this->app->instance(MollieGateway::class, new FakeMollieGateway);
 
     Livewire::actingAs(User::factory()->superadmin()->create())
-        ->test(Settings::class, ['club' => $club])
+        ->test(Mollie::class, ['club' => $club])
         ->set('mollie_api_key', 'test_demo_key')
         ->call('save')
         ->assertHasNoErrors();

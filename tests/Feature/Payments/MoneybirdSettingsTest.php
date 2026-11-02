@@ -186,6 +186,25 @@ test('the catch-up actions write their queued jobs in a single insert per chunk'
         ->and(DB::table('jobs')->where('payload', 'like', '%SyncMoneybirdContact%')->count())->toBe(2);
 });
 
+test('the catch-up tab is linkable and counts what is still open', function () {
+    $club = clubWithOwner($this, connected: true);
+    $club->update(['moneybird_sync_contacts' => false]);
+    $member = User::factory()->create();
+    $club->addMember($member);
+    Payment::factory()->for($club)->paid()->count(2)->create(['user_id' => $member->id]);
+
+    Livewire::actingAs($this->owner)
+        ->withQueryParams(['tab' => 'catch-up'])
+        ->test(Moneybird::class, ['club' => $club])
+        ->assertSet('tab', 'catch-up')
+        ->assertSeeInOrder([__('Catch up'), '3']);
+
+    Livewire::actingAs($this->owner)
+        ->withQueryParams(['tab' => 'nonsense'])
+        ->test(Moneybird::class, ['club' => $club])
+        ->assertSet('tab', 'settings');
+});
+
 test('a club admin cannot manage the Moneybird connection', function () {
     $club = clubWithOwner($this, connected: true);
     $admin = User::factory()->create();

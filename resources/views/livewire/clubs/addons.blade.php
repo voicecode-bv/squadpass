@@ -7,7 +7,7 @@
             <flux:callout.text>{{ __('There are no add-ons for sale at the moment.') }}</flux:callout.text>
         </flux:callout>
     @else
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             @foreach ($this->addons as $addon)
                 @php($subscription = $this->subscriptions->get($addon->id))
                 @php($status = $subscription?->status)

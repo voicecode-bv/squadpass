@@ -91,6 +91,11 @@
                                 </flux:sidebar.item>
                             @endif
                         @endcan
+                        @if ($currentClub->hasAddon(\App\Enums\AddonKey::Mollie) && auth()->user()->can('manage', $currentClub))
+                            <flux:sidebar.item icon="receipt-percent" :href="route('clubs.mollie', $currentClub)" :current="request()->routeIs('clubs.mollie')" wire:navigate>
+                                {{ __('Mollie') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
 
                     <flux:sidebar.group :heading="__('Members')" expandable :expanded="false" data-sidebar-group="club-members" class="grid">
