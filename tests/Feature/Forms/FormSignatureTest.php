@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
-    Storage::fake('local');
+    Storage::fake();
 
     $this->club = Club::factory()->create();
     $this->owner = User::factory()->create();
@@ -55,7 +55,7 @@ test('a signature is stored as a file and only its path ends up in the answers',
     expect($path)->toStartWith("form-signatures/{$this->form->id}/{$this->member->id}/")
         ->and($path)->toEndWith('.png');
 
-    Storage::disk('local')->assertExists($path);
+    Storage::disk()->assertExists($path);
 });
 
 test('after saving, the property holds the stored path and the saved signature is shown', function () {
@@ -114,5 +114,5 @@ test('filling in again after a reopen without drawing keeps the stored signature
     ]);
 
     expect($second->answer($this->signatureKey))->toBe($first->answer($this->signatureKey))
-        ->and(Storage::disk('local')->files("form-signatures/{$this->form->id}/{$this->member->id}"))->toHaveCount(1);
+        ->and(Storage::disk()->files("form-signatures/{$this->form->id}/{$this->member->id}"))->toHaveCount(1);
 });

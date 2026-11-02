@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FormSignatureController extends Controller
 {
     /**
-     * Serve a signature from the private disk to the member who signed it or
+     * Serve a signature from the private default disk to the member who signed it or
      * to the club's staff.
      */
     public function __invoke(FormSubmission $submission, string $field): StreamedResponse
@@ -28,9 +28,9 @@ class FormSignatureController extends Controller
 
         $path = $submission->answer($field);
 
-        abort_unless(is_string($path) && $path !== '' && Storage::disk('local')->exists($path), 404);
+        abort_unless(is_string($path) && $path !== '' && Storage::disk()->exists($path), 404);
 
-        return Storage::disk('local')->response($path, 'signature.png', [
+        return Storage::disk()->response($path, 'signature.png', [
             'Content-Type' => 'image/png',
             'Cache-Control' => 'private, max-age=300',
         ]);

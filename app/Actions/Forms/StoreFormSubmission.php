@@ -113,7 +113,7 @@ class StoreFormSubmission
             }
 
             $path = sprintf('form-signatures/%d/%d/%s.png', $form->id, $user->id, Str::ulid());
-            Storage::disk('local')->put($path, $binary);
+            Storage::disk()->put($path, $binary);
 
             $answers[$field->key] = $path;
         }
