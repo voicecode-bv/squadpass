@@ -7,6 +7,7 @@ use App\Models\LessonEnrollment;
 use App\Models\Payment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use Database\Seeders\UserSeeder;
 
 test('the demo seeder builds fully populated clubs', function () {
     $this->seed();
@@ -55,4 +56,13 @@ test('every seeded club offers the same subscription ladder', function () {
             ->and($plans->last()->isUnlimited())->toBeTrue()
             ->and($plans->pluck('credits')->filter()->values()->all())->toBe([4, 8, 12]);
     });
+});
+
+test('the user seeder creates the platform accounts once and can run again', function () {
+    $this->seed(UserSeeder::class);
+    $this->seed(UserSeeder::class);
+
+    expect(User::query()->count())->toBe(2)
+        ->and(User::query()->where('email', UserSeeder::SUPERADMIN_EMAIL)->sole()->is_superadmin)->toBeTrue()
+        ->and(User::query()->where('email', UserSeeder::OWNER_EMAIL)->sole()->is_superadmin)->toBeFalse();
 });
