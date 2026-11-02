@@ -98,10 +98,11 @@ test('an add-on that is not for sale cannot be bought', function () {
 
     Livewire::actingAs($this->owner)
         ->test(ClubAddons::class, ['club' => $this->club])
-        ->call('purchase', $this->addon->id);
+        ->call('purchase', $this->addon->id)
+        ->assertNotFound();
 
     expect(AddonSubscription::query()->count())->toBe(0);
-})->throws(ModelNotFoundException::class);
+});
 
 test('buying fails gracefully when the platform Mollie key is missing', function () {
     config()->set('services.mollie.key', null);
@@ -128,8 +129,9 @@ test('an owner cannot cancel another clubs add-on subscription', function () {
 
     Livewire::actingAs($this->owner)
         ->test(ClubAddons::class, ['club' => $this->club])
-        ->call('cancel', $foreign->id);
-})->throws(ModelNotFoundException::class);
+        ->call('cancel', $foreign->id)
+        ->assertNotFound();
+});
 
 test('cancelling keeps the add-on unlocked until the paid month ends and stops billing', function () {
     $subscription = payFirstAddonPayment($this);

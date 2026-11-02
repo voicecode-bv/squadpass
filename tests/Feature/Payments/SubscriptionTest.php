@@ -9,7 +9,6 @@ use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Mollie\MollieGateway;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Fakes\FakeMollieGateway;
 
@@ -172,10 +171,10 @@ test('a member cannot cancel another members subscription', function () {
 
     $other = User::factory()->create();
 
-    expect(fn () => Livewire::actingAs($other)
+    Livewire::actingAs($other)
         ->test(PortalSubscriptions::class)
         ->call('cancel', $subscription->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });
 
 test('subscribing requires membership and a mollie key', function () {

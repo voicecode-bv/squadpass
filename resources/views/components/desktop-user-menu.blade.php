@@ -24,6 +24,9 @@
             <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                 {{ __('Settings') }}
             </flux:menu.item>
+            <flux:menu.item icon="information-circle" x-on:click="Livewire.dispatch('open-product-tour')" class="w-full cursor-pointer" data-test="open-product-tour">
+                {{ __('How SquadPass works') }}
+            </flux:menu.item>
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item

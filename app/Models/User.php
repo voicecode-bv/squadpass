@@ -29,6 +29,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $password
  * @property bool $is_superadmin
  * @property string|null $avatar_path
+ * @property Carbon|null $product_tour_completed_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -54,6 +55,7 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_superadmin' => 'boolean',
+            'product_tour_completed_at' => 'datetime',
         ];
     }
 

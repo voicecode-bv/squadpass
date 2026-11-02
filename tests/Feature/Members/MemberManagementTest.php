@@ -7,7 +7,6 @@ use App\Models\Club;
 use App\Models\ClubInvitation;
 use App\Models\Membership;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
@@ -111,10 +110,10 @@ test('staff cannot update a membership of another club via the component', funct
     $otherClub = Club::factory()->create();
     $foreignMembership = $otherClub->addMember(User::factory()->create());
 
-    expect(fn () => Livewire::actingAs($this->staff)
+    Livewire::actingAs($this->staff)
         ->test(Index::class, ['club' => $this->club])
         ->call('updateStatus', $foreignMembership->id, 'ended')
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 
     expect($foreignMembership->refresh()->status)->toBe(MembershipStatus::Active);
 });

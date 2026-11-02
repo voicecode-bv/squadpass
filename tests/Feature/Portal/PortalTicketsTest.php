@@ -7,7 +7,6 @@ use App\Models\Club;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -97,7 +96,7 @@ test('a member cannot reply on a closed ticket', function () {
 test('a member cannot view someone elses ticket', function () {
     $ticket = Ticket::factory()->for($this->club)->create();
 
-    expect(fn () => Livewire::actingAs($this->member)
+    Livewire::actingAs($this->member)
         ->test(TicketShow::class, ['ticket' => $ticket])
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });

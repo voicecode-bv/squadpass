@@ -7,7 +7,6 @@ use App\Models\Lesson;
 use App\Models\LessonOccurrence;
 use App\Models\Trainer;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -74,8 +73,8 @@ test('a trainer cannot select occurrences of lessons they do not teach', functio
         'ends_at' => now()->addDays(2)->addHour(),
     ]);
 
-    expect(fn () => Livewire::actingAs($this->trainerUser)
+    Livewire::actingAs($this->trainerUser)
         ->test(MyLessons::class)
         ->call('selectOccurrence', $foreignOccurrence->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });

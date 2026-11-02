@@ -7,7 +7,6 @@ use App\Models\Lesson;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -100,10 +99,10 @@ test('cancelling a recurring enrollment requires an own fixed enrollment', funct
         ->test(Schedule::class)
         ->call('enrollFixed', $this->occurrence->id);
 
-    expect(fn () => Livewire::actingAs($this->member)
+    Livewire::actingAs($this->member)
         ->test(Schedule::class)
         ->call('cancelFixed', $this->occurrence->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 
     expect(LessonEnrollment::query()->count())->toBe(1);
 });
@@ -118,10 +117,10 @@ test('a member cannot cancel someone elses enrollment', function () {
 
     $enrollment = LessonEnrollment::query()->where('user_id', $other->id)->firstOrFail();
 
-    expect(fn () => Livewire::actingAs($this->member)
+    Livewire::actingAs($this->member)
         ->test(MyEnrollments::class)
         ->call('cancel', $enrollment->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 
     expect(LessonEnrollment::query()->count())->toBe(1);
 });

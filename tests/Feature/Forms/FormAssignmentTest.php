@@ -12,7 +12,6 @@ use App\Models\FormAssignment;
 use App\Models\User;
 use App\Services\Forms\FormField;
 use App\Services\Forms\FormSchema;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -76,8 +75,8 @@ test('a member of another club cannot be assigned', function () {
     $component = Livewire::actingAs($this->owner)
         ->test(Submissions::class, ['club' => $this->club, 'form' => $form]);
 
-    expect(fn () => $component->call('assign', $outsider->id))
-        ->toThrow(ModelNotFoundException::class);
+    $component->call('assign', $outsider->id)
+        ->assertNotFound();
 
     expect(FormAssignment::query()->count())->toBe(0);
 });

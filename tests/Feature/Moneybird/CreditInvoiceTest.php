@@ -8,7 +8,6 @@ use App\Models\Club;
 use App\Models\MoneybirdInvoice;
 use App\Models\User;
 use App\Services\Moneybird\MoneybirdGateway;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 use Tests\Fakes\FakeMoneybirdGateway;
 
@@ -96,10 +95,10 @@ test('non-staff cannot credit an invoice', function () {
 test('staff cannot credit an invoice from another club', function () {
     $otherInvoice = MoneybirdInvoice::factory()->create();
 
-    expect(fn () => Livewire::actingAs($this->staff)
+    Livewire::actingAs($this->staff)
         ->test(Index::class, ['club' => $this->club])
         ->call('createCreditInvoice', $otherInvoice->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 
     expect($this->gateway->createdCreditInvoices)->toBeEmpty();
 });

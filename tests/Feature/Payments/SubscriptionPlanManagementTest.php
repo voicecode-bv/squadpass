@@ -6,7 +6,6 @@ use App\Livewire\SubscriptionPlans\Index;
 use App\Models\Club;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -63,10 +62,10 @@ test('staff can edit a subscription plan', function () {
 test('a subscription plan of another club cannot be edited', function () {
     $otherPlan = SubscriptionPlan::factory()->create();
 
-    expect(fn () => Livewire::actingAs($this->staff)
+    Livewire::actingAs($this->staff)
         ->test(Index::class, ['club' => $this->club])
         ->call('editPlan', $otherPlan->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });
 
 test('non-staff cannot manage subscription plans', function () {

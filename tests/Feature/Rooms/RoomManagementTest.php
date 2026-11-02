@@ -7,7 +7,6 @@ use App\Models\Club;
 use App\Models\Lesson;
 use App\Models\Room;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -113,8 +112,8 @@ test('editing keeps the name unique within the club', function () {
 test('a room of another club cannot be edited', function () {
     $otherRoom = Room::factory()->create();
 
-    expect(fn () => Livewire::actingAs($this->staff)
+    Livewire::actingAs($this->staff)
         ->test(Index::class, ['club' => $this->club])
         ->call('editRoom', $otherRoom->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });

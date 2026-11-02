@@ -5,7 +5,6 @@ use App\Livewire\StripCardPlans\Index;
 use App\Models\Club;
 use App\Models\StripCardPlan;
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -78,8 +77,8 @@ test('staff can edit a strip card plan', function () {
 test('a strip card plan of another club cannot be edited', function () {
     $otherPlan = StripCardPlan::factory()->create();
 
-    expect(fn () => Livewire::actingAs($this->staff)
+    Livewire::actingAs($this->staff)
         ->test(Index::class, ['club' => $this->club])
         ->call('editPlan', $otherPlan->id)
-    )->toThrow(ModelNotFoundException::class);
+        ->assertNotFound();
 });

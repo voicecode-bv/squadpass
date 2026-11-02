@@ -37,13 +37,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * Seed three demo clubs with staff, trainers, rooms, lessons, members with
+ * Seed the demo clubs with staff, trainers, rooms, lessons, members with
  * memberships spread over the past year, subscriptions, strip cards, paid
  * payments and check-in history, so every dashboard and chart has data.
  *
  * Demo accounts (password for all: "password"):
  * - superadmin@squadpass.nl (superadmin)
- * - owner@squadpass.nl (owner of all three clubs)
+ * - owner@squadpass.nl (owner of every demo club)
  * - trainer@squadpass.nl (trainer at Padel Club Amsterdam)
  * - lid1@squadpass.nl (member of Padel Club Amsterdam, for the member portal)
  */
