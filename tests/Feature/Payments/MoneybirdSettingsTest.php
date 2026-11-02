@@ -11,6 +11,8 @@ use App\Models\Club;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Moneybird\MoneybirdGateway;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\Fakes\FakeMoneybirdGateway;
@@ -155,6 +157,33 @@ test('the catch-up action queues invoices for paid payments without one', functi
         ->call('invoiceMissingPayments');
 
     Queue::assertPushed(CreateMoneybirdInvoice::class, 3);
+});
+
+test('the catch-up actions write their queued jobs in a single insert per chunk', function () {
+    config(['queue.default' => 'database']);
+    $club = clubWithOwner($this, connected: true);
+    $club->update(['moneybird_sync_contacts' => false]);
+    $member = User::factory()->create();
+    $club->addMember($member);
+    $club->addMember(User::factory()->create());
+    Payment::factory()->for($club)->paid()->count(3)->create(['user_id' => $member->id]);
+
+    $jobInserts = 0;
+    DB::listen(function (QueryExecuted $query) use (&$jobInserts): void {
+        if (str_starts_with($query->sql, 'insert into "jobs"')) {
+            $jobInserts++;
+        }
+    });
+
+    Livewire::actingAs($this->owner)
+        ->test(Moneybird::class, ['club' => $club])
+        ->call('invoiceMissingPayments')
+        ->call('syncAllContacts')
+        ->call('syncAllContacts');
+
+    expect($jobInserts)->toBe(2)
+        ->and(DB::table('jobs')->where('payload', 'like', '%CreateMoneybirdInvoice%')->count())->toBe(3)
+        ->and(DB::table('jobs')->where('payload', 'like', '%SyncMoneybirdContact%')->count())->toBe(2);
 });
 
 test('a club admin cannot manage the Moneybird connection', function () {

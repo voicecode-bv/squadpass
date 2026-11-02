@@ -9,12 +9,15 @@ use App\Enums\PaymentStatus;
 use App\Jobs\CreateMoneybirdInvoice;
 use App\Jobs\SyncMoneybirdContact;
 use App\Models\Club;
+use App\Models\Membership;
 use App\Models\Payment;
 use App\Services\Moneybird\MoneybirdGateway;
 use Flux\Flux;
+use Illuminate\Bus\UniqueLock;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -440,17 +443,17 @@ class Moneybird extends Component
     }
 
     /**
-     * Queue an invoice for every paid payment that has none yet.
+     * Queue an invoice for every paid payment that has none yet. Each chunk is
+     * pushed in bulk so the database queue writes it with a single insert.
      */
     protected function queueMissingInvoices(): int
     {
         $count = 0;
 
         $this->missingInvoicesQuery()->chunkById(200, function ($payments) use (&$count): void {
-            foreach ($payments as $payment) {
-                CreateMoneybirdInvoice::dispatch($payment);
-                $count++;
-            }
+            Queue::bulk($payments->map(fn (Payment $payment) => new CreateMoneybirdInvoice($payment))->all());
+
+            $count += $payments->count();
         });
 
         unset($this->missingInvoiceCount);
@@ -459,19 +462,29 @@ class Moneybird extends Component
     }
 
     /**
-     * Queue a contact sync for every active member.
+     * Queue a contact sync for every active member. Queue::bulk() skips the
+     * ShouldBeUnique lock that dispatch() takes, so it is acquired here to keep
+     * members that already have a pending sync from being queued twice.
      */
     protected function queueContactSyncs(): int
     {
         $count = 0;
+        $uniqueLock = new UniqueLock(Cache::store());
 
         $this->club->memberships()
             ->where('status', MembershipStatus::Active)
-            ->chunkById(200, function ($memberships) use (&$count): void {
-                foreach ($memberships as $membership) {
-                    SyncMoneybirdContact::dispatch($membership);
-                    $count++;
+            ->chunkById(200, function ($memberships) use (&$count, $uniqueLock): void {
+                $jobs = $memberships
+                    ->map(fn (Membership $membership) => new SyncMoneybirdContact($membership))
+                    ->filter(fn (SyncMoneybirdContact $job) => $uniqueLock->acquire($job))
+                    ->values()
+                    ->all();
+
+                if ($jobs !== []) {
+                    Queue::bulk($jobs);
                 }
+
+                $count += count($jobs);
             });
 
         return $count;
