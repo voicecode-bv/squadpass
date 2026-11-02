@@ -13,3 +13,4 @@ Schedule::command('subscriptions:charge')->dailyAt('06:00');
 Schedule::command('enrollments:end-uncovered')->dailyAt('06:15');
 Schedule::command('addons:charge')->dailyAt('06:30');
 Schedule::command('club-subscriptions:charge')->dailyAt('06:45');
+Schedule::command('demo:prune')->hourly();

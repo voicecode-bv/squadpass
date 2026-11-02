@@ -18,6 +18,13 @@
         ['label' => __('Status'), 'value' => $status?->label() ?? ($club->isOnTrial() ? __('Trial') : __('Inactive'))],
     ]" />
 
+    @cannot('manageBilling', $club)
+        <flux:callout icon="information-circle">
+            <flux:callout.heading>{{ __('Not available in the demo') }}</flux:callout.heading>
+            <flux:callout.text>{{ __('In a demo club you cannot choose a plan or buy add-ons. Every add-on is already switched on, so you can try them all.') }}</flux:callout.text>
+        </flux:callout>
+    @else
+
     @if ($status === $statuses::PastDue)
         <flux:callout icon="exclamation-triangle" variant="danger">
             <flux:callout.heading>{{ __('Payment overdue') }}</flux:callout.heading>
@@ -153,4 +160,5 @@
             </flux:table>
         </x-table-card>
     @endif
+    @endcannot
 </div>

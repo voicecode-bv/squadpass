@@ -1,6 +1,13 @@
 <div class="flex w-full flex-col gap-8">
     <x-portal.hero :title="__('Add-ons')" :subtitle="__('Extend :club with extra features. Add-ons are billed monthly via direct debit and can be cancelled monthly.', ['club' => $club->name])" />
 
+    @cannot('manageBilling', $club)
+        <flux:callout icon="information-circle">
+            <flux:callout.heading>{{ __('Not available in the demo') }}</flux:callout.heading>
+            <flux:callout.text>{{ __('In a demo club you cannot choose a plan or buy add-ons. Every add-on is already switched on, so you can try them all.') }}</flux:callout.text>
+        </flux:callout>
+    @else
+
     @if ($this->addons->isEmpty())
         <flux:callout icon="puzzle-piece">
             <flux:callout.heading>{{ __('No add-ons available') }}</flux:callout.heading>
@@ -112,4 +119,5 @@
             </flux:table>
         </x-table-card>
     @endif
+    @endcannot
 </div>

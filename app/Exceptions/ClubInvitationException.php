@@ -16,6 +16,11 @@ class ClubInvitationException extends RuntimeException
         return new self(__('This person is already a member of this club.'));
     }
 
+    public static function demoSandbox(): self
+    {
+        return new self(__('Invitations are not sent from the demo. Create your own club to invite people.'));
+    }
+
     public static function noLongerValid(): self
     {
         return new self(__('This invitation is no longer valid.'));

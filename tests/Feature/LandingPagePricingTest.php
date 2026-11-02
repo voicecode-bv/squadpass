@@ -40,3 +40,9 @@ test('the landing page answers the most asked questions', function () {
         ->assertSee(__('How long before I can start?'))
         ->assertSee(__('Every new club gets a free trial of :days days with all features. You only choose a plan once you want to keep going.', ['days' => 14]));
 });
+
+test('the footer says where SquadPass is made', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee(__('Made with :heart in the Netherlands', ['heart' => '❤️']));
+});

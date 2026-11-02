@@ -37,7 +37,7 @@ class Addons extends Component
 
     public function purchase(int $addonId, PurchaseAddon $purchaseAddon): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $addon = Addon::query()->active()->findOrFail($addonId);
 
@@ -54,7 +54,7 @@ class Addons extends Component
 
     public function cancel(int $subscriptionId, CancelAddonSubscription $cancelAddonSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $cancelAddonSubscription->handle($this->findSubscription($subscriptionId));
 
@@ -65,7 +65,7 @@ class Addons extends Component
 
     public function resume(int $subscriptionId, ResumeAddonSubscription $resumeAddonSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $resumed = $resumeAddonSubscription->handle($this->findSubscription($subscriptionId));
 
@@ -79,7 +79,7 @@ class Addons extends Component
 
     public function retryPayment(int $subscriptionId, ChargeAddonSubscription $chargeAddonSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $payment = $chargeAddonSubscription->handle($this->findSubscription($subscriptionId), retry: true);
 

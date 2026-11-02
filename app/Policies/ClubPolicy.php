@@ -43,6 +43,15 @@ class ClubPolicy
     }
 
     /**
+     * Choosing a SquadPass plan or buying add-ons charges real money, so it is
+     * closed on a demo club (superadmins still pass via Gate::before).
+     */
+    public function manageBilling(User $user, Club $club): bool
+    {
+        return ! $club->is_demo && $this->update($user, $club);
+    }
+
+    /**
      * Owners and admins handle day-to-day administration.
      */
     public function manage(User $user, Club $club): bool

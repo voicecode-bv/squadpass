@@ -39,6 +39,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
+ * @property Carbon|null $demo_expires_at set on the fake accounts of a demo sandbox, which is deleted once it passes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -57,6 +58,12 @@ class User extends Authenticatable implements PasskeyUser
     protected static function booted(): void
     {
         static::saving(function (User $user): void {
+            // A demo account keeps its undeliverable address, so nobody can use the
+            // public demo to have mail sent to a real inbox.
+            if ($user->exists && $user->isDemoSandbox() && $user->isDirty('email')) {
+                $user->email = $user->getOriginal('email');
+            }
+
             $partsChanged = $user->isDirty(['first_name', 'name_prefix', 'last_name']);
             $composed = PersonName::compose($user->first_name, $user->name_prefix, $user->last_name);
 
@@ -86,6 +93,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'is_superadmin' => 'boolean',
             'product_tour_completed_at' => 'datetime',
+            'demo_expires_at' => 'datetime',
         ];
     }
 
@@ -93,6 +101,11 @@ class User extends Authenticatable implements PasskeyUser
      * Whether the name was split automatically (existing account or imported
      * member) and the person has not checked it yet.
      */
+    public function isDemoSandbox(): bool
+    {
+        return $this->demo_expires_at !== null;
+    }
+
     public function needsNameReview(): bool
     {
         return $this->name_confirmed_at === null;

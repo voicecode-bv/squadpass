@@ -51,6 +51,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int $next_ticket_number
  * @property bool $self_signup
  * @property bool $is_demo demo club: every add-on unlocked, integrations managed by superadmins only
+ * @property Carbon|null $demo_expires_at set on a visitor's demo sandbox, which is deleted once it passes
  * @property Carbon|null $onboarded_at
  * @property CarbonInterface|null $trial_ends_at last day a club without a plan may still add members
  * @property Carbon|null $created_at
@@ -122,6 +123,7 @@ class Club extends Model implements MollieAccount
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
             'is_demo' => 'boolean',
+            'demo_expires_at' => 'datetime',
             'onboarded_at' => 'datetime',
             'trial_ends_at' => 'date',
         ];
@@ -427,6 +429,15 @@ class Club extends Model implements MollieAccount
     {
         $this->currentSubscription = null;
         $this->currentSubscriptionResolved = false;
+    }
+
+    /**
+     * A temporary demo club for one landing page visitor. Nothing in it may
+     * reach the outside world: no mail, no payments, no integrations.
+     */
+    public function isDemoSandbox(): bool
+    {
+        return $this->demo_expires_at !== null;
     }
 
     public function isOnTrial(): bool

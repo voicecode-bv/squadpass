@@ -21,6 +21,11 @@ class InviteToClub
      */
     public function handle(Club $club, string $email, ClubInvitationRole $role, User $invitedBy): ClubInvitation
     {
+        // The public demo must never mail a real person on a visitor's behalf.
+        if ($club->isDemoSandbox()) {
+            throw ClubInvitationException::demoSandbox();
+        }
+
         $existingUser = User::query()->where('email', $email)->first();
 
         if ($existingUser) {

@@ -39,7 +39,7 @@ class Plan extends Component
 
     public function subscribe(string $plan, StartClubSubscription $startClubSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         try {
             $checkoutUrl = $startClubSubscription->handle($this->club, ClubPlan::from($plan), Auth::user());
@@ -54,7 +54,7 @@ class Plan extends Component
 
     public function changePlan(string $plan, ChangeClubPlan $changeClubPlan): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $subscription = $this->latestSubscriptionOrFail();
 
@@ -73,7 +73,7 @@ class Plan extends Component
 
     public function cancel(CancelClubSubscription $cancelClubSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $cancelClubSubscription->handle($this->latestSubscriptionOrFail());
 
@@ -84,7 +84,7 @@ class Plan extends Component
 
     public function resume(ResumeClubSubscription $resumeClubSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $resumed = $resumeClubSubscription->handle($this->latestSubscriptionOrFail());
 
@@ -98,7 +98,7 @@ class Plan extends Component
 
     public function retryPayment(ChargeClubSubscription $chargeClubSubscription): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $payment = $chargeClubSubscription->handle($this->latestSubscriptionOrFail(), retry: true);
 

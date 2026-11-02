@@ -45,8 +45,14 @@ class SpamProtection
      */
     public function ensureHuman(?string $honeypot, ?string $startedAtToken, ?string $turnstileToken, ?string $ip): void
     {
-        if (filled($honeypot) || ! $this->filledInSlowlyEnough($startedAtToken)) {
+        // A filled honeypot means a bot: tell it nothing useful.
+        if (filled($honeypot)) {
             $this->fail(__('Something went wrong. Please try again.'));
+        }
+
+        // People can be quick too, so say what happened and that a retry works.
+        if (! $this->filledInSlowlyEnough($startedAtToken)) {
+            $this->fail(__('That was a little too fast. Wait a moment and try again.'));
         }
 
         if ($this->turnstileEnabled() && ! $this->turnstilePasses($turnstileToken, $ip)) {

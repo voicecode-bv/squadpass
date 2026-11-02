@@ -36,7 +36,7 @@ class AddonCta extends Component
 
     public function purchase(PurchaseAddon $purchaseAddon): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('manageBilling', $this->club);
 
         $addon = $this->addon ?? abort(404);
 

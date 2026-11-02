@@ -108,6 +108,13 @@ class Import extends Component
     {
         $this->authorize('update', $this->club);
 
+        // An import creates accounts for real addresses and may invite them, so the public demo skips it.
+        if ($this->club->isDemoSandbox()) {
+            $this->addError('file', __('Importing is not available in the demo. Create your own club to import your members.'));
+
+            return;
+        }
+
         $columnIndexes = implode(',', array_keys($this->headers));
 
         $this->validate([

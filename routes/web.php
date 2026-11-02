@@ -3,8 +3,10 @@
 use App\Http\Controllers\CheckInCodeImageController;
 use App\Http\Controllers\FormSignatureController;
 use App\Http\Controllers\ImpersonationController;
+use App\Http\Controllers\LeaveDemoController;
 use App\Http\Controllers\MollieWebhookController;
 use App\Http\Controllers\PlatformMollieWebhookController;
+use App\Http\Controllers\SegmentLandingController;
 use App\Livewire\Admin;
 use App\Livewire\CheckIns;
 use App\Livewire\Clubs;
@@ -24,12 +26,17 @@ use App\Livewire\Trainers;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::get('voor/{segment}', SegmentLandingController::class)->name('segments.show');
 
 // Stopping impersonation only needs an authenticated session; the impersonated
 // member may well be unverified, which must not lock staff out of their session.
 Route::post('impersonate/stop', [ImpersonationController::class, 'destroy'])
     ->middleware('auth')
     ->name('impersonate.stop');
+
+Route::post('demo/leave', LeaveDemoController::class)
+    ->middleware('auth')
+    ->name('demo.leave');
 
 Route::post('webhooks/mollie-platform', PlatformMollieWebhookController::class)->name('webhooks.mollie.platform');
 Route::post('webhooks/mollie/{club}', MollieWebhookController::class)->name('webhooks.mollie');

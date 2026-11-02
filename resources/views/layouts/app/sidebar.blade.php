@@ -240,6 +240,7 @@
         {{ $slot }}
 
         @include('partials.impersonation-banner')
+        @include('partials.demo-banner')
 
         <livewire:product-tour />
 

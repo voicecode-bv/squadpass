@@ -31,6 +31,7 @@ use App\Models\Trainer;
 use App\Models\User;
 use App\Services\Lessons\OccurrenceGenerator;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -54,6 +55,29 @@ class DemoClubSeeder extends Seeder
      */
     private const string MOLLIE_TEST_KEY = 'test_3A4C2ubRV62Dd7f9WM4dwUAr6KmJbq';
 
+    /**
+     * Reserved domain (RFC 2606) for the accounts of a demo sandbox: mail to it
+     * can never be delivered, and the mailer drops it before even trying.
+     */
+    public const string SANDBOX_EMAIL_DOMAIN = 'demo.squadpass.invalid';
+
+    /**
+     * Set for a visitor's demo sandbox: every account it creates expires with it.
+     */
+    protected ?CarbonInterface $sandboxExpiresAt = null;
+
+    /**
+     * A copy that creates the accounts for a demo sandbox: undeliverable
+     * addresses and an expiry, so the hourly prune removes them.
+     */
+    public function forSandbox(CarbonInterface $expiresAt): static
+    {
+        $seeder = clone $this;
+        $seeder->sandboxExpiresAt = $expiresAt;
+
+        return $seeder;
+    }
+
     public function run(): void
     {
         $owner = User::query()->where('email', UserSeeder::OWNER_EMAIL)->firstOrFail();
@@ -64,25 +88,30 @@ class DemoClubSeeder extends Seeder
     }
 
     /**
-     * User factory that puts every demo account on the squadpass.nl domain.
+     * User factory that puts every demo account on the squadpass.nl domain, or on
+     * the undeliverable sandbox domain with an expiry for a demo sandbox.
      *
      * @return Factory<User>
      */
     protected function userFactory(): Factory
     {
+        $expiresAt = $this->sandboxExpiresAt;
+        $domain = $expiresAt === null ? 'squadpass.nl' : self::SANDBOX_EMAIL_DOMAIN;
+
         // The state closure is rebound to the factory, so resolve the helper statically.
         return User::factory()->state(fn (array $attributes): array => [
-            'email' => self::squadpassEmail($attributes['first_name'].' '.$attributes['last_name']),
+            'email' => self::demoEmail($attributes['first_name'].' '.$attributes['last_name'], $domain),
+            'demo_expires_at' => $expiresAt,
         ]);
     }
 
     /**
-     * Build a unique squadpass.nl address from a name, e.g. "Anna Bakker" => "anna.bakker.k3x9qa@squadpass.nl".
+     * Build a unique address from a name, e.g. "Anna Bakker" => "anna.bakker.k3x9qa@squadpass.nl".
      * The random suffix keeps repeated runs against the same database collision-free.
      */
-    protected static function squadpassEmail(string $name): string
+    public static function demoEmail(string $name, string $domain = 'squadpass.nl'): string
     {
-        return Str::slug($name, '.').'.'.Str::lower(Str::random(6)).'@squadpass.nl';
+        return Str::slug($name, '.').'.'.Str::lower(Str::random(6)).'@'.$domain;
     }
 
     /**
