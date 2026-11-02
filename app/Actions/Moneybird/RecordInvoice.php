@@ -92,12 +92,12 @@ class RecordInvoice
      */
     protected function lines(array $details): array
     {
-        return collect($details)->map(fn (array $detail) => [
+        return array_values(array_map(fn (array $detail): array => [
             'description' => (string) ($detail['description'] ?? ''),
             'amount' => isset($detail['amount']) ? (string) $detail['amount'] : null,
             'price_cents' => $this->toCents($detail['price'] ?? 0),
             'total_price_excl_tax_cents' => $this->toCents($detail['total_price_excl_tax_with_discount'] ?? 0),
-        ])->values()->all();
+        ], $details));
     }
 
     protected function toCents(mixed $amount): int

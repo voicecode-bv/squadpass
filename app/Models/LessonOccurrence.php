@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\LessonOccurrenceStatus;
 use Database\Factories\LessonOccurrenceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -79,9 +80,9 @@ class LessonOccurrence extends Model
     {
         return LessonEnrollment::query()
             ->with('user')
-            ->where(function ($query) {
+            ->where(function (Builder $query): void {
                 $query->where('lesson_occurrence_id', $this->id)
-                    ->orWhere(function ($fixedQuery) {
+                    ->orWhere(function (Builder $fixedQuery): void {
                         $fixedQuery->where('lesson_id', $this->lesson_id)
                             ->whereDoesntHave('absences', fn ($absenceQuery) => $absenceQuery
                                 ->where('lesson_occurrence_id', $this->id));

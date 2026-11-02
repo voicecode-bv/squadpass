@@ -9,6 +9,7 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use GdImage;
+use RuntimeException;
 
 /**
  * Renders a check-in code as a QR code: inline SVG for the web portal, PNG for
@@ -53,11 +54,15 @@ class QrCodeRenderer
     public function png(string $value, int $moduleSize = 8, int $quietZone = 2): string
     {
         $matrix = Encoder::encode($value, ErrorCorrectionLevel::H())->getMatrix();
-        $size = ($matrix->getWidth() + $quietZone * 2) * $moduleSize;
+        $size = max(1, ($matrix->getWidth() + $quietZone * 2) * $moduleSize);
 
         $image = imagecreatetruecolor($size, $size);
         $white = imagecolorallocate($image, 255, 255, 255);
         $black = imagecolorallocate($image, 0, 0, 0);
+
+        if ($white === false || $black === false) {
+            throw new RuntimeException('GD could not allocate the QR code colours.');
+        }
 
         imagefilledrectangle($image, 0, 0, $size - 1, $size - 1, $white);
 

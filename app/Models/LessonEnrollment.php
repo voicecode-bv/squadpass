@@ -18,6 +18,8 @@ use Illuminate\Support\Carbon;
  * @property EnrollmentType $type
  * @property int|null $lesson_id
  * @property int|null $lesson_occurrence_id
+ * @property-read Lesson|null $lesson null for a single enrollment
+ * @property-read LessonOccurrence|null $occurrence null for a fixed enrollment
  * @property int|null $subscription_id
  * @property int $credits_used
  * @property Carbon|null $created_at

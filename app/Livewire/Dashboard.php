@@ -22,6 +22,12 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read Collection<int, Club> $staffClubs
+ * @property-read array{labels: list<string>, values: list<int>} $newMembersPerMonth
+ */
 #[Title('Dashboard')]
 class Dashboard extends Component
 {
@@ -142,7 +148,7 @@ class Dashboard extends Component
     #[Computed]
     public function failedChargesByClub(): \Illuminate\Support\Collection
     {
-        $clubIds = $this->staffClubs->modelKeys();
+        $clubIds = $this->staffClubIds();
 
         if ($clubIds === []) {
             return collect();
@@ -174,7 +180,7 @@ class Dashboard extends Component
     #[Computed]
     public function newMembersPerMonth(): array
     {
-        return app(ClubStatistics::class)->newMembersPerMonth($this->staffClubs->modelKeys());
+        return app(ClubStatistics::class)->newMembersPerMonth($this->staffClubIds());
     }
 
     /**
@@ -185,7 +191,7 @@ class Dashboard extends Component
     #[Computed]
     public function activeMembersPerMonth(): array
     {
-        return app(ClubStatistics::class)->activeMembersPerMonth($this->staffClubs->modelKeys());
+        return app(ClubStatistics::class)->activeMembersPerMonth($this->staffClubIds());
     }
 
     /**
@@ -196,7 +202,17 @@ class Dashboard extends Component
     #[Computed]
     public function revenuePerMonth(): array
     {
-        return app(ClubStatistics::class)->revenuePerMonth($this->staffClubs->modelKeys());
+        return app(ClubStatistics::class)->revenuePerMonth($this->staffClubIds());
+    }
+
+    /**
+     * Ids of the clubs this user manages, for the statistics queries.
+     *
+     * @return list<int>
+     */
+    protected function staffClubIds(): array
+    {
+        return array_values($this->staffClubs->map(fn (Club $club): int => $club->id)->all());
     }
 
     public function render(): View

@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Builder;
 class ClubStatistics
 {
     /**
+     * Result column per month bucket, oldest first. Fixed names keep the
+     * generated SELECT a literal string.
+     *
+     * @var list<literal-string>
+     */
+    protected const array MONTH_COLUMNS = ['m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11'];
+
+    /**
      * New memberships per month, oldest month first.
      *
      * @param  list<int>  $clubIds
@@ -23,7 +31,7 @@ class ClubStatistics
         return $this->monthlySeries(
             $clubIds,
             Membership::query(),
-            fn (int $index) => "SUM(CASE WHEN joined_at >= ? AND joined_at < ? THEN 1 ELSE 0 END) as m{$index}",
+            'SUM(CASE WHEN joined_at >= ? AND joined_at < ? THEN 1 ELSE 0 END)',
         );
     }
 
@@ -38,7 +46,7 @@ class ClubStatistics
         return $this->monthlySeries(
             $clubIds,
             Membership::query(),
-            fn (int $index) => "SUM(CASE WHEN joined_at < ? AND (ended_at IS NULL OR ended_at >= ?) THEN 1 ELSE 0 END) as m{$index}",
+            'SUM(CASE WHEN joined_at < ? AND (ended_at IS NULL OR ended_at >= ?) THEN 1 ELSE 0 END)',
             fn (array $bucket) => [$bucket['end'], $bucket['end']],
         );
     }
@@ -54,7 +62,7 @@ class ClubStatistics
         return $this->monthlySeries(
             $clubIds,
             Payment::query()->where('status', PaymentStatus::Paid),
-            fn (int $index) => "SUM(CASE WHEN paid_at >= ? AND paid_at < ? THEN amount_cents ELSE 0 END) as m{$index}",
+            'SUM(CASE WHEN paid_at >= ? AND paid_at < ? THEN amount_cents ELSE 0 END)',
         );
     }
 
@@ -63,11 +71,11 @@ class ClubStatistics
      *
      * @param  list<int>  $clubIds
      * @param  Builder<Membership>|Builder<Payment>  $query
-     * @param  callable(int): string  $caseFor
+     * @param  literal-string  $sumCase  aggregate per month, with two placeholders for the month's bindings
      * @param  callable(array{label: string, start: string, end: string}): array{string, string}|null  $bindingsFor
      * @return array{labels: list<string>, values: list<int>}
      */
-    protected function monthlySeries(array $clubIds, Builder $query, callable $caseFor, ?callable $bindingsFor = null): array
+    protected function monthlySeries(array $clubIds, Builder $query, string $sumCase, ?callable $bindingsFor = null): array
     {
         $buckets = $this->monthBuckets();
         $labels = array_column($buckets, 'label');
@@ -80,7 +88,7 @@ class ClubStatistics
         $bindings = [];
 
         foreach ($buckets as $index => $bucket) {
-            $selects[] = $caseFor($index);
+            $selects[] = $sumCase.' as '.self::MONTH_COLUMNS[$index];
             array_push($bindings, ...($bindingsFor ? $bindingsFor($bucket) : [$bucket['start'], $bucket['end']]));
         }
 
@@ -91,7 +99,7 @@ class ClubStatistics
 
         return [
             'labels' => $labels,
-            'values' => array_map(fn (int $index) => (int) ($row?->{"m{$index}"} ?? 0), array_keys($buckets)),
+            'values' => array_map(fn (int $index): int => (int) ($row->{self::MONTH_COLUMNS[$index]} ?? 0), array_keys($buckets)),
         ];
     }
 
@@ -102,8 +110,8 @@ class ClubStatistics
      */
     protected function monthBuckets(): array
     {
-        return collect(range(11, 0))
-            ->map(function (int $offset) {
+        return array_map(
+            function (int $offset): array {
                 $start = now()->startOfMonth()->subMonths($offset);
 
                 return [
@@ -111,7 +119,8 @@ class ClubStatistics
                     'start' => $start->toDateString(),
                     'end' => $start->copy()->addMonth()->toDateString(),
                 ];
-            })
-            ->all();
+            },
+            range(11, 0),
+        );
     }
 }

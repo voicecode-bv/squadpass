@@ -28,7 +28,7 @@ class PersonName
      */
     public static function split(string $fullName): array
     {
-        $words = preg_split('/\s+/', trim($fullName), -1, PREG_SPLIT_NO_EMPTY);
+        $words = preg_split('/\s+/', trim($fullName), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
         if ($words === []) {
             return ['first_name' => '', 'name_prefix' => null, 'last_name' => ''];

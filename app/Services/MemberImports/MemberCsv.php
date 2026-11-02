@@ -4,6 +4,7 @@ namespace App\Services\MemberImports;
 
 use Generator;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Reads a member list exported from another system. Handles what spreadsheet
@@ -56,15 +57,18 @@ class MemberCsv
     public static function open($source): self
     {
         $stream = fopen('php://temp/maxmemory:'.(4 * 1024 * 1024), 'w+b');
+
+        if ($stream === false) {
+            throw new RuntimeException('Could not open a temporary stream to read the CSV.');
+        }
+
         stream_copy_to_stream($source, $stream);
         rewind($stream);
 
         // Skip a UTF-8 byte order mark so it does not stick to the first header.
-        if (fread($stream, 3) !== "\xEF\xBB\xBF") {
-            rewind($stream);
-        }
+        $start = fread($stream, 3) === "\xEF\xBB\xBF" ? 3 : 0;
+        fseek($stream, $start);
 
-        $start = ftell($stream);
         $firstLine = (string) fgets($stream);
         fseek($stream, $start);
 

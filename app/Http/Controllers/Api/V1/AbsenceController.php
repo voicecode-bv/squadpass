@@ -21,7 +21,7 @@ class AbsenceController extends Controller
             'occurrence_id' => ['required', 'integer'],
         ]);
 
-        $occurrence = LessonOccurrence::query()->findOrFail($validated['occurrence_id']);
+        $occurrence = LessonOccurrence::query()->findOrFail($request->integer('occurrence_id'));
 
         $enrollment = LessonEnrollment::query()
             ->where('user_id', $request->user()->id)

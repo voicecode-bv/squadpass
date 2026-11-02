@@ -66,7 +66,7 @@ class SpamProtection
             return false;
         }
 
-        return now()->timestamp - $startedAt >= self::MINIMUM_SECONDS;
+        return now()->getTimestamp() - $startedAt >= self::MINIMUM_SECONDS;
     }
 
     protected function turnstilePasses(?string $token, ?string $ip): bool

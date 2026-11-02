@@ -19,7 +19,7 @@ class ClubSubscriptionPaymentFactory extends Factory
     {
         return [
             'club_subscription_id' => ClubSubscription::factory(),
-            'club_id' => fn (array $attributes) => ClubSubscription::query()->findOrFail($attributes['club_subscription_id'])->club_id,
+            'club_id' => fn (array $attributes) => ClubSubscription::query()->whereKey($attributes['club_subscription_id'])->value('club_id'),
             'mollie_payment_id' => 'tr_'.fake()->unique()->regexify('[A-Za-z0-9]{10}'),
             'purpose' => ClubSubscriptionPayment::PURPOSE_RECURRING,
             'status' => PaymentStatus::Open,

@@ -18,6 +18,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read Collection<int, Club> $memberClubs
+ */
 #[Title('Support tickets')]
 class Tickets extends Component
 {
@@ -33,7 +38,7 @@ class Tickets extends Component
 
     public function mount(): void
     {
-        $this->club_id = (string) ($this->memberClubs->first()?->id ?? '');
+        $this->club_id = (string) ($this->memberClubs->first()->id ?? '');
     }
 
     public function createTicket(): void

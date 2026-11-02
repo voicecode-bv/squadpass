@@ -47,7 +47,7 @@ class EnrollmentController extends Controller
             'occurrence_id' => ['required', 'integer'],
         ]);
 
-        $occurrence = LessonOccurrence::query()->with(['lesson', 'club'])->findOrFail($validated['occurrence_id']);
+        $occurrence = LessonOccurrence::query()->with(['lesson', 'club'])->findOrFail($request->integer('occurrence_id'));
 
         try {
             $enrollment = $enrollSingle->handle($request->user(), $occurrence);
@@ -64,7 +64,7 @@ class EnrollmentController extends Controller
             'lesson_id' => ['required', 'integer'],
         ]);
 
-        $lesson = Lesson::query()->with('club')->findOrFail($validated['lesson_id']);
+        $lesson = Lesson::query()->with('club')->findOrFail($request->integer('lesson_id'));
 
         try {
             $enrollment = $enrollFixed->handle($request->user(), $lesson);

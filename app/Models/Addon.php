@@ -82,7 +82,7 @@ class Addon extends Model
             }
         }
 
-        return static::query()->orderBy('id')->get();
+        return self::query()->orderBy('id')->get();
     }
 
     public const string LANDING_CACHE_KEY = 'addons.landing';

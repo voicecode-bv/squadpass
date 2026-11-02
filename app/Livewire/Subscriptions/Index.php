@@ -12,6 +12,11 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read LengthAwarePaginator<int, Subscription> $subscriptions
+ */
 #[Title('Member subscriptions')]
 class Index extends Component
 {

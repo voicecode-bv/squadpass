@@ -19,7 +19,7 @@ class AddonPaymentFactory extends Factory
     {
         return [
             'addon_subscription_id' => AddonSubscription::factory(),
-            'club_id' => fn (array $attributes) => AddonSubscription::query()->findOrFail($attributes['addon_subscription_id'])->club_id,
+            'club_id' => fn (array $attributes) => AddonSubscription::query()->whereKey($attributes['addon_subscription_id'])->value('club_id'),
             'mollie_payment_id' => 'tr_'.fake()->unique()->regexify('[A-Za-z0-9]{10}'),
             'purpose' => AddonPayment::PURPOSE_RECURRING,
             'status' => PaymentStatus::Open,

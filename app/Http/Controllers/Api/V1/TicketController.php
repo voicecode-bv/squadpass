@@ -64,7 +64,7 @@ class TicketController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        $club = Club::query()->findOrFail($validated['club_id']);
+        $club = Club::query()->findOrFail($request->integer('club_id'));
 
         $ticket = DB::transaction(function () use ($request, $club, $validated): Ticket {
             $ticket = Ticket::create([

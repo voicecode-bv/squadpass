@@ -20,7 +20,7 @@ class LessonEnrollmentResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'lesson_id' => $this->lesson_id,
-            'lesson_name' => $this->lesson?->name ?? $this->occurrence?->lesson->name,
+            'lesson_name' => $this->lesson->name ?? $this->occurrence?->lesson->name,
             'club_id' => $this->club_id,
             'occurrence' => new LessonOccurrenceResource($this->whenLoaded('occurrence')),
         ];

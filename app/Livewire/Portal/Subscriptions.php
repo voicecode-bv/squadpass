@@ -17,6 +17,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read Collection<int, SubscriptionPlan> $availablePlans
+ */
 #[Title('My subscriptions')]
 class Subscriptions extends Component
 {
@@ -99,12 +104,14 @@ class Subscriptions extends Component
     #[Computed]
     public function payableClubIds(): array
     {
-        return $this->availablePlans
+        $clubIds = $this->availablePlans
             ->pluck('club')
             ->unique('id')
             ->filter(fn (Club $club): bool => $club->acceptsOnlinePayments())
-            ->mapWithKeys(fn (Club $club): array => [$club->id => true])
+            ->map(fn (Club $club): int => $club->id)
             ->all();
+
+        return array_fill_keys($clubIds, true);
     }
 
     public function render(): View

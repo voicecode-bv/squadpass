@@ -12,6 +12,7 @@ use App\Enums\SubscriptionStatus;
 use App\Exceptions\ClubPlanException;
 use App\Jobs\SyncMoneybirdContact;
 use App\Services\Mollie\MollieAccount;
+use Carbon\CarbonInterface;
 use Database\Factories\ClubFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -51,7 +52,7 @@ use Illuminate\Support\Facades\Storage;
  * @property bool $self_signup
  * @property bool $is_demo demo club: every add-on unlocked, integrations managed by superadmins only
  * @property Carbon|null $onboarded_at
- * @property Carbon|null $trial_ends_at last day a club without a plan may still add members
+ * @property CarbonInterface|null $trial_ends_at last day a club without a plan may still add members
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -211,7 +212,7 @@ class Club extends Model implements MollieAccount
         }
 
         if ($this->activeAddonKeys === null) {
-            $this->activeAddonKeys = AddonSubscription::query()
+            $this->activeAddonKeys = array_values(AddonSubscription::query()
                 ->where('addon_subscriptions.club_id', $this->id)
                 ->where(function ($query): void {
                     $query->where('status', SubscriptionStatus::Active)
@@ -222,7 +223,8 @@ class Club extends Model implements MollieAccount
                 })
                 ->join('addons', 'addons.id', '=', 'addon_subscriptions.addon_id')
                 ->pluck('addons.key')
-                ->all();
+                ->map(fn (mixed $addonKey): string => (string) $addonKey)
+                ->all());
         }
 
         return in_array($key->value, $this->activeAddonKeys, true);

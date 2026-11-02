@@ -68,10 +68,10 @@ class DemoClubSeeder extends Seeder
      *
      * @return Factory<User>
      */
-    protected function userFactory(int $count = 1): Factory
+    protected function userFactory(): Factory
     {
         // The state closure is rebound to the factory, so resolve the helper statically.
-        return User::factory($count)->state(fn (array $attributes): array => [
+        return User::factory()->state(fn (array $attributes): array => [
             'email' => self::squadpassEmail($attributes['first_name'].' '.$attributes['last_name']),
         ]);
     }
@@ -267,7 +267,7 @@ class DemoClubSeeder extends Seeder
      */
     protected function seedTrainers(Club $club, bool $isPrimary): Collection
     {
-        $users = $this->userFactory(3)->create();
+        $users = $this->userFactory()->createMany(3);
 
         if ($isPrimary) {
             $users->prepend(User::factory()->create([
@@ -323,7 +323,7 @@ class DemoClubSeeder extends Seeder
      */
     protected function seedMembers(Club $club, int $count, bool $isPrimary): Collection
     {
-        $users = $this->userFactory($count - ($isPrimary ? 1 : 0))->create();
+        $users = $this->userFactory()->createMany($count - ($isPrimary ? 1 : 0));
 
         if ($isPrimary) {
             $users->prepend(User::factory()->create([

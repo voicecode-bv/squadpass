@@ -18,6 +18,12 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read LengthAwarePaginator<int, Payment> $payments
+ * @property-read bool $hasAddon
+ */
 #[Title('Mollie')]
 class Mollie extends Component
 {

@@ -2,6 +2,9 @@
 
 namespace App\Jobs\Middleware;
 
+use App\Jobs\CreateMoneybirdCreditInvoice;
+use App\Jobs\CreateMoneybirdInvoice;
+use App\Jobs\SyncMoneybirdContact;
 use Closure;
 use Illuminate\Http\Client\RequestException;
 
@@ -19,7 +22,7 @@ class ReleaseWhenMoneybirdRateLimited
      *
      * @param  Closure(object): void  $next
      */
-    public function handle(object $job, Closure $next): void
+    public function handle(CreateMoneybirdInvoice|CreateMoneybirdCreditInvoice|SyncMoneybirdContact $job, Closure $next): void
     {
         try {
             $next($job);

@@ -12,6 +12,12 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read array{labels: list<string>, values: list<int>} $newMembersPerMonth
+ * @property-read array{labels: list<string>, values: list<int>} $revenuePerMonth
+ */
 #[Title('Dashboard')]
 class Dashboard extends Component
 {

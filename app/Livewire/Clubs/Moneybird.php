@@ -12,9 +12,11 @@ use App\Models\Club;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Services\Moneybird\MoneybirdGateway;
+use Closure;
 use Flux\Flux;
 use Illuminate\Bus\UniqueLock;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
@@ -396,7 +398,7 @@ class Moneybird extends Component
     #[Computed]
     public function ledgerAccounts(): array
     {
-        return $this->options('ledger_accounts', fn (MoneybirdGateway $gateway) => $gateway->listRevenueLedgerAccounts($this->club));
+        return $this->options('ledger_accounts', fn (MoneybirdGateway $gateway) => $gateway->listRevenueLedgerAccounts($this->club)) ?? [];
     }
 
     /**
@@ -405,7 +407,7 @@ class Moneybird extends Component
     #[Computed]
     public function taxRates(): array
     {
-        return $this->options('tax_rates', fn (MoneybirdGateway $gateway) => $gateway->listSalesTaxRates($this->club));
+        return $this->options('tax_rates', fn (MoneybirdGateway $gateway) => $gateway->listSalesTaxRates($this->club)) ?? [];
     }
 
     /**
@@ -414,7 +416,7 @@ class Moneybird extends Component
     #[Computed]
     public function workflows(): array
     {
-        return $this->options('workflows', fn (MoneybirdGateway $gateway) => $gateway->listInvoiceWorkflows($this->club));
+        return $this->options('workflows', fn (MoneybirdGateway $gateway) => $gateway->listInvoiceWorkflows($this->club)) ?? [];
     }
 
     /**
@@ -423,7 +425,7 @@ class Moneybird extends Component
     #[Computed]
     public function documentStyles(): array
     {
-        return $this->options('document_styles', fn (MoneybirdGateway $gateway) => $gateway->listDocumentStyles($this->club));
+        return $this->options('document_styles', fn (MoneybirdGateway $gateway) => $gateway->listDocumentStyles($this->club)) ?? [];
     }
 
     protected function saveConnection(): void
@@ -510,15 +512,15 @@ class Moneybird extends Component
      * Moneybird reference data changes rarely; cache it briefly per club so the
      * settings page does not hit the API on every request.
      *
-     * @template T of array
+     * @template T of list<array<string, string>>
      *
-     * @param  callable(MoneybirdGateway): T  $fetch
-     * @return T
+     * @param  Closure(MoneybirdGateway): T  $fetch
+     * @return T|null null when Moneybird is not configured or not reachable
      */
-    protected function options(string $kind, callable $fetch): array
+    protected function options(string $kind, Closure $fetch): ?array
     {
         if (! $this->club->hasMoneybirdConfigured()) {
-            return [];
+            return null;
         }
 
         try {
@@ -526,7 +528,7 @@ class Moneybird extends Component
         } catch (Throwable $exception) {
             $this->club->recordMoneybirdError($exception->getMessage());
 
-            return [];
+            return null;
         }
     }
 
@@ -542,7 +544,10 @@ class Moneybird extends Component
         return "moneybird.{$this->club->id}.{$kind}";
     }
 
-    protected function missingInvoicesQuery()
+    /**
+     * @return Builder<Payment>
+     */
+    protected function missingInvoicesQuery(): Builder
     {
         return Payment::query()
             ->where('club_id', $this->club->id)

@@ -14,14 +14,15 @@ class AddonSeeder extends Seeder
      */
     public function run(): void
     {
-        $prices = [
-            AddonKey::Mollie->value => 1500,
-            AddonKey::Moneybird->value => 1000,
-            AddonKey::MobileApp->value => 7900,
-        ];
-
         foreach (Addon::syncFromKeys() as $addon) {
-            $addon->update(['price_cents' => $prices[$addon->key->value] ?? 1000, 'is_active' => true]);
+            // Exhaustive on purpose: a new add-on fails here until it has a demo price.
+            $priceCents = match ($addon->key) {
+                AddonKey::Mollie => 1500,
+                AddonKey::Moneybird => 1000,
+                AddonKey::MobileApp => 7900,
+            };
+
+            $addon->update(['price_cents' => $priceCents, 'is_active' => true]);
         }
     }
 }

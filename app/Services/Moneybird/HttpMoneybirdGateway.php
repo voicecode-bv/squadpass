@@ -6,6 +6,7 @@ use App\Enums\MoneybirdInvoiceDelivery;
 use App\Models\Club;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 
@@ -15,56 +16,60 @@ class HttpMoneybirdGateway implements MoneybirdGateway
 
     public function listAdministrations(string $accessToken): array
     {
-        $administrations = Http::baseUrl(self::BASE_URL)
+        $response = Http::baseUrl(self::BASE_URL)
             ->withToken($accessToken)
             ->acceptJson()
-            ->get('administrations.json')
-            ->throw()
-            ->json();
+            ->get('administrations.json');
 
-        return collect($administrations)
-            ->map(fn (array $administration) => ['id' => (string) $administration['id'], 'name' => (string) $administration['name']])
-            ->values()
-            ->all();
+        return array_map(
+            fn (array $administration) => ['id' => (string) $administration['id'], 'name' => (string) $administration['name']],
+            $this->records($response),
+        );
     }
 
     public function listRevenueLedgerAccounts(Club $club): array
     {
-        return collect($this->clientFor($club)->get('ledger_accounts.json')->throw()->json())
-            ->filter(fn (array $account) => ($account['account_type'] ?? null) === 'revenue' && ($account['active'] ?? true))
-            ->map(fn (array $account) => ['id' => (string) $account['id'], 'name' => (string) $account['name']])
-            ->values()
-            ->all();
+        return array_map(
+            fn (array $account) => ['id' => (string) $account['id'], 'name' => (string) $account['name']],
+            $this->records(
+                $this->clientFor($club)->get('ledger_accounts.json'),
+                fn (array $account) => ($account['account_type'] ?? null) === 'revenue' && ($account['active'] ?? true),
+            ),
+        );
     }
 
     public function listSalesTaxRates(Club $club): array
     {
-        return collect($this->clientFor($club)->get('tax_rates.json', ['filter' => 'tax_rate_type:sales_invoice', 'per_page' => 100])->throw()->json())
-            ->filter(fn (array $rate) => $rate['active'] ?? true)
-            ->map(fn (array $rate) => [
+        return array_map(
+            fn (array $rate) => [
                 'id' => (string) $rate['id'],
                 'name' => (string) $rate['name'],
                 'percentage' => (string) ($rate['percentage'] ?? ''),
-            ])
-            ->values()
-            ->all();
+            ],
+            $this->records(
+                $this->clientFor($club)->get('tax_rates.json', ['filter' => 'tax_rate_type:sales_invoice', 'per_page' => 100]),
+                fn (array $rate) => (bool) ($rate['active'] ?? true),
+            ),
+        );
     }
 
     public function listInvoiceWorkflows(Club $club): array
     {
-        return collect($this->clientFor($club)->get('workflows.json')->throw()->json())
-            ->filter(fn (array $workflow) => ($workflow['type'] ?? null) === 'InvoiceWorkflow' && ($workflow['active'] ?? true))
-            ->map(fn (array $workflow) => ['id' => (string) $workflow['id'], 'name' => (string) $workflow['name']])
-            ->values()
-            ->all();
+        return array_map(
+            fn (array $workflow) => ['id' => (string) $workflow['id'], 'name' => (string) $workflow['name']],
+            $this->records(
+                $this->clientFor($club)->get('workflows.json'),
+                fn (array $workflow) => ($workflow['type'] ?? null) === 'InvoiceWorkflow' && ($workflow['active'] ?? true),
+            ),
+        );
     }
 
     public function listDocumentStyles(Club $club): array
     {
-        return collect($this->clientFor($club)->get('document_styles.json')->throw()->json())
-            ->map(fn (array $style) => ['id' => (string) $style['id'], 'name' => (string) $style['name']])
-            ->values()
-            ->all();
+        return array_map(
+            fn (array $style) => ['id' => (string) $style['id'], 'name' => (string) $style['name']],
+            $this->records($this->clientFor($club)->get('document_styles.json')),
+        );
     }
 
     public function upsertContact(Club $club, ?string $contactId, array $attributes): string
@@ -165,6 +170,27 @@ class HttpMoneybirdGateway implements MoneybirdGateway
         $this->clientFor($club)
             ->patch("sales_invoices/{$creditInvoiceId}/register_payment_creditinvoice.json", [])
             ->throw();
+    }
+
+    /**
+     * The records of a Moneybird list response, optionally filtered. Anything
+     * that is not a JSON object is skipped. Failed responses throw.
+     *
+     * @param  (callable(array<string, mixed>): bool)|null  $keep
+     * @return list<array<string, mixed>>
+     */
+    protected function records(Response $response, ?callable $keep = null): array
+    {
+        $records = $response->throw()->json();
+
+        if (! is_array($records)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $records,
+            fn (mixed $record): bool => is_array($record) && ($keep === null || $keep($record)),
+        ));
     }
 
     protected function clientFor(Club $club): PendingRequest

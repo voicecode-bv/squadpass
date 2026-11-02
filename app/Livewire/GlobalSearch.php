@@ -15,6 +15,8 @@ use Livewire\Component;
  * Search across the clubs the current user manages: clubs, members, lessons
  * and tickets. Every group is scoped to those clubs and capped, so the query
  * stays cheap no matter how big the club is.
+ *
+ * @property-read array<int, int> $clubIds
  */
 class GlobalSearch extends Component
 {

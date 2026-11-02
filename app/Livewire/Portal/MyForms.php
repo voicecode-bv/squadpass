@@ -13,6 +13,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * Computed properties, read as $this->name:
+ *
+ * @property-read Collection<int, Form> $forms
+ */
 #[Title('My forms')]
 class MyForms extends Component
 {

@@ -16,6 +16,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Title('Import members')]
@@ -159,6 +160,11 @@ class Import extends Component
 
         return response()->streamDownload(function () use ($fields, $example): void {
             $output = fopen('php://output', 'wb');
+
+            if ($output === false) {
+                throw new RuntimeException('Could not open the output stream for the example file.');
+            }
+
             fwrite($output, "\xEF\xBB\xBF");
             fputcsv($output, array_map(fn (string $field): string => MemberCsv::label($field), $fields), ';', '"', '');
             fputcsv($output, $example, ';', '"', '');
