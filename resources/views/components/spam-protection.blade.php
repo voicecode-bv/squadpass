@@ -34,7 +34,7 @@
         x-data
         x-on:turnstile-reset.window="window.turnstile?.reset()"
     >
-        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="auto"></div>
+        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="auto" data-appearance="interaction-only"></div>
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     </div>
 @endif
