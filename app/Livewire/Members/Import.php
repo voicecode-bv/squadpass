@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Members;
 
+use App\Enums\StaffPermission;
 use App\Jobs\ProcessMemberImport;
 use App\Models\Club;
 use App\Models\MemberImport;
@@ -50,7 +51,7 @@ class Import extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('update', $club);
+        $this->authorize('access', [$club, StaffPermission::MemberImport]);
 
         $this->club = $club;
     }
@@ -61,7 +62,7 @@ class Import extends Component
      */
     public function updatedFile(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::MemberImport]);
 
         $this->validateOnly('file', $this->fileRules());
 
@@ -106,7 +107,7 @@ class Import extends Component
      */
     public function start(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::MemberImport]);
 
         // An import creates accounts for real addresses and may invite them, so the public demo skips it.
         if ($this->club->isDemoSandbox()) {
@@ -160,7 +161,7 @@ class Import extends Component
      */
     public function downloadTemplate(): StreamedResponse
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::MemberImport]);
 
         $fields = ['first_name', 'name_prefix', 'last_name', 'email', 'membership_number', 'joined_at', 'phone', 'date_of_birth'];
         $example = ['Anna', 'de', 'Vries', 'anna@example.com', '101', '01-09-2024', '0612345678', '14-03-1990'];

@@ -60,6 +60,7 @@
 
                     @if ($currentClub && (
                         $user->can('update', $currentClub)
+                        || $user->can('access', [$currentClub, \App\Enums\StaffPermission::ClubDetails])
                         || $user->can('access', [$currentClub, \App\Enums\StaffPermission::Forms])
                         || $user->can('access', [$currentClub, \App\Enums\StaffPermission::Setup])
                         || ($currentClub->hasAddon(\App\Enums\AddonKey::Mollie) && $user->can('access', [$currentClub, \App\Enums\StaffPermission::Billing]))
@@ -181,88 +182,31 @@
             </flux:sidebar.nav>
 
             {{-- No flux:spacer: the nav grows and scrolls, this stays pinned to the bottom. --}}
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            {{-- The only account menu, also on phones where the sidebar opens as a drawer. --}}
+            <x-desktop-user-menu :name="auth()->user()->name" />
         </flux:sidebar>
 
         {{-- No Flux `sticky` prop here: it binds an inline `top: $el.offsetTop + 'px'`,
              which lands below the viewport top when the page is already scrolled
              (for example right after a wire:navigate). Plain sticky top-0 is stable. --}}
-        {{-- Three zones: club context on the left, search centred in the free space, account on the right. --}}
+        {{-- Search on the left, notifications and the club picker on the right; the account menu lives in the sidebar. --}}
         <flux:header class="sticky top-0 z-20 gap-2 bg-white sm:gap-4 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
             @if ($managesClubs)
-                <x-club-switcher :clubs="$switcherClubs" :current-club="$currentClub" :has-more="$switcherHasMore" />
-
-                <flux:separator vertical class="my-4 max-sm:hidden" />
-
-                {{-- Phones skip the search: the top bar keeps room for the club, notifications and account. --}}
-                <flux:spacer class="sm:hidden" />
-
-                <div class="flex min-w-0 flex-1 justify-center max-sm:hidden">
+                {{-- Phones skip the search: the top bar keeps room for notifications and the club. --}}
+                <div class="flex min-w-0 flex-1 max-sm:hidden">
                     <livewire:global-search />
                 </div>
-            @else
-                <flux:spacer />
             @endif
+
+            <flux:spacer />
 
             <x-unread-tickets :tickets="$unreadTickets" :limit="$unreadTicketLimit" />
 
-            <flux:dropdown position="bottom" align="end" class="shrink-0">
-                {{-- The name only shows from tablet width; on phones the avatar is enough. --}}
-                <flux:profile
-                    :avatar="auth()->user()->avatarUrl()"
-                    :name="auth()->user()->name"
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                    class="max-w-56 max-md:[&>span]:hidden"
-                />
-
-                <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :src="auth()->user()->avatarUrl()"
-                                    :name="auth()->user()->name"
-                                    :initials="auth()->user()->initials()"
-                                />
-
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                                </div>
-                            </div>
-                        </div>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
-                        <flux:menu.item icon="information-circle" x-on:click="Livewire.dispatch('open-product-tour')" class="w-full cursor-pointer" data-test="open-product-tour">
-                            {{ __('How SquadPass works') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
-                </flux:menu>
-            </flux:dropdown>
+            @if ($managesClubs)
+                <x-club-switcher :clubs="$switcherClubs" :current-club="$currentClub" :has-more="$switcherHasMore" />
+            @endif
         </flux:header>
 
         {{ $slot }}

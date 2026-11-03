@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Clubs;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Services\CheckIns\QrCodeRenderer;
 use Flux\Flux;
@@ -60,7 +61,7 @@ class Settings extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('update', $club);
+        $this->authorize('access', [$club, StaffPermission::ClubDetails]);
 
         $this->club = $club;
         $this->name = $club->name;
@@ -77,7 +78,7 @@ class Settings extends Component
 
     public function save(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::ClubDetails]);
 
         try {
             $validated = $this->validate([
@@ -126,7 +127,7 @@ class Settings extends Component
      */
     public function downloadJoinQrCode(QrCodeRenderer $renderer): StreamedResponse
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::ClubDetails]);
 
         $png = $renderer->png(route('clubs.join', $this->club), moduleSize: 20, quietZone: 4);
 
@@ -141,7 +142,7 @@ class Settings extends Component
 
     public function deletePhoto(): void
     {
-        $this->authorize('update', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::ClubDetails]);
 
         if ($this->club->photo_path) {
             Storage::disk('public')->delete($this->club->photo_path);

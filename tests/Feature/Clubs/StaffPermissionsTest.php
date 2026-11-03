@@ -189,3 +189,22 @@ test('staff members cannot manage other staff', function () {
 
     Livewire::actingAs($staff)->test(Staff::class, ['club' => $this->club])->assertForbidden();
 });
+
+test('club details and member import each sit behind their own permission', function (StaffPermission $permission, string $route) {
+    $allowed = staffWith($this->club, StaffPermission::Members, $permission);
+    $denied = staffWith($this->club, StaffPermission::Members);
+
+    $this->actingAs($allowed)->get(route($route, $this->club))->assertOk();
+    $this->actingAs($denied)->get(route($route, $this->club))->assertForbidden();
+})->with([
+    'club details' => [StaffPermission::ClubDetails, 'clubs.settings.club'],
+    'member import' => [StaffPermission::MemberImport, 'clubs.members.import'],
+]);
+
+test('a staff member with club details does not see the owner-only integrations', function () {
+    $staff = staffWith($this->club, StaffPermission::ClubDetails);
+
+    $this->actingAs($staff)->get(route('clubs.settings.club', $this->club))
+        ->assertOk()
+        ->assertDontSeeHtml('href="'.route('clubs.mollie', $this->club).'"');
+});

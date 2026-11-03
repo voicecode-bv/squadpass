@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Livewire\Clubs\Index;
 use App\Livewire\Clubs\Settings;
@@ -62,10 +63,10 @@ test('an owner can update club settings', function () {
         ->and($club->self_signup)->toBeFalse();
 });
 
-test('an admin cannot access club settings', function () {
+test('a staff member without the club details permission cannot access club settings', function () {
     $admin = User::factory()->create();
     $club = Club::factory()->create();
-    $club->addStaff($admin, StaffRole::Admin);
+    $club->addStaff($admin, StaffRole::Admin, [StaffPermission::Members]);
 
     Livewire::actingAs($admin)
         ->test(Settings::class, ['club' => $club])

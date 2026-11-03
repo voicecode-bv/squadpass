@@ -5,7 +5,7 @@
 ])
 
 {{-- Club picker in the top bar: the current club as the button, the user's staff clubs in the menu. --}}
-<flux:dropdown position="bottom" align="start" data-test="club-switcher">
+<flux:dropdown position="bottom" align="end" data-test="club-switcher">
     {{-- On phones only the club photo shows, so the search keeps its room. --}}
     <flux:button variant="ghost" icon:trailing="chevron-up-down" class="shrink-0 sm:max-w-64 xl:max-w-80" :aria-label="$currentClub?->name ?? __('Choose a club')">
         @if ($currentClub)

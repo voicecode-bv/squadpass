@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MembershipStatus;
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Livewire\Clubs\Join;
 use App\Livewire\Clubs\Settings;
@@ -133,13 +134,13 @@ test('an owner can download the join link as a QR code', function () {
         ->assertFileDownloaded('qr-'.$this->club->slug.'.png', contentType: 'image/png');
 });
 
-test('the QR download is re-authorized when the owner lost their role meanwhile', function () {
+test('the QR download is re-authorized when the club details permission was taken away meanwhile', function () {
     $owner = User::factory()->create();
     $this->club->addStaff($owner, StaffRole::Owner);
 
     $component = Livewire::actingAs($owner)->test(Settings::class, ['club' => $this->club]);
 
-    $this->club->addStaff($owner, StaffRole::Admin);
+    $this->club->addStaff($owner, StaffRole::Admin, [StaffPermission::Members]);
 
     $component->call('downloadJoinQrCode')->assertForbidden();
 });

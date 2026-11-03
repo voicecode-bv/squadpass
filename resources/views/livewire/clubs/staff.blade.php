@@ -114,7 +114,7 @@
                 @endforeach
             </flux:checkbox.group>
 
-            <flux:text class="text-xs">{{ __('Club details, the SquadPass plan, add-ons, integrations and staff always stay with the owner.') }}</flux:text>
+            <flux:text class="text-xs">{{ __('The SquadPass plan, add-ons, integrations and staff always stay with the owner.') }}</flux:text>
 
             <div class="flex justify-end">
                 <flux:button type="submit" variant="primary">{{ $editingUserId ? __('Save') : __('Send invitation') }}</flux:button>

@@ -45,8 +45,8 @@ test('an admin only sees the settings they may manage', function (bool $hasMolli
 
     expect(array_column($cards, 'key'))->toBe($expectedCards);
 })->with([
-    'with Mollie' => [true, ['forms', 'trainers', 'rooms', 'mollie']],
-    'without Mollie' => [false, ['forms', 'trainers', 'rooms']],
+    'with Mollie' => [true, ['club', 'forms', 'trainers', 'rooms', 'mollie']],
+    'without Mollie' => [false, ['club', 'forms', 'trainers', 'rooms']],
 ]);
 
 test('people outside the club staff cannot open the settings', function () {

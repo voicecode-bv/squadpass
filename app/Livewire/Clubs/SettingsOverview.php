@@ -43,7 +43,9 @@ class SettingsOverview extends Component
         $addonsUrl = route('clubs.addons', $club);
         $sections = [];
 
-        if ($canUpdate) {
+        $can = fn (StaffPermission $permission): bool => Gate::allows('access', [$club, $permission]);
+
+        if ($can(StaffPermission::ClubDetails)) {
             $sections[__('Club')][] = [
                 'key' => 'club',
                 'title' => __('Club details'),
@@ -51,7 +53,9 @@ class SettingsOverview extends Component
                 'description' => __('Name, photo, online registration, cancellation deadline and credit expiry.'),
                 'url' => route('clubs.settings.club', $club),
             ];
+        }
 
+        if ($canUpdate) {
             $staffCount = $club->staff()->wherePivot('role', StaffRole::Admin->value)->count();
 
             $sections[__('Club')][] = [
@@ -62,8 +66,6 @@ class SettingsOverview extends Component
                 'url' => route('clubs.staff', $club),
             ];
         }
-
-        $can = fn (StaffPermission $permission): bool => Gate::allows('access', [$club, $permission]);
 
         if ($can(StaffPermission::Forms)) {
             $publishedForms = Form::query()->where('club_id', $club->id)->published()->count();

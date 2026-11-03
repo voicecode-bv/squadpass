@@ -7,7 +7,10 @@
                 <flux:tab name="general">{{ __('General') }}</flux:tab>
                 <flux:tab name="registration">{{ __('Registration') }}</flux:tab>
                 <flux:tab name="lessons">{{ __('Lessons & credits') }}</flux:tab>
+                {{-- Integrations link to owner-only pages. --}}
+                @can('update', $club)
                 <flux:tab name="integrations">{{ __('Integrations') }}</flux:tab>
+                @endcan
             </flux:tabs>
 
             <flux:tab.panel name="general" class="flex flex-col gap-6">
@@ -109,6 +112,7 @@
                 </section>
             </flux:tab.panel>
 
+            @can('update', $club)
             <flux:tab.panel name="integrations" class="flex flex-col gap-6">
                 @if ($club->hasAddon(\App\Enums\AddonKey::Mollie))
                     <section class="sp-panel flex flex-wrap items-center justify-between gap-4 p-5">
@@ -146,6 +150,7 @@
                     <livewire:clubs.addon-cta :club="$club" :addon-key="\App\Enums\AddonKey::Moneybird" wire:key="addon-cta-Moneybird" />
                 @endif
             </flux:tab.panel>
+            @endcan
         </flux:tab.group>
 
         <div class="flex justify-end">

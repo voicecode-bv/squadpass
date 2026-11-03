@@ -2,6 +2,7 @@
 
 use App\Actions\MemberImports\ImportMemberRow;
 use App\Enums\MemberImportStatus;
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Jobs\ProcessMemberImport;
 use App\Livewire\Members\Import;
@@ -186,9 +187,9 @@ test('an import needs an email and a name column', function () {
     Queue::assertNothingPushed();
 });
 
-test('only the owner can import, and only reports of their own club are shown', function () {
+test('only staff with the import permission can import, and only reports of their own club are shown', function () {
     $admin = User::factory()->create();
-    $this->club->addStaff($admin, StaffRole::Admin);
+    $this->club->addStaff($admin, StaffRole::Admin, [StaffPermission::Members]);
 
     Livewire::actingAs($admin)
         ->test(Import::class, ['club' => $this->club])
