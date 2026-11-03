@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
@@ -84,4 +85,25 @@ test('the assignee must be a staff member of the club', function () {
         ->assertStatus(422);
 
     expect($ticket->refresh()->assigned_to)->toBeNull();
+});
+
+test('the member name in the ticket overview links to their profile', function () {
+    $member = User::factory()->create(['first_name' => 'Ticket', 'last_name' => 'Indiener', 'name' => 'Ticket Indiener']);
+    $membership = $this->club->addMember($member);
+    Ticket::factory()->for($this->club)->create(['user_id' => $member->id]);
+
+    Livewire::actingAs($this->owner)
+        ->test(Index::class, ['club' => $this->club])
+        ->assertSeeHtml('href="'.route('clubs.members.show', [$this->club, $membership]).'"');
+});
+
+test('the member name is plain text for staff who may not view members', function () {
+    $support = User::factory()->create();
+    $this->club->addStaff($support, StaffRole::Admin, [StaffPermission::Tickets]);
+    $membership = $this->club->addMember(User::factory()->create());
+    Ticket::factory()->for($this->club)->create(['user_id' => $membership->user_id]);
+
+    Livewire::actingAs($support)
+        ->test(Index::class, ['club' => $this->club])
+        ->assertDontSeeHtml('href="'.route('clubs.members.show', [$this->club, $membership]).'"');
 });

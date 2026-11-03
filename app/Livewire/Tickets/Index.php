@@ -5,6 +5,7 @@ namespace App\Livewire\Tickets;
 use App\Enums\StaffPermission;
 use App\Enums\TicketStatus;
 use App\Models\Club;
+use App\Models\Membership;
 use App\Models\Ticket;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -44,6 +45,12 @@ class Index extends Component
     {
         return $this->club->tickets()
             ->when(TicketStatus::tryFrom($this->status), fn ($query, TicketStatus $status) => $query->where('status', $status))
+            // The member's membership at this club, so the name can link to their profile without a query per row.
+            ->addSelect(['membership_id' => Membership::query()
+                ->select('id')
+                ->whereColumn('memberships.user_id', 'tickets.user_id')
+                ->where('memberships.club_id', $this->club->id)
+                ->limit(1)])
             ->with(['user', 'assignee'])
             ->latest('updated_at')
             ->paginate(15);

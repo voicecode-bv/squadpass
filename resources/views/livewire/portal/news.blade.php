@@ -5,11 +5,20 @@
         <x-portal.empty icon="megaphone" :heading="__('No news yet')" :text="__('When your club posts news, you will find it here.')" />
     @else
         @foreach ($this->pinnedPosts as $post)
-            <article wire:key="pinned-{{ $post->id }}" class="sp-panel animate-rise border-s-4 border-blue-600 p-5" data-test="pinned-post">
-                <p class="sp-card-subtitle tracking-wide uppercase">{{ __('Pinned') }} · {{ $post->club->name }}</p>
-                <h2 class="sp-card-title mt-1">{{ $post->title }}</h2>
-                <div class="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{!! nl2br(e($post->body)) !!}</div>
-                <p class="sp-muted mt-3 text-xs">{{ $post->published_at->timezone($post->club->timezone)->isoFormat('D MMMM YYYY') }}@if ($post->author) · {{ $post->author->name }}@endif</p>
+            @php($pinnedAt = $post->published_at->timezone($post->club->timezone))
+
+            <article wire:key="pinned-{{ $post->id }}" class="sp-panel p-5" data-test="pinned-post">
+                <div class="flex items-center gap-3">
+                    <flux:avatar size="xs" :src="$post->club->photoUrl()" :name="$post->club->name" />
+                    <p class="sp-muted min-w-0 truncate text-xs">
+                        <span class="sp-strong">{{ $post->club->name }}</span>
+                        · {{ __('Pinned') }}
+                        · <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $pinnedAt->isoFormat('D MMMM YYYY') }}</time>
+                        @if ($post->author) · {{ $post->author->name }}@endif
+                    </p>
+                </div>
+                <h2 class="mt-3 text-base font-semibold text-zinc-900 dark:text-white">{{ $post->title }}</h2>
+                <div class="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{!! nl2br(e($post->body)) !!}</div>
             </article>
         @endforeach
 

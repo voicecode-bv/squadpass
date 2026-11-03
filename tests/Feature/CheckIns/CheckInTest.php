@@ -14,6 +14,7 @@ use App\Models\StripCard;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -226,4 +227,18 @@ test('non-staff cannot open the check-in desk', function () {
     Livewire::actingAs($this->member)
         ->test(Desk::class, ['club' => $this->club])
         ->assertForbidden();
+});
+
+test('the desk counts today in the club timezone', function () {
+    $this->club->update(['timezone' => 'Europe/Amsterdam']);
+    $staff = User::factory()->create();
+    $this->club->addStaff($staff, StaffRole::Owner);
+    $this->travelTo(Carbon::parse('2026-11-03 00:30', 'Europe/Amsterdam'));
+    CheckIn::factory()->create(['club_id' => $this->club->id, 'user_id' => $this->member->id, 'checked_in_at' => Carbon::parse('2026-11-02 23:45', 'Europe/Amsterdam')->utc()]);
+    CheckIn::factory()->create(['club_id' => $this->club->id, 'user_id' => $this->member->id, 'checked_in_at' => Carbon::parse('2026-11-03 00:10', 'Europe/Amsterdam')->utc()]);
+
+    $component = Livewire::actingAs($staff)->test(Desk::class, ['club' => $this->club]);
+
+    expect($component->instance()->todayCheckInCount)->toBe(1)
+        ->and($component->instance()->todayCheckIns)->toHaveCount(1);
 });

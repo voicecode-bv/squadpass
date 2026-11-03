@@ -1508,5 +1508,11 @@
     "Schedule for later": "Inplannen",
     "My news": "Mijn nieuws",
     "You still have :count form to fill in|You still have :count forms to fill in": "Je moet nog :count formulier invullen|Je moet nog :count formulieren invullen",
-    "View my forms": "Bekijk mijn formulieren"
+    "View my forms": "Bekijk mijn formulieren",
+    "Checked in": "Ingecheckt",
+    "Last check-in": "Laatste check-in",
+    "Check in a member": "Lid inchecken",
+    "Choose the lesson, then search for the member": "Kies de les en zoek daarna het lid",
+    ":count visit|:count visits": ":count bezoek|:count bezoeken",
+    "Free visit": "Vrij bezoek"
 }

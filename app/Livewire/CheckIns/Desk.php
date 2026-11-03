@@ -11,6 +11,7 @@ use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\LessonOccurrence;
 use App\Models\Membership;
+use Carbon\CarbonInterface;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -123,7 +124,7 @@ class Desk extends Component
         return LessonOccurrence::query()
             ->where('club_id', $this->club->id)
             ->where('status', LessonOccurrenceStatus::Scheduled)
-            ->whereBetween('starts_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereBetween('starts_at', [$this->startOfToday(), $this->startOfToday()->addDay()])
             ->with('lesson')
             ->orderBy('starts_at')
             ->get();
@@ -137,15 +138,35 @@ class Desk extends Component
     {
         return CheckIn::query()
             ->where('club_id', $this->club->id)
-            ->where('checked_in_at', '>=', now()->startOfDay())
+            ->where('checked_in_at', '>=', $this->startOfToday())
             ->with(['user', 'occurrence.lesson'])
             ->latest('checked_in_at')
             ->limit(50)
             ->get();
     }
 
+    /**
+     * All check-ins today, for the KPI band; the list itself stops at 50.
+     */
+    #[Computed]
+    public function todayCheckInCount(): int
+    {
+        return CheckIn::query()
+            ->where('club_id', $this->club->id)
+            ->where('checked_in_at', '>=', $this->startOfToday())
+            ->count();
+    }
+
     public function render(): View
     {
         return view('livewire.check-ins.desk');
+    }
+
+    /**
+     * Midnight in the club's own timezone, so "today" matches the clock on the wall.
+     */
+    private function startOfToday(): CarbonInterface
+    {
+        return now($this->club->timezone)->startOfDay()->utc();
     }
 }

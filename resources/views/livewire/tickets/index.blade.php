@@ -1,4 +1,6 @@
 <div class="flex w-full flex-col gap-6">
+    @php($canViewMembers = auth()->user()->can('access', [$club, \App\Enums\StaffPermission::Members]))
+
     <x-portal.hero :title="__('Tickets')" :subtitle="$club->name">
         <x-slot:actions>
             <flux:select wire:model.live="status" class="max-w-48" :label="__('Status')" label:sr-only>
@@ -36,7 +38,13 @@
                             <flux:table.cell>
                                 <flux:link class="sp-strong" :href="route('clubs.tickets.show', [$club, $ticket])" wire:navigate variant="ghost">{{ $ticket->subject }}</flux:link>
                             </flux:table.cell>
-                            <flux:table.cell>{{ $ticket->user->name }}</flux:table.cell>
+                            <flux:table.cell>
+                                @if ($ticket->membership_id && $canViewMembers)
+                                    <flux:link :href="route('clubs.members.show', [$club, $ticket->membership_id])" wire:navigate variant="ghost">{{ $ticket->user->name }}</flux:link>
+                                @else
+                                    {{ $ticket->user->name }}
+                                @endif
+                            </flux:table.cell>
                             <flux:table.cell>{{ $ticket->category->label() }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="$ticket->priority->color()">{{ $ticket->priority->label() }}</flux:badge>
