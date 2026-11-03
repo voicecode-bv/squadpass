@@ -19,6 +19,7 @@ class PurchaseAddon
         protected MollieGateway $gateway,
         protected PlatformMollieAccount $platform,
         protected ResolvePlatformMollieCustomer $resolveCustomer,
+        protected RefreshPendingAddonPurchase $refreshPendingPurchase,
     ) {}
 
     /**
@@ -30,6 +31,19 @@ class PurchaseAddon
     {
         throw_unless($addon->is_active, PaymentException::addonUnavailable());
         throw_unless($this->platform->isConfigured(), PaymentException::platformPaymentsUnavailable());
+
+        $pending = AddonSubscription::query()
+            ->where('club_id', $club->id)
+            ->where('addon_id', $addon->id)
+            ->where('status', SubscriptionStatus::Pending)
+            ->latest('id')
+            ->first();
+
+        // A closed checkout leaves the purchase pending: continue that payment while it is
+        // open, otherwise settle it with Mollie so a new purchase can start.
+        if ($pending && ($checkoutUrl = $this->refreshPendingPurchase->handle($pending))) {
+            return $checkoutUrl;
+        }
 
         $blocking = AddonSubscription::query()
             ->where('club_id', $club->id)

@@ -168,3 +168,36 @@ test('a cancelled add-on can be resumed while it is still unlocked', function ()
         ->and($subscription->cancelled_at)->toBeNull()
         ->and($subscription->next_billing_at->toDateString())->toBe($nextBilling->toDateString());
 });
+
+test('an owner who closed the checkout continues the same open payment', function () {
+    Livewire::actingAs($this->owner)
+        ->test(ClubAddons::class, ['club' => $this->club])
+        ->call('purchase', $this->addon->id);
+
+    Livewire::actingAs($this->owner)
+        ->test(ClubAddons::class, ['club' => $this->club])
+        ->assertSee(__('Continue payment'))
+        ->call('purchase', $this->addon->id)
+        ->assertRedirect('https://mollie.test/checkout/tr_fake2');
+
+    expect(AddonSubscription::query()->count())->toBe(1)
+        ->and($this->gateway->createdPayments)->toHaveCount(1);
+});
+
+test('a checkout cancelled at Mollie can be bought again before the webhook arrives', function (PaymentStatus $status) {
+    Livewire::actingAs($this->owner)
+        ->test(ClubAddons::class, ['club' => $this->club])
+        ->call('purchase', $this->addon->id);
+    $this->gateway->setPaymentStatus(AddonPayment::query()->sole()->mollie_payment_id, $status);
+
+    Livewire::actingAs($this->owner)
+        ->test(ClubAddons::class, ['club' => $this->club])
+        ->assertSee(__('Buy'))
+        ->assertDontSee(__('Continue payment'))
+        ->call('purchase', $this->addon->id)
+        ->assertRedirect();
+
+    expect(AddonSubscription::query()->sole()->status)->toBe(SubscriptionStatus::Pending)
+        ->and($this->gateway->createdPayments)->toHaveCount(2)
+        ->and(AddonPayment::query()->sole()->status)->toBe(PaymentStatus::Open);
+})->with([PaymentStatus::Canceled, PaymentStatus::Expired]);

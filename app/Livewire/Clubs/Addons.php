@@ -5,6 +5,7 @@ namespace App\Livewire\Clubs;
 use App\Actions\Addons\CancelAddonSubscription;
 use App\Actions\Addons\ChargeAddonSubscription;
 use App\Actions\Addons\PurchaseAddon;
+use App\Actions\Addons\RefreshPendingAddonPurchase;
 use App\Actions\Addons\ResumeAddonSubscription;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\PaymentException;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Club owners buy, cancel and resume platform add-ons here.
@@ -28,11 +30,33 @@ class Addons extends Component
 {
     public Club $club;
 
-    public function mount(Club $club): void
+    public function mount(Club $club, RefreshPendingAddonPurchase $refreshPendingPurchase): void
     {
         $this->authorize('update', $club);
 
         $this->club = $club;
+
+        $this->refreshPendingPurchases($refreshPendingPurchase);
+    }
+
+    /**
+     * Returning from (or closing) the Mollie checkout must not leave a purchase stuck
+     * on "Waiting for payment" until the webhook arrives: ask Mollie for the state now.
+     */
+    protected function refreshPendingPurchases(RefreshPendingAddonPurchase $refreshPendingPurchase): void
+    {
+        AddonSubscription::query()
+            ->where('club_id', $this->club->id)
+            ->where('status', SubscriptionStatus::Pending)
+            ->get()
+            ->each(function (AddonSubscription $subscription) use ($refreshPendingPurchase): void {
+                try {
+                    $refreshPendingPurchase->handle($subscription);
+                } catch (Throwable $exception) {
+                    // Mollie unreachable: keep the pending state, the webhook settles it later.
+                    report($exception);
+                }
+            });
     }
 
     public function purchase(int $addonId, PurchaseAddon $purchaseAddon): void

@@ -53,7 +53,7 @@
                                 @elseif ($status === $statuses::PastDue)
                                     {{ __('The last direct debit failed. Retry the payment to reactivate the add-on.') }}
                                 @elseif ($status === $statuses::Pending)
-                                    {{ __('Waiting for payment') }}
+                                    {{ __('Payment not completed yet') }}
                                 @else
                                     {{ __('Per month') }}
                                 @endif
@@ -64,7 +64,7 @@
                             @if ($unlocked && $addon->key === \App\Enums\AddonKey::Moneybird)
                                 <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.moneybird', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
                             @elseif ($unlocked && $addon->key === \App\Enums\AddonKey::Mollie)
-                                <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.settings', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
+                                <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.mollie', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
                             @endif
                             @if ($status === $statuses::Active)
                                 <flux:button size="sm" wire:click="cancel({{ $subscription->id }})" wire:confirm="{{ __('Cancel this add-on? It stays active until the end of the paid month.') }}">{{ __('Cancel') }}</flux:button>
@@ -74,7 +74,7 @@
                             @elseif ($status === $statuses::Cancelled && $unlocked)
                                 <flux:button size="sm" variant="primary" wire:click="resume({{ $subscription->id }})">{{ __('Resume') }}</flux:button>
                             @elseif ($status === $statuses::Pending)
-                                <flux:button size="sm" variant="primary" wire:click="purchase({{ $addon->id }})" disabled>{{ __('Waiting for payment') }}</flux:button>
+                                <flux:button size="sm" variant="primary" icon="arrow-right" wire:click="purchase({{ $addon->id }})">{{ __('Continue payment') }}</flux:button>
                             @else
                                 <flux:button size="sm" variant="primary" icon="shopping-cart" wire:click="purchase({{ $addon->id }})">{{ __('Buy') }}</flux:button>
                             @endif
