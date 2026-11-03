@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Models\Membership;
 use App\Models\User;
@@ -10,17 +11,17 @@ class MembershipPolicy
 {
     public function view(User $user, Membership $membership): bool
     {
-        return $user->isStaffOf($membership->club) || $user->id === $membership->user_id;
+        return $user->id === $membership->user_id || $user->hasStaffPermission($membership->club, StaffPermission::Members);
     }
 
     public function update(User $user, Membership $membership): bool
     {
-        return $user->isStaffOf($membership->club);
+        return $user->hasStaffPermission($membership->club, StaffPermission::Members);
     }
 
     public function delete(User $user, Membership $membership): bool
     {
-        return $user->isStaffOf($membership->club);
+        return $user->hasStaffPermission($membership->club, StaffPermission::Members);
     }
 
     /**

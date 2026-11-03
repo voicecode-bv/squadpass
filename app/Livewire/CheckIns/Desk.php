@@ -5,6 +5,7 @@ namespace App\Livewire\CheckIns;
 use App\Actions\CheckIns\CheckInMember;
 use App\Actions\CheckIns\CheckInWithCode;
 use App\Enums\LessonOccurrenceStatus;
+use App\Enums\StaffPermission;
 use App\Exceptions\CheckInException;
 use App\Models\CheckIn;
 use App\Models\Club;
@@ -29,14 +30,14 @@ class Desk extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::CheckIns]);
 
         $this->club = $club;
     }
 
     public function checkIn(int $userId, CheckInMember $checkInMember): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::CheckIns]);
 
         $membership = Membership::query()
             ->where('club_id', $this->club->id)
@@ -71,7 +72,7 @@ class Desk extends Component
      */
     public function scanMemberCode(string $code, CheckInWithCode $checkInWithCode): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::CheckIns]);
 
         try {
             $checkIn = $checkInWithCode->fromMemberCode($this->club, $code, Auth::user());

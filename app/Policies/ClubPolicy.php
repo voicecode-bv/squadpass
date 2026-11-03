@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Models\Club;
 use App\Models\User;
@@ -52,10 +53,28 @@ class ClubPolicy
     }
 
     /**
-     * Owners and admins handle day-to-day administration.
+     * Any staff member may open the club's shared pages (dashboard, settings
+     * overview); each area behind them checks its own permission via access().
      */
     public function manage(User $user, Club $club): bool
     {
-        return $user->isStaffOf($club);
+        return $user->staffAccessTo($club) !== null;
+    }
+
+    /**
+     * Whether the user may use one area of the club, as ticked by the owner.
+     * Owners may use every area.
+     */
+    public function access(User $user, Club $club, StaffPermission $permission): bool
+    {
+        return $user->hasStaffPermission($club, $permission);
+    }
+
+    /**
+     * Inviting staff and setting their permissions is for owners only.
+     */
+    public function manageStaff(User $user, Club $club): bool
+    {
+        return ! $club->isDemoSandbox() && $this->update($user, $club);
     }
 }

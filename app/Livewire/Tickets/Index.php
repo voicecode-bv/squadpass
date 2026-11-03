@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Tickets;
 
+use App\Enums\StaffPermission;
 use App\Enums\TicketStatus;
 use App\Models\Club;
 use App\Models\Ticket;
@@ -25,7 +26,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Tickets]);
 
         $this->club = $club;
     }

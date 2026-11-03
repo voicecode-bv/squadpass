@@ -34,6 +34,7 @@ test('a staff member sees their clubs with active member counts', function () {
     $club = Club::factory()->create(['name' => 'Padel Club Oost']);
     $club->addStaff($user, StaffRole::Owner);
     $club->addMember(User::factory()->create());
+    Club::factory()->create(['name' => 'Tweede Club'])->addStaff($user, StaffRole::Admin);
 
     $otherClub = Club::factory()->create(['name' => 'Andermans Club']);
 
@@ -56,6 +57,7 @@ test('the my clubs navigation is only shown to staff', function () {
 
     $owner = User::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
+    Club::factory()->create()->addStaff($owner, StaffRole::Owner);
 
     $this->actingAs($owner)
         ->get(route('dashboard'))
@@ -110,6 +112,7 @@ test('new members per month counts staff clubs only', function () {
     $owner = User::factory()->create();
     $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
+    Club::factory()->create()->addStaff($owner, StaffRole::Admin);
 
     Membership::factory()->count(2)->for($club)->create(['joined_at' => now()->startOfMonth()->addDay()->toDateString()]);
     Membership::factory()->for($club)->create(['joined_at' => now()->startOfMonth()->subMonth()->addDays(3)->toDateString()]);
@@ -127,6 +130,7 @@ test('active members per month measures month-end snapshots', function () {
     $owner = User::factory()->create();
     $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
+    Club::factory()->create()->addStaff($owner, StaffRole::Admin);
 
     Membership::factory()->for($club)->create(['joined_at' => now()->startOfMonth()->subMonths(5)->addDays(3)->toDateString()]);
     Membership::factory()->for($club)->create([
@@ -145,6 +149,7 @@ test('revenue per month sums paid payments of staff clubs only', function () {
     $owner = User::factory()->create();
     $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
+    Club::factory()->create()->addStaff($owner, StaffRole::Admin);
 
     Payment::factory()->for($club)->paid()->create(['amount_cents' => 5000, 'paid_at' => now()->startOfMonth()->addDay()]);
     Payment::factory()->for($club)->paid()->create(['amount_cents' => 2500, 'paid_at' => now()->startOfMonth()->subMonth()->addDays(3)]);
@@ -161,6 +166,7 @@ test('the dashboard warns staff about failed charges in their clubs only', funct
     $owner = User::factory()->create();
     $club = Club::factory()->create();
     $club->addStaff($owner, StaffRole::Owner);
+    Club::factory()->create()->addStaff($owner, StaffRole::Admin);
 
     $subscription = Subscription::factory()->for($club)->create();
     Payment::factory()->for($club)->create([
@@ -198,4 +204,24 @@ test('remaining strips only count usable cards', function () {
     $component = Livewire::actingAs($member)->test(Dashboard::class);
 
     expect($component->instance()->stripsRemaining)->toBe(7);
+});
+
+test('someone who manages a single club lands on that club dashboard', function () {
+    $club = Club::factory()->create();
+    $owner = User::factory()->create();
+    $club->addStaff($owner, StaffRole::Owner);
+
+    Livewire::actingAs($owner)
+        ->test(Dashboard::class)
+        ->assertRedirect(route('clubs.dashboard', $club));
+});
+
+test('a superadmin with a single club keeps the personal dashboard', function () {
+    $club = Club::factory()->create();
+    $superadmin = User::factory()->superadmin()->create();
+    $club->addStaff($superadmin, StaffRole::Owner);
+
+    Livewire::actingAs($superadmin)
+        ->test(Dashboard::class)
+        ->assertNoRedirect();
 });

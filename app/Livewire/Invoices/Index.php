@@ -5,6 +5,7 @@ namespace App\Livewire\Invoices;
 use App\Actions\Moneybird\CreateCreditInvoice;
 use App\Actions\Moneybird\SyncInvoices;
 use App\Enums\MoneybirdInvoiceState;
+use App\Enums\StaffPermission;
 use App\Exceptions\MoneybirdException;
 use App\Models\Club;
 use App\Models\MoneybirdInvoice;
@@ -56,7 +57,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Billing]);
 
         $this->club = $club;
     }
@@ -79,7 +80,7 @@ class Index extends Component
      */
     public function sync(SyncInvoices $syncInvoices): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         if (! $this->club->hasMoneybirdConfigured()) {
             Flux::toast(variant: 'danger', text: __('This club has no Moneybird administration connected.'));
@@ -96,7 +97,7 @@ class Index extends Component
 
     public function showInvoice(int $invoiceId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $this->selectedInvoiceId = $this->scopedQuery()->whereKey($invoiceId)->value('id');
 
@@ -108,7 +109,7 @@ class Index extends Component
      */
     public function createCreditInvoice(int $invoiceId, CreateCreditInvoice $createCreditInvoice): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $invoice = $this->scopedQuery()->findOrFail($invoiceId);
 

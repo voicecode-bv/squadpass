@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Rooms;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Room;
 use Flux\Flux;
@@ -26,7 +27,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Setup]);
 
         $this->club = $club;
     }
@@ -36,7 +37,7 @@ class Index extends Component
      */
     public function newRoom(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $this->resetValidation();
         $this->reset('editingRoomId', 'name', 'description');
@@ -49,7 +50,7 @@ class Index extends Component
      */
     public function editRoom(int $roomId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $room = $this->findRoom($roomId);
 
@@ -63,7 +64,7 @@ class Index extends Component
 
     public function saveRoom(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $room = $this->editingRoomId ? $this->findRoom($this->editingRoomId) : null;
 
@@ -94,7 +95,7 @@ class Index extends Component
 
     public function toggleActive(int $roomId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $room = $this->findRoom($roomId);
 

@@ -3,6 +3,8 @@
 namespace App\Actions\Invitations;
 
 use App\Enums\ClubInvitationRole;
+use App\Enums\StaffPermission;
+use App\Enums\StaffRole;
 use App\Exceptions\ClubInvitationException;
 use App\Exceptions\ClubPlanException;
 use App\Models\ClubInvitation;
@@ -25,6 +27,15 @@ class AcceptClubInvitation
 
         DB::transaction(function () use ($invitation, $user): void {
             $invitation->update(['accepted_at' => now()]);
+
+            if ($invitation->role === ClubInvitationRole::Staff) {
+                // Never downgrade someone who already owns the club.
+                if (! $user->isStaffOf($invitation->club, StaffRole::Owner)) {
+                    $invitation->club->addStaff($user, StaffRole::Admin, StaffPermission::fromValues($invitation->permissions));
+                }
+
+                return;
+            }
 
             if ($invitation->role === ClubInvitationRole::Trainer) {
                 $trainer = Trainer::query()->firstOrCreate([

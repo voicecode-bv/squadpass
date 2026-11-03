@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Lesson;
 use App\Models\Membership;
@@ -13,8 +14,8 @@ use Livewire\Component;
 
 /**
  * Search across the clubs the current user manages: clubs, members, lessons
- * and tickets. Every group is scoped to those clubs and capped, so the query
- * stays cheap no matter how big the club is.
+ * and tickets. Every group is scoped to the clubs where the user may use that
+ * area and capped, so the query stays cheap no matter how big the club is.
  *
  * @property-read array<int, int> $clubIds
  */
@@ -44,6 +45,16 @@ class GlobalSearch extends Component
         return $user->is_superadmin
             ? Club::query()->pluck('id')->all()
             : $user->staffClubs()->pluck('clubs.id')->all();
+    }
+
+    /**
+     * Clubs where the user may use an area; superadmins search every club.
+     *
+     * @return array<int, int>
+     */
+    private function clubIdsWith(StaffPermission $permission): array
+    {
+        return Auth::user()->is_superadmin ? $this->clubIds : Auth::user()->staffClubIdsWith($permission);
     }
 
     /**
@@ -99,7 +110,7 @@ class GlobalSearch extends Component
     private function members(string $prefix): array
     {
         return Membership::query()
-            ->whereIn('club_id', $this->clubIds)
+            ->whereIn('club_id', $this->clubIdsWith(StaffPermission::Members))
             ->with(['user', 'club'])
             ->whereHas('user', function ($query) use ($prefix) {
                 $query->where('name', 'like', $prefix)
@@ -123,7 +134,7 @@ class GlobalSearch extends Component
     private function lessons(string $prefix): array
     {
         return Lesson::query()
-            ->whereIn('club_id', $this->clubIds)
+            ->whereIn('club_id', $this->clubIdsWith(StaffPermission::Lessons))
             ->with('club')
             ->where('name', 'like', $prefix)
             ->orderBy('name')
@@ -148,7 +159,7 @@ class GlobalSearch extends Component
         $number = (int) preg_replace('/\D/', '', $term);
 
         return Ticket::query()
-            ->whereIn('club_id', $this->clubIds)
+            ->whereIn('club_id', $this->clubIdsWith(StaffPermission::Tickets))
             ->with('club')
             ->where(function ($query) use ($prefix, $number) {
                 $query->where('subject', 'like', $prefix);

@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $club_id
  * @property string $email
  * @property ClubInvitationRole $role
+ * @property list<string>|null $permissions staff permissions handed over on accept
  * @property string $token
  * @property int|null $invited_by
  * @property Carbon|null $accepted_at
@@ -24,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['club_id', 'email', 'role', 'token', 'invited_by', 'accepted_at', 'expires_at'])]
+#[Fillable(['club_id', 'email', 'role', 'permissions', 'token', 'invited_by', 'accepted_at', 'expires_at'])]
 class ClubInvitation extends Model
 {
     /** @use HasFactory<ClubInvitationFactory> */
@@ -37,6 +38,7 @@ class ClubInvitation extends Model
     {
         return [
             'role' => ClubInvitationRole::class,
+            'permissions' => 'array',
             'accepted_at' => 'datetime',
             'expires_at' => 'datetime',
         ];

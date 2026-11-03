@@ -3,7 +3,6 @@
 namespace App\Livewire\Invitations;
 
 use App\Actions\Invitations\AcceptClubInvitation;
-use App\Enums\ClubInvitationRole;
 use App\Exceptions\ClubInvitationException;
 use App\Exceptions\ClubPlanException;
 use App\Models\ClubInvitation;
@@ -42,9 +41,7 @@ class Accept extends Component
 
         $club = $this->invitation->club->name;
 
-        Flux::toast(variant: 'success', text: $this->invitation->role === ClubInvitationRole::Trainer
-            ? __('You are now a trainer at :club.', ['club' => $club])
-            : __('You are now a member of :club.', ['club' => $club]));
+        Flux::toast(variant: 'success', text: $this->invitation->role->accepted($club));
 
         $this->redirectRoute('dashboard', navigate: true);
     }

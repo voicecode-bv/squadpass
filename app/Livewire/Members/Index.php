@@ -5,6 +5,7 @@ namespace App\Livewire\Members;
 use App\Actions\Invitations\InviteToClub;
 use App\Enums\ClubInvitationRole;
 use App\Enums\MembershipStatus;
+use App\Enums\StaffPermission;
 use App\Exceptions\ClubInvitationException;
 use App\Exceptions\ClubPlanException;
 use App\Models\Club;
@@ -44,14 +45,14 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Members]);
 
         $this->club = $club;
     }
 
     public function addMember(InviteToClub $inviteToClub): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Members]);
 
         $validated = $this->validate([
             'email' => ['required', 'email'],
@@ -112,7 +113,7 @@ class Index extends Component
 
     public function resendInvitation(int $invitationId, InviteToClub $inviteToClub): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Members]);
 
         $invitation = ClubInvitation::query()
             ->where('club_id', $this->club->id)
@@ -136,7 +137,7 @@ class Index extends Component
 
     public function revokeInvitation(int $invitationId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Members]);
 
         ClubInvitation::query()
             ->where('club_id', $this->club->id)

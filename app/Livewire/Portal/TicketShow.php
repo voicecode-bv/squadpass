@@ -25,6 +25,8 @@ class TicketShow extends Component
             ->where('user_id', Auth::id())
             ->with(['club', 'assignee'])
             ->findOrFail($ticket->id);
+
+        $this->ticket->markReadBy(Auth::user());
     }
 
     public function sendMessage(): void

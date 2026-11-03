@@ -5,6 +5,7 @@ namespace App\Livewire\Clubs;
 use App\Actions\Mollie\ConnectMollieAccount;
 use App\Enums\AddonKey;
 use App\Enums\PaymentStatus;
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Membership;
 use App\Models\Payment;
@@ -54,7 +55,7 @@ class Mollie extends Component
      */
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Billing]);
 
         $this->club = $club;
 

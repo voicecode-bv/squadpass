@@ -61,7 +61,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('clubs/{club}')->scopeBindings()->group(function () {
         Route::livewire('dashboard', Clubs\Dashboard::class)->name('clubs.dashboard');
         Route::livewire('onboarding', Clubs\Onboarding::class)->name('clubs.onboarding');
-        Route::livewire('settings', Clubs\Settings::class)->name('clubs.settings');
+        Route::livewire('settings', Clubs\SettingsOverview::class)->name('clubs.settings');
+        Route::livewire('settings/club', Clubs\Settings::class)->name('clubs.settings.club');
+        Route::livewire('staff', Clubs\Staff::class)->name('clubs.staff');
         Route::livewire('addons', Clubs\Addons::class)->name('clubs.addons');
         Route::livewire('plan', Clubs\Plan::class)->name('clubs.plan');
         Route::livewire('moneybird', Clubs\Moneybird::class)->name('clubs.moneybird');

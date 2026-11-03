@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\MembershipStatus;
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Services\PersonName;
 use Database\Factories\UserFactory;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -47,6 +49,9 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
+    /** Clubs listed in the top bar club switcher; more are reached via All clubs. */
+    public const int CLUB_SWITCHER_LIMIT = 15;
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
@@ -101,6 +106,21 @@ class User extends Authenticatable implements PasskeyUser
      * Whether the name was split automatically (existing account or imported
      * member) and the person has not checked it yet.
      */
+    /**
+     * The one club a non-superadmin manages, when they manage exactly one; that
+     * club then stands in for the personal dashboard and is selected by default.
+     */
+    public function soleStaffClub(): ?Club
+    {
+        if ($this->is_superadmin) {
+            return null;
+        }
+
+        $clubs = $this->staffClubs()->limit(2)->get(['clubs.id', 'clubs.slug']);
+
+        return $clubs->count() === 1 ? $clubs->first() : null;
+    }
+
     public function isDemoSandbox(): bool
     {
         return $this->demo_expires_at !== null;
@@ -129,7 +149,7 @@ class User extends Authenticatable implements PasskeyUser
     public function staffClubs(): BelongsToMany
     {
         return $this->belongsToMany(Club::class, 'club_staff')
-            ->withPivot('role')
+            ->withPivot(['role', 'permissions'])
             ->withTimestamps();
     }
 
@@ -188,6 +208,71 @@ class User extends Authenticatable implements PasskeyUser
         }
 
         return $query->exists();
+    }
+
+    /**
+     * Role and permissions per club, resolved once per club per request: menus,
+     * pages and search ask for them many times.
+     *
+     * @var array<int, array{role: StaffRole, permissions: list<StaffPermission>}|null>
+     */
+    protected array $staffAccess = [];
+
+    /**
+     * This user's role and permissions at a club, or null when they are not staff there.
+     *
+     * @return array{role: StaffRole, permissions: list<StaffPermission>}|null
+     */
+    public function staffAccessTo(Club $club): ?array
+    {
+        if (! array_key_exists($club->id, $this->staffAccess)) {
+            $row = DB::table('club_staff')
+                ->where('club_id', $club->id)
+                ->where('user_id', $this->id)
+                ->first(['role', 'permissions']);
+
+            $role = $row ? StaffRole::from($row->role) : null;
+
+            $this->staffAccess[$club->id] = $role === null ? null : [
+                'role' => $role,
+                'permissions' => $role === StaffRole::Owner
+                    ? StaffPermission::cases()
+                    : StaffPermission::fromValues(json_decode((string) $row->permissions, true) ?: []),
+            ];
+        }
+
+        return $this->staffAccess[$club->id];
+    }
+
+    /**
+     * Whether this user may use an area of the club; owners may use every area.
+     */
+    public function hasStaffPermission(Club $club, StaffPermission $permission): bool
+    {
+        return in_array($permission, $this->staffAccessTo($club)['permissions'] ?? [], true);
+    }
+
+    /**
+     * Ids of the clubs where this user may use an area: clubs they own, and clubs
+     * where the owner ticked that permission for them. One query.
+     *
+     * @return list<int>
+     */
+    public function staffClubIdsWith(StaffPermission $permission): array
+    {
+        return array_values(DB::table('club_staff')
+            ->where('user_id', $this->id)
+            ->where(fn ($query) => $query
+                ->where('role', StaffRole::Owner->value)
+                ->orWhereJsonContains('permissions', $permission->value))
+            ->pluck('club_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all());
+    }
+
+    public function forgetStaffAccess(): void
+    {
+        $this->staffAccess = [];
     }
 
     public function ownsAnyClub(): bool

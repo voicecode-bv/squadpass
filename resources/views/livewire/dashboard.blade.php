@@ -41,18 +41,20 @@
             </x-portal.card>
         </div>
 
-        @php($revenueTitles = array_map(
-            fn ($cents, $label) => $label.': € '.number_format($cents / 100, 2, ',', '.'),
-            $this->revenuePerMonth['values'],
-            $this->revenuePerMonth['labels'],
-        ))
-        @php($revenueDisplay = array_map(fn ($cents) => '€ '.number_format($cents / 100, 0, ',', '.'), $this->revenuePerMonth['values']))
+        @if ($this->billingClubIds !== [])
+            @php($revenueTitles = array_map(
+                fn ($cents, $label) => $label.': € '.number_format($cents / 100, 2, ',', '.'),
+                $this->revenuePerMonth['values'],
+                $this->revenuePerMonth['labels'],
+            ))
+            @php($revenueDisplay = array_map(fn ($cents) => '€ '.number_format($cents / 100, 0, ',', '.'), $this->revenuePerMonth['values']))
 
-        <x-portal.card :delay="200" class="p-5">
-            <flux:heading class="sp-card-title">{{ __('Revenue per month') }}</flux:heading>
-            <flux:text class="sp-card-subtitle mt-1">{{ __('Last 12 months') }}</flux:text>
-            <x-charts.bars class="mt-4" :values="$this->revenuePerMonth['values']" :labels="$this->revenuePerMonth['labels']" :titles="$revenueTitles" :display="$revenueDisplay" />
-        </x-portal.card>
+            <x-portal.card :delay="200" class="p-5">
+                <flux:heading class="sp-card-title">{{ __('Revenue per month') }}</flux:heading>
+                <flux:text class="sp-card-subtitle mt-1">{{ __('Last 12 months') }}</flux:text>
+                <x-charts.bars class="mt-4" :values="$this->revenuePerMonth['values']" :labels="$this->revenuePerMonth['labels']" :titles="$revenueTitles" :display="$revenueDisplay" />
+            </x-portal.card>
+        @endif
     @endif
 
     {{-- Clubs you manage --}}

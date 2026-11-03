@@ -49,20 +49,60 @@
             @endunless
         </flux:callout>
     @elseif ($current)
-        <flux:callout icon="check-circle" variant="success">
-            <flux:callout.text>
-                @if ($current->isBilledManually())
-                    {{ __('Your plan is active and invoiced separately.') }}
-                @else
-                    {{ __(':price per month, next billing :date.', ['price' => $current->formattedPrice(), 'date' => $current->next_billing_at?->format('d-m-Y')]) }}
-                @endif
-            </flux:callout.text>
+        @php
+            $usagePercentage = $memberLimit ? min(100, (int) round($this->activeMemberCount / max(1, $memberLimit) * 100)) : null;
+        @endphp
+
+        <section class="sp-panel animate-rise overflow-hidden" data-test="current-plan">
+            <div class="flex flex-wrap items-start justify-between gap-4 p-6">
+                <div>
+                    <p class="sp-card-subtitle uppercase tracking-wide">{{ __('Your plan') }}</p>
+                    <div class="mt-1 flex items-center gap-3">
+                        <h2 class="sp-card-title">{{ $current->plan->label() }}</h2>
+                        <flux:badge size="sm" color="green">{{ __('Active') }}</flux:badge>
+                    </div>
+                </div>
+
+                @unless ($current->isBilledManually())
+                    <div class="text-end">
+                        <p class="text-2xl font-semibold text-zinc-900 tabular-nums dark:text-white">{{ $current->formattedPrice() }}</p>
+                        <p class="sp-muted text-xs">{{ __('Per month') }}</p>
+                    </div>
+                @endunless
+            </div>
+
+            <dl class="grid gap-6 border-t border-zinc-100 p-6 sm:grid-cols-3 dark:border-white/5">
+                <div>
+                    <dt class="sp-muted text-xs tracking-wide uppercase">{{ __('Next billing') }}</dt>
+                    <dd class="sp-strong mt-1">
+                        {{ $current->isBilledManually() ? __('Invoiced separately') : ($current->next_billing_at?->format('d-m-Y') ?? '-') }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="sp-muted text-xs tracking-wide uppercase">{{ __('Active since') }}</dt>
+                    <dd class="sp-strong mt-1">{{ $current->starts_at->format('d-m-Y') }}</dd>
+                </div>
+                <div>
+                    <dt class="sp-muted text-xs tracking-wide uppercase">{{ __('Active members') }}</dt>
+                    <dd class="sp-strong mt-1 tabular-nums">
+                        {{ number_format($this->activeMemberCount, 0, ',', '.') }}
+                        <span class="sp-muted font-normal">/ {{ $memberLimit === null ? __('Unlimited') : number_format($memberLimit, 0, ',', '.') }}</span>
+                    </dd>
+                    @if ($usagePercentage !== null)
+                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                            <div class="sp-bar h-full rounded-full {{ $usagePercentage >= 90 ? 'bg-amber-500' : 'bg-blue-600' }}" style="--sp-width: {{ $usagePercentage }}%"></div>
+                        </div>
+                    @endif
+                </div>
+            </dl>
+
             @unless ($current->isBilledManually())
-                <x-slot name="actions">
-                    <flux:button size="sm" variant="ghost" wire:click="cancel" wire:confirm="{{ __('Cancel your plan? It stays active until the end of the paid month. After that you cannot add members.') }}">{{ __('Cancel') }}</flux:button>
-                </x-slot>
+                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-6 py-3 dark:border-white/5">
+                    <flux:text class="text-xs">{{ __('Cancel monthly; your plan stays active until the end of the paid month.') }}</flux:text>
+                    <flux:button size="sm" variant="ghost" wire:click="cancel" wire:confirm="{{ __('Cancel your plan? It stays active until the end of the paid month. After that you cannot add members.') }}">{{ __('Cancel plan') }}</flux:button>
+                </div>
             @endunless
-        </flux:callout>
+        </section>
     @elseif ($club->isOnTrial())
         <flux:callout icon="sparkles">
             <flux:callout.heading>{{ __('Your trial runs until :date', ['date' => $club->trial_ends_at->format('d-m-Y')]) }}</flux:callout.heading>

@@ -4,6 +4,7 @@ namespace App\Livewire\Trainers;
 
 use App\Actions\Invitations\InviteToClub;
 use App\Enums\ClubInvitationRole;
+use App\Enums\StaffPermission;
 use App\Exceptions\ClubInvitationException;
 use App\Models\Club;
 use App\Models\ClubInvitation;
@@ -25,14 +26,14 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Setup]);
 
         $this->club = $club;
     }
 
     public function inviteTrainer(InviteToClub $inviteToClub): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $validated = $this->validate([
             'email' => ['required', 'email'],
@@ -55,7 +56,7 @@ class Index extends Component
 
     public function resendInvitation(int $invitationId, InviteToClub $inviteToClub): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $invitation = ClubInvitation::query()
             ->where('club_id', $this->club->id)
@@ -77,7 +78,7 @@ class Index extends Component
 
     public function revokeInvitation(int $invitationId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         ClubInvitation::query()
             ->where('club_id', $this->club->id)
@@ -92,7 +93,7 @@ class Index extends Component
 
     public function toggleActive(int $trainerId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Setup]);
 
         $trainer = Trainer::query()
             ->where('club_id', $this->club->id)

@@ -1,9 +1,5 @@
 <x-mail::message>
-@if ($role === \App\Enums\ClubInvitationRole::Trainer)
-# {{ __('You have been invited as a trainer at :club', ['club' => $club->name]) }}
-@else
-# {{ __('You have been invited as a member of :club', ['club' => $club->name]) }}
-@endif
+# {{ $role->invitedTitle($club->name) }}
 
 {{ __('Accept the invitation via the button below. If you do not have an account yet, you can create one first — the invitation stays linked.') }}
 

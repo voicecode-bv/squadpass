@@ -4,6 +4,7 @@ namespace App\Livewire\Lessons;
 
 use App\Actions\Lessons\CancelEnrollment;
 use App\Actions\Lessons\MarkAbsence;
+use App\Enums\StaffPermission;
 use App\Exceptions\EnrollmentException;
 use App\Models\Club;
 use App\Models\LessonEnrollment;
@@ -25,7 +26,7 @@ class OccurrenceShow extends Component
 
     public function mount(Club $club, LessonOccurrence $occurrence): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Lessons]);
         abort_unless($occurrence->club_id === $club->id, 404);
 
         $this->club = $club;
@@ -34,7 +35,7 @@ class OccurrenceShow extends Component
 
     public function removeEnrollment(int $enrollmentId, CancelEnrollment $cancelEnrollment): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Lessons]);
 
         $enrollment = LessonEnrollment::query()
             ->where('club_id', $this->club->id)
@@ -50,7 +51,7 @@ class OccurrenceShow extends Component
 
     public function markAbsent(int $enrollmentId, MarkAbsence $markAbsence): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Lessons]);
 
         $enrollment = LessonEnrollment::query()
             ->where('club_id', $this->club->id)

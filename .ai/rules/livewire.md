@@ -7,7 +7,7 @@ paths:
 # Livewire
 
 ## Autoriseer in mount() én in elke Livewire action-methode; scope queries op club of auth-user
-Livewire-actions zijn aparte HTTP-requests: $this->authorize(...) in mount() alleen is onvoldoende — herhaal de check in elke publieke action-methode. Beheer-components authorizen 'manage' (of 'update' voor settings) op de club en scopen elke query op club_id; portaal-components (app/Livewire/Portal) scopen altijd op Auth::id(). Records uit andere clubs horen een 404 te geven via where('club_id', ...)->findOrFail().
+Livewire-actions zijn aparte HTTP-requests: $this->authorize(...) in mount() alleen is onvoldoende — herhaal de check in elke publieke action-methode. Beheer-components authorizen per onderdeel `$this->authorize('access', [$club, StaffPermission::X])` (eigenaars mogen alles; medewerkers alleen de aangevinkte App\Enums\StaffPermission-onderdelen), 'update'/'manageBilling'/'manageStaff' voor eigenaar-only schermen en 'manage' alleen voor gedeelde pagina's (clubdashboard, instellingenoverzicht). Toon menu-items, kaarten en zoekgroepen alleen bij dezelfde permissie (User::staffClubIdsWith() voor queries over meerdere clubs) en scope elke query op club_id; portaal-components (app/Livewire/Portal) scopen altijd op Auth::id(). Records uit andere clubs horen een 404 te geven via where('club_id', ...)->findOrFail().
 
 ## Globale zoekbalk: prefix-match, per groep gelimiteerd, gescoped op staff-clubs
 `App\Livewire\GlobalSearch` staat in de topbar (layouts/app/sidebar.blade.php) en zoekt in clubs, leden, lessen en tickets. Uitbreiden? Houd deze eigenschappen aan:

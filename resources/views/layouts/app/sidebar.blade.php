@@ -4,42 +4,137 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-canvas">
+        @php
+            $user = auth()->user();
+            $currentClub = request()->route('club');
+            $currentClub = $currentClub instanceof \App\Models\Club && $user->can('view', $currentClub) ? $currentClub : null;
+
+            // One query for the switcher: staff see their own clubs, superadmins every club.
+            // One row extra tells whether "All clubs" should link to more.
+            $switcherClubs = ($user->is_superadmin ? \App\Models\Club::query() : $user->staffClubs())
+                ->orderBy('clubs.name')
+                ->limit(\App\Models\User::CLUB_SWITCHER_LIMIT + 1)
+                ->get(['clubs.id', 'clubs.name', 'clubs.slug', 'clubs.photo_path']);
+            $switcherHasMore = $switcherClubs->count() > \App\Models\User::CLUB_SWITCHER_LIMIT;
+            $switcherClubs = $switcherClubs->take(\App\Models\User::CLUB_SWITCHER_LIMIT);
+
+            // The open club always appears in the list, also when it falls outside the first page.
+            if ($currentClub && ! $switcherClubs->contains($currentClub)) {
+                $switcherClubs = $switcherClubs->prepend($currentClub);
+            }
+            $managesClubs = $user->is_superadmin || $switcherClubs->isNotEmpty();
+
+            // A single club is selected by default and replaces the personal dashboard (see User::soleStaffClub()).
+            $soleClub = ! $user->is_superadmin && $switcherClubs->count() === 1 ? $switcherClubs->first() : null;
+            $currentClub ??= $soleClub;
+            $homeUrl = $soleClub ? route('clubs.dashboard', $soleClub) : route('dashboard');
+
+            // Newest unread tickets; one extra row shows "9+" without counting them all.
+            $unreadTicketLimit = 9;
+            $unreadTickets = \App\Models\Ticket::query()
+                ->unreadFor($user)
+                ->with('club:id,name,slug')
+                ->orderByDesc('tickets.last_message_at')
+                ->limit($unreadTicketLimit + 1)
+                ->get(['tickets.id', 'tickets.club_id', 'tickets.user_id', 'tickets.number', 'tickets.subject', 'tickets.last_message_at']);
+        @endphp
+
         <flux:sidebar sticky collapsible="mobile" class="bg-white dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo :sidebar="true" href="{{ $homeUrl }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="gap-6">
-                <flux:sidebar.group :heading="__('Platform')" expandable :expanded="false" data-sidebar-group="platform" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                {{-- One block, so the nav's group gap does not separate Dashboard and Settings. --}}
+                <div class="grid">
+                    {{-- Always the top item: the selected club's dashboard, or the personal one when no club is open. --}}
+                    <flux:sidebar.item
+                        icon="home"
+                        :href="$currentClub ? route('clubs.dashboard', $currentClub) : route('dashboard')"
+                        :current="request()->routeIs($currentClub ? 'clubs.dashboard' : 'dashboard')"
+                        wire:navigate
+                    >
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
-                    @if (auth()->user()->is_superadmin || auth()->user()->staffClubs()->exists())
-                        <flux:sidebar.item icon="building-storefront" :href="route('clubs.index')" :current="request()->routeIs('clubs.index')" wire:navigate>
-                            {{ __('My clubs') }}
+
+                    @if ($currentClub && (
+                        $user->can('update', $currentClub)
+                        || $user->can('access', [$currentClub, \App\Enums\StaffPermission::Forms])
+                        || $user->can('access', [$currentClub, \App\Enums\StaffPermission::Setup])
+                        || ($currentClub->hasAddon(\App\Enums\AddonKey::Mollie) && $user->can('access', [$currentClub, \App\Enums\StaffPermission::Billing]))
+                    ))
+                        <flux:sidebar.item icon="cog-6-tooth" :href="route('clubs.settings', $currentClub)" :current="request()->routeIs('clubs.settings*', 'clubs.staff', 'clubs.forms*', 'clubs.trainers', 'clubs.rooms', 'clubs.plan', 'clubs.addons', 'clubs.moneybird', 'clubs.mollie')" wire:navigate>
+                            {{ __('Settings') }}
                         </flux:sidebar.item>
                     @endif
-                    @if (auth()->user()->is_superadmin)
-                        <flux:sidebar.item icon="puzzle-piece" :href="route('admin.addons')" :current="request()->routeIs('admin.addons')" wire:navigate>
-                            {{ __('Add-ons') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="credit-card" :href="route('admin.club-plans')" :current="request()->routeIs('admin.club-plans')" wire:navigate>
-                            {{ __('SquadPass plans') }}
-                        </flux:sidebar.item>
+                </div>
+
+                @if ($currentClub)
+                    @php
+                        $permissions = \App\Enums\StaffPermission::class;
+                        $can = fn (\App\Enums\StaffPermission $permission): bool => $user->can('access', [$currentClub, $permission]);
+                    @endphp
+
+                    @if ($can($permissions::Members) || $can($permissions::CheckIns) || $can($permissions::Tickets))
+                        <flux:sidebar.group :heading="__('Members')" data-sidebar-group="club-members" class="grid">
+                            @if ($can($permissions::Members))
+                                <flux:sidebar.item icon="users" :href="route('clubs.members', $currentClub)" :current="request()->routeIs('clubs.members*')" wire:navigate>
+                                    {{ __('Members') }}
+                                </flux:sidebar.item>
+                            @endif
+                            @if ($can($permissions::CheckIns))
+                                <flux:sidebar.item icon="finger-print" :href="route('clubs.check-ins', $currentClub)" :current="request()->routeIs('clubs.check-ins*')" wire:navigate>
+                                    {{ __('Check-in desk') }}
+                                </flux:sidebar.item>
+                            @endif
+                            @if ($can($permissions::Tickets))
+                                <flux:sidebar.item icon="lifebuoy" :href="route('clubs.tickets', $currentClub)" :current="request()->routeIs('clubs.tickets*')" wire:navigate>
+                                    {{ __('Tickets') }}
+                                </flux:sidebar.item>
+                            @endif
+                        </flux:sidebar.group>
                     @endif
-                </flux:sidebar.group>
+
+                    @if ($can($permissions::Lessons))
+                        <flux:sidebar.group :heading="__('Lessons')" data-sidebar-group="club-lessons" class="grid">
+                            <flux:sidebar.item icon="calendar" :href="route('clubs.lessons', $currentClub)" :current="request()->routeIs('clubs.lessons*')" wire:navigate>
+                                {{ __('Lessons') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="clock" :href="route('clubs.schedule', $currentClub)" :current="request()->routeIs('clubs.schedule', 'clubs.occurrences.*')" wire:navigate>
+                                {{ __('Schedule') }}
+                            </flux:sidebar.item>
+                        </flux:sidebar.group>
+                    @endif
+
+                    @if ($can($permissions::Billing))
+                        <flux:sidebar.group :heading="__('Billing')" data-sidebar-group="club-billing" class="grid">
+                            <flux:sidebar.item icon="ticket" :href="route('clubs.strip-cards', $currentClub)" :current="request()->routeIs('clubs.strip-cards')" wire:navigate>
+                                {{ __('Strip cards') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="credit-card" :href="route('clubs.subscription-plans', $currentClub)" :current="request()->routeIs('clubs.subscription-plans')" wire:navigate>
+                                {{ __('Subscription plans') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="banknotes" :href="route('clubs.subscriptions', $currentClub)" :current="request()->routeIs('clubs.subscriptions')" wire:navigate>
+                                {{ __('Subscriptions') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="receipt-percent" :href="route('clubs.invoices', $currentClub)" :current="request()->routeIs('clubs.invoices')" wire:navigate>
+                                {{ __('Invoices') }}
+                            </flux:sidebar.item>
+                        </flux:sidebar.group>
+                    @endif
+                @endif
 
                 @if (auth()->user()->trainerProfiles()->exists())
-                    <flux:sidebar.group :heading="__('Trainer')" expandable :expanded="false" data-sidebar-group="trainer" class="grid">
+                    <flux:sidebar.group :heading="__('Trainer')" data-sidebar-group="trainer" class="grid">
                         <flux:sidebar.item icon="academic-cap" :href="route('trainer.lessons')" :current="request()->routeIs('trainer.lessons')" wire:navigate>
-                            {{ __('My lessons') }}
+                            {{ __('Lessons I teach') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
 
                 @if (auth()->user()->memberships()->exists())
-                    <flux:sidebar.group :heading="__('Lessons')" expandable :expanded="false" data-sidebar-group="lessons" class="grid">
+                    <flux:sidebar.group :heading="__('My lessons')" data-sidebar-group="lessons" class="grid">
                         <flux:sidebar.item icon="calendar-days" :href="route('portal.schedule')" :current="request()->routeIs('portal.schedule')" wire:navigate>
                             {{ __('Lesson schedule') }}
                         </flux:sidebar.item>
@@ -48,7 +143,7 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('My membership')" expandable :expanded="false" data-sidebar-group="membership" class="grid">
+                    <flux:sidebar.group :heading="__('My membership')" data-sidebar-group="membership" class="grid">
                         <flux:sidebar.item icon="ticket" :href="route('portal.cards')" :current="request()->routeIs('portal.cards*')" wire:navigate>
                             {{ __('My strip cards') }}
                         </flux:sidebar.item>
@@ -63,86 +158,23 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
 
-                    <flux:sidebar.group :heading="__('Support')" expandable :expanded="false" data-sidebar-group="support" class="grid">
+                    <flux:sidebar.group :heading="__('My support')" data-sidebar-group="support" class="grid">
                         <flux:sidebar.item icon="lifebuoy" :href="route('portal.tickets')" :current="request()->routeIs('portal.tickets*')" wire:navigate>
                             {{ __('Support tickets') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
 
-                @if (($currentClub = request()->route('club')) instanceof \App\Models\Club && auth()->user()->can('view', $currentClub))
-                    <flux:sidebar.group :heading="$currentClub->name" expandable :expanded="false" data-sidebar-group="club" class="grid">
-                        <flux:sidebar.item icon="chart-bar" :href="route('clubs.dashboard', $currentClub)" :current="request()->routeIs('clubs.dashboard')" wire:navigate>
-                            {{ __('Dashboard') }}
+                @if ($user->is_superadmin)
+                    <flux:sidebar.group :heading="__('Platform')" data-sidebar-group="platform" class="grid">
+                        <flux:sidebar.item icon="building-storefront" :href="route('clubs.index')" :current="request()->routeIs('clubs.index')" wire:navigate>
+                            {{ __('All clubs') }}
                         </flux:sidebar.item>
-                        @can('update', $currentClub)
-                            <flux:sidebar.item icon="cog-6-tooth" :href="route('clubs.settings', $currentClub)" :current="request()->routeIs('clubs.settings')" wire:navigate>
-                                {{ __('Settings') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="credit-card" :href="route('clubs.plan', $currentClub)" :current="request()->routeIs('clubs.plan')" wire:navigate>
-                                {{ __('SquadPass plan') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="puzzle-piece" :href="route('clubs.addons', $currentClub)" :current="request()->routeIs('clubs.addons')" wire:navigate>
-                                {{ __('Add-ons') }}
-                            </flux:sidebar.item>
-                            @if ($currentClub->hasAddon(\App\Enums\AddonKey::Moneybird))
-                                <flux:sidebar.item icon="document-text" :href="route('clubs.moneybird', $currentClub)" :current="request()->routeIs('clubs.moneybird')" wire:navigate>
-                                    {{ __('Moneybird') }}
-                                </flux:sidebar.item>
-                            @endif
-                        @endcan
-                        @if ($currentClub->hasAddon(\App\Enums\AddonKey::Mollie) && auth()->user()->can('manage', $currentClub))
-                            <flux:sidebar.item icon="receipt-percent" :href="route('clubs.mollie', $currentClub)" :current="request()->routeIs('clubs.mollie')" wire:navigate>
-                                {{ __('Mollie') }}
-                            </flux:sidebar.item>
-                        @endif
-                    </flux:sidebar.group>
-
-                    <flux:sidebar.group :heading="__('Members')" expandable :expanded="false" data-sidebar-group="club-members" class="grid">
-                        <flux:sidebar.item icon="users" :href="route('clubs.members', $currentClub)" :current="request()->routeIs('clubs.members')" wire:navigate>
-                            {{ __('Members') }}
+                        <flux:sidebar.item icon="puzzle-piece" :href="route('admin.addons')" :current="request()->routeIs('admin.addons')" wire:navigate>
+                            {{ __('Add-ons') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="academic-cap" :href="route('clubs.trainers', $currentClub)" :current="request()->routeIs('clubs.trainers')" wire:navigate>
-                            {{ __('Trainers') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="finger-print" :href="route('clubs.check-ins', $currentClub)" :current="request()->routeIs('clubs.check-ins')" wire:navigate>
-                            {{ __('Check-in desk') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="clipboard-document-list" :href="route('clubs.forms', $currentClub)" :current="request()->routeIs('clubs.forms*')" wire:navigate>
-                            {{ __('Forms') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
-
-                    <flux:sidebar.group :heading="__('Lessons')" expandable :expanded="false" data-sidebar-group="club-lessons" class="grid">
-                        <flux:sidebar.item icon="calendar" :href="route('clubs.lessons', $currentClub)" :current="request()->routeIs('clubs.lessons*')" wire:navigate>
-                            {{ __('Lessons') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="clock" :href="route('clubs.schedule', $currentClub)" :current="request()->routeIs('clubs.schedule')" wire:navigate>
-                            {{ __('Schedule') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="map-pin" :href="route('clubs.rooms', $currentClub)" :current="request()->routeIs('clubs.rooms')" wire:navigate>
-                            {{ __('Rooms') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
-
-                    <flux:sidebar.group :heading="__('Billing')" expandable :expanded="false" data-sidebar-group="club-billing" class="grid">
-                        <flux:sidebar.item icon="ticket" :href="route('clubs.strip-cards', $currentClub)" :current="request()->routeIs('clubs.strip-cards')" wire:navigate>
-                            {{ __('Strip cards') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="credit-card" :href="route('clubs.subscription-plans', $currentClub)" :current="request()->routeIs('clubs.subscription-plans')" wire:navigate>
-                            {{ __('Subscription plans') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="banknotes" :href="route('clubs.subscriptions', $currentClub)" :current="request()->routeIs('clubs.subscriptions')" wire:navigate>
-                            {{ __('Subscriptions') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="receipt-percent" :href="route('clubs.invoices', $currentClub)" :current="request()->routeIs('clubs.invoices')" wire:navigate>
-                            {{ __('Invoices') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
-
-                    <flux:sidebar.group :heading="__('Support')" expandable :expanded="false" data-sidebar-group="club-support" class="grid">
-                        <flux:sidebar.item icon="lifebuoy" :href="route('clubs.tickets', $currentClub)" :current="request()->routeIs('clubs.tickets*')" wire:navigate>
-                            {{ __('Tickets') }}
+                        <flux:sidebar.item icon="credit-card" :href="route('admin.club-plans')" :current="request()->routeIs('admin.club-plans')" wire:navigate>
+                            {{ __('SquadPass plans') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
@@ -150,44 +182,40 @@
 
             {{-- No flux:spacer: the nav grows and scrolls, this stays pinned to the bottom. --}}
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
-
-            {{-- Runs before @fluxScripts upgrades <ui-disclosure>, so a group never flashes open or shut.
-                 Groups start collapsed; a remembered choice wins, and the group holding the current page always opens. --}}
-            <script>
-                document.querySelectorAll('[data-sidebar-group]').forEach((group) => {
-                    try {
-                        if (localStorage.getItem('sidebar-group:' + group.dataset.sidebarGroup) === 'open') {
-                            group.setAttribute('open', '');
-                        }
-                    } catch (error) {
-                        // Private mode or blocked storage: keep the server-rendered state.
-                    }
-
-                    if (group.querySelector('[data-current]')) {
-                        group.setAttribute('open', '');
-                    }
-                });
-            </script>
         </flux:sidebar>
 
         {{-- No Flux `sticky` prop here: it binds an inline `top: $el.offsetTop + 'px'`,
              which lands below the viewport top when the page is already scrolled
              (for example right after a wire:navigate). Plain sticky top-0 is stable. --}}
-        <flux:header class="sticky top-0 z-20 bg-white dark:bg-zinc-900">
+        {{-- Three zones: club context on the left, search centred in the free space, account on the right. --}}
+        <flux:header class="sticky top-0 z-20 gap-2 bg-white sm:gap-4 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
-            @if (auth()->user()->is_superadmin || auth()->user()->staffClubs()->exists())
-                <livewire:global-search />
+            @if ($managesClubs)
+                <x-club-switcher :clubs="$switcherClubs" :current-club="$currentClub" :has-more="$switcherHasMore" />
+
+                <flux:separator vertical class="my-4 max-sm:hidden" />
+
+                {{-- Phones skip the search: the top bar keeps room for the club, notifications and account. --}}
+                <flux:spacer class="sm:hidden" />
+
+                <div class="flex min-w-0 flex-1 justify-center max-sm:hidden">
+                    <livewire:global-search />
+                </div>
+            @else
+                <flux:spacer />
             @endif
 
-            <flux:spacer />
+            <x-unread-tickets :tickets="$unreadTickets" :limit="$unreadTicketLimit" />
 
-            <flux:dropdown position="bottom" align="end">
+            <flux:dropdown position="bottom" align="end" class="shrink-0">
+                {{-- The name only shows from tablet width; on phones the avatar is enough. --}}
                 <flux:profile
                     :avatar="auth()->user()->avatarUrl()"
                     :name="auth()->user()->name"
                     :initials="auth()->user()->initials()"
                     icon-trailing="chevron-down"
+                    class="max-w-56 max-md:[&>span]:hidden"
                 />
 
                 <flux:menu>

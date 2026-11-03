@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Actions\Forms\ReopenFormSubmission;
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Form;
 use App\Models\FormSubmission;
@@ -25,7 +26,7 @@ class SubmissionShow extends Component
 
     public function mount(Club $club, Form $form, FormSubmission $submission): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Forms]);
 
         $this->club = $club;
         $this->form = $club->forms()->findOrFail($form->id);
@@ -40,7 +41,7 @@ class SubmissionShow extends Component
      */
     public function reopen(ReopenFormSubmission $reopenFormSubmission): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         abort_unless($this->submission->locks($this->form), 403);
 

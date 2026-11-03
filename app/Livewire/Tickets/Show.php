@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Tickets;
 
+use App\Enums\StaffPermission;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Club;
@@ -33,18 +34,20 @@ class Show extends Component
 
     public function mount(Club $club, Ticket $ticket): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Tickets]);
 
         $this->club = $club;
         $this->ticket = $club->tickets()->with(['user', 'assignee'])->findOrFail($ticket->id);
         $this->status = $this->ticket->status->value;
         $this->priority = $this->ticket->priority->value;
         $this->assignedTo = (string) ($this->ticket->assigned_to ?? '');
+
+        $this->ticket->markReadBy(Auth::user());
     }
 
     public function sendMessage(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Tickets]);
 
         $ticket = $this->club->tickets()->findOrFail($this->ticket->id);
 
@@ -81,7 +84,7 @@ class Show extends Component
 
     public function updatedStatus(string $value): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Tickets]);
 
         $status = TicketStatus::tryFrom($value);
         abort_unless($status !== null, 422);
@@ -96,7 +99,7 @@ class Show extends Component
 
     public function updatedPriority(string $value): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Tickets]);
 
         $priority = TicketPriority::tryFrom($value);
         abort_unless($priority !== null, 422);
@@ -111,7 +114,7 @@ class Show extends Component
 
     public function updatedAssignedTo(string $value): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Tickets]);
 
         $assigneeId = $value === '' ? null : (int) $value;
 

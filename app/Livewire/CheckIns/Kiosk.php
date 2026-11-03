@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CheckIns;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Services\CheckIns\CheckInCode;
 use App\Services\CheckIns\QrCodeRenderer;
@@ -26,7 +27,7 @@ class Kiosk extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::CheckIns]);
 
         $this->club = $club;
     }

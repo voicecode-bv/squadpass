@@ -2,6 +2,7 @@
 
 namespace App\Livewire\StripCardPlans;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\StripCardPlan;
 use Flux\Flux;
@@ -29,7 +30,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Billing]);
 
         $this->club = $club;
     }
@@ -39,7 +40,7 @@ class Index extends Component
      */
     public function newPlan(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $this->resetValidation();
         $this->resetForm();
@@ -52,7 +53,7 @@ class Index extends Component
      */
     public function editPlan(int $planId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $plan = $this->findPlan($planId);
 
@@ -68,7 +69,7 @@ class Index extends Component
 
     public function savePlan(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $plan = $this->editingPlanId ? $this->findPlan($this->editingPlanId) : null;
 
@@ -107,7 +108,7 @@ class Index extends Component
 
     public function toggleActive(int $planId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Billing]);
 
         $plan = $this->findPlan($planId);
 

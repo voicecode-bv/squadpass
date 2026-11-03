@@ -4,6 +4,7 @@ namespace App\Livewire\Members;
 
 use App\Actions\Moneybird\SyncMemberContact;
 use App\Enums\FormAudience;
+use App\Enums\StaffPermission;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\MoneybirdContactConflict;
 use App\Models\CheckIn;
@@ -18,6 +19,7 @@ use App\Models\Subscription;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -27,6 +29,7 @@ use Livewire\Component;
  * Computed properties, read as $this->name:
  *
  * @property-read Collection<int, Form> $forms
+ * @property-read list<string> $visibleTabs
  * @property-read Collection<int, CreditTransaction> $creditTransactions
  * @property-read array{total: int, limited: int, remaining: int} $activeSubscriptionTotals
  */
@@ -56,19 +59,36 @@ class Show extends Component
 
     public function mount(Club $club, Membership $membership): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Members]);
 
         $this->club = $club;
         $this->membership = $club->memberships()->with('user')->findOrFail($membership->id);
 
-        if (! in_array($this->tab, self::TABS, true)) {
+        if (! in_array($this->tab, $this->visibleTabs, true)) {
             $this->tab = self::TABS[0];
         }
     }
 
+    /**
+     * Tabs this staff member may open: finances need the billing permission,
+     * form answers (which can hold health data) the forms permission.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function visibleTabs(): array
+    {
+        $hidden = [
+            ...(Gate::allows('access', [$this->club, StaffPermission::Billing]) ? [] : ['subscriptions', 'payments']),
+            ...(Gate::allows('access', [$this->club, StaffPermission::Forms]) ? [] : ['forms']),
+        ];
+
+        return array_values(array_diff(self::TABS, $hidden));
+    }
+
     public function syncMoneybird(SyncMemberContact $syncMemberContact): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Members]);
 
         if (! $this->club->hasMoneybirdConfigured()) {
             Flux::toast(variant: 'danger', text: __('Moneybird is not configured for this club.'));
@@ -166,7 +186,7 @@ class Show extends Component
 
     public function showMoreCreditTransactions(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Members]);
 
         $this->creditTimelineLimit += self::CREDIT_TIMELINE_PAGE;
     }

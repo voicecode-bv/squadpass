@@ -49,10 +49,16 @@
     <flux:tab.group>
         <flux:tabs wire:model="tab" scrollable scrollable:fade>
             <flux:tab name="membership">{{ __('Membership') }}</flux:tab>
+            @if (in_array('subscriptions', $this->visibleTabs, true))
             <flux:tab name="subscriptions">{{ __('Subscriptions & strip cards') }}</flux:tab>
+            @endif
             <flux:tab name="credits">{{ __('Credits') }}</flux:tab>
+            @if (in_array('payments', $this->visibleTabs, true))
             <flux:tab name="payments">{{ __('Payments') }}</flux:tab>
+            @endif
+            @if (in_array('forms', $this->visibleTabs, true))
             <flux:tab name="forms">{{ __('Forms') }}</flux:tab>
+            @endif
             <flux:tab name="check-ins">{{ __('Check-ins') }}</flux:tab>
         </flux:tabs>
 
@@ -74,6 +80,7 @@
             </div>
         </flux:tab.panel>
 
+        @if (in_array('subscriptions', $this->visibleTabs, true))
         <flux:tab.panel name="subscriptions" class="flex flex-col gap-8">
             <section class="flex flex-col gap-4">
                 <flux:heading size="lg">{{ __('Subscriptions') }}</flux:heading>
@@ -148,6 +155,7 @@
                 @endif
             </section>
         </flux:tab.panel>
+        @endif
 
         <flux:tab.panel name="credits">
             @php
@@ -174,6 +182,7 @@
             </section>
         </flux:tab.panel>
 
+        @if (in_array('payments', $this->visibleTabs, true))
         <flux:tab.panel name="payments">
             <section class="flex flex-col gap-4">
                 @if ($this->payments->isEmpty())
@@ -223,7 +232,9 @@
                 @endif
             </section>
         </flux:tab.panel>
+        @endif
 
+        @if (in_array('forms', $this->visibleTabs, true))
         <flux:tab.panel name="forms">
             <section class="flex flex-col gap-4">
                 @if ($this->forms->isEmpty())
@@ -267,6 +278,7 @@
                 @endif
             </section>
         </flux:tab.panel>
+        @endif
 
         <flux:tab.panel name="check-ins">
             <section class="flex flex-col gap-4">

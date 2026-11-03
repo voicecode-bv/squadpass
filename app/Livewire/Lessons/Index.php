@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Lessons;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Lesson;
 use Illuminate\Contracts\View\View;
@@ -17,7 +18,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Lessons]);
 
         $this->club = $club;
     }

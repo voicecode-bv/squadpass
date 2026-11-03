@@ -23,6 +23,17 @@ class TicketMessage extends Model
     /** @use HasFactory<TicketMessageFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // Every message, from any entry point, moves the ticket's unread marker; the author has read it by writing it.
+        static::created(function (TicketMessage $message): void {
+            Ticket::query()->whereKey($message->ticket_id)->update([
+                'last_message_at' => $message->created_at,
+                'last_message_by' => $message->user_id,
+            ]);
+        });
+    }
+
     /**
      * @return BelongsTo<Ticket, $this>
      */

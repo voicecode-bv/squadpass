@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Enums\FormAudience;
 use App\Enums\FormStatus;
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Form;
 use Flux\Flux;
@@ -27,14 +28,14 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Forms]);
 
         $this->club = $club;
     }
 
     public function createForm(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -55,7 +56,7 @@ class Index extends Component
 
     public function archive(int $formId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $form = $this->findForm($formId);
 
@@ -71,7 +72,7 @@ class Index extends Component
      */
     public function restore(int $formId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $form = $this->findForm($formId);
 

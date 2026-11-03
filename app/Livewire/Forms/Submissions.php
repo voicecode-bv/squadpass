@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Enums\FormAudience;
 use App\Enums\MembershipStatus;
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Form;
 use App\Models\FormAssignment;
@@ -39,7 +40,7 @@ class Submissions extends Component
 
     public function mount(Club $club, Form $form): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Forms]);
 
         $this->club = $club;
         $this->form = $club->forms()->with('publishedVersion')->findOrFail($form->id);
@@ -57,7 +58,7 @@ class Submissions extends Component
 
     public function assign(int $userId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $member = $this->clubMember($userId);
 
@@ -74,7 +75,7 @@ class Submissions extends Component
 
     public function unassign(int $userId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         FormAssignment::query()
             ->where('form_id', $this->form->id)

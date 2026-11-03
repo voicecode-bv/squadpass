@@ -3,6 +3,7 @@
 namespace App\Actions\Invitations;
 
 use App\Enums\ClubInvitationRole;
+use App\Enums\StaffPermission;
 use App\Exceptions\ClubInvitationException;
 use App\Mail\ClubInvitationMail;
 use App\Models\Club;
@@ -15,11 +16,13 @@ use Illuminate\Support\Str;
 class InviteToClub
 {
     /**
-     * Invite someone by email to join the club as a trainer or member. Works
-     * for people without an account (they register first) and existing users.
-     * Re-inviting refreshes the token and expiry and resends the email.
+     * Invite someone by email to join the club as a trainer, member or staff
+     * member. Works for people without an account (they register first) and
+     * existing users. Re-inviting refreshes the token and expiry and resends the email.
+     *
+     * @param  list<StaffPermission>  $permissions  what a staff member may do once they accept
      */
-    public function handle(Club $club, string $email, ClubInvitationRole $role, User $invitedBy): ClubInvitation
+    public function handle(Club $club, string $email, ClubInvitationRole $role, User $invitedBy, array $permissions = []): ClubInvitation
     {
         // The public demo must never mail a real person on a visitor's behalf.
         if ($club->isDemoSandbox()) {
@@ -35,6 +38,9 @@ class InviteToClub
         $invitation = ClubInvitation::query()->updateOrCreate(
             ['club_id' => $club->id, 'email' => $email, 'role' => $role],
             [
+                'permissions' => $role === ClubInvitationRole::Staff
+                    ? array_map(fn (StaffPermission $permission): string => $permission->value, $permissions)
+                    : null,
                 'token' => Str::random(64),
                 'invited_by' => $invitedBy->id,
                 'accepted_at' => null,
@@ -49,6 +55,12 @@ class InviteToClub
 
     protected function ensureNotAlreadyInRole(Club $club, User $user, ClubInvitationRole $role): void
     {
+        if ($role === ClubInvitationRole::Staff) {
+            throw_if($user->isStaffOf($club), ClubInvitationException::alreadyStaff());
+
+            return;
+        }
+
         if ($role === ClubInvitationRole::Trainer) {
             $alreadyTrainer = Trainer::query()
                 ->where('club_id', $club->id)

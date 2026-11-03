@@ -7,6 +7,7 @@ use App\Enums\ClubPlan;
 use App\Enums\MembershipStatus;
 use App\Enums\MoneybirdInvoiceDelivery;
 use App\Enums\PaymentStatus;
+use App\Enums\StaffPermission;
 use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\ClubPlanException;
@@ -141,7 +142,7 @@ class Club extends Model implements MollieAccount
     public function staff(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'club_staff')
-            ->withPivot('role')
+            ->withPivot(['role', 'permissions'])
             ->withTimestamps();
     }
 
@@ -351,9 +352,22 @@ class Club extends Model implements MollieAccount
         return $this->onboarded_at !== null;
     }
 
-    public function addStaff(User $user, StaffRole $role): void
+    /**
+     * Add a user as staff, or change their role. A staff member without explicit
+     * permissions gets every area; owners always have every area.
+     *
+     * @param  list<StaffPermission>|null  $permissions
+     */
+    public function addStaff(User $user, StaffRole $role, ?array $permissions = null): void
     {
-        $this->staff()->syncWithoutDetaching([$user->id => ['role' => $role->value]]);
+        $permissions = $role === StaffRole::Owner ? null : ($permissions ?? StaffPermission::cases());
+
+        $this->staff()->syncWithoutDetaching([$user->id => [
+            'role' => $role->value,
+            'permissions' => $permissions === null ? null : json_encode(array_map(fn (StaffPermission $permission): string => $permission->value, $permissions)),
+        ]]);
+
+        $user->forgetStaffAccess();
     }
 
     /**

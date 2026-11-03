@@ -6,6 +6,7 @@ use App\Actions\Forms\PublishFormVersion;
 use App\Actions\Forms\StartFormDraft;
 use App\Enums\FormAudience;
 use App\Enums\FormFieldType;
+use App\Enums\StaffPermission;
 use App\Exceptions\FormException;
 use App\Models\Club;
 use App\Models\Form;
@@ -51,7 +52,7 @@ class Builder extends Component
 
     public function mount(Club $club, Form $form, StartFormDraft $startFormDraft): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Forms]);
 
         $this->club = $club;
         $this->form = $club->forms()->findOrFail($form->id);
@@ -64,7 +65,7 @@ class Builder extends Component
 
     public function saveSettings(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -83,7 +84,7 @@ class Builder extends Component
 
     public function newField(string $type): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $this->resetFieldEditor();
         $this->fieldType = FormFieldType::from($type)->value;
@@ -97,7 +98,7 @@ class Builder extends Component
 
     public function editField(string $key): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $field = $this->schema()->field($key);
 
@@ -131,7 +132,7 @@ class Builder extends Component
 
     public function saveField(): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $type = FormFieldType::from($this->fieldType);
 
@@ -173,7 +174,7 @@ class Builder extends Component
 
     public function deleteField(string $key): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $fields = array_values(array_filter(
             $this->schema()->fields,
@@ -185,7 +186,7 @@ class Builder extends Component
 
     public function moveField(string $key, int $direction): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         $fields = $this->schema()->fields;
         $index = null;
@@ -210,7 +211,7 @@ class Builder extends Component
 
     public function publish(PublishFormVersion $publishFormVersion): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Forms]);
 
         try {
             $publishFormVersion->handle($this->form, $this->draft);

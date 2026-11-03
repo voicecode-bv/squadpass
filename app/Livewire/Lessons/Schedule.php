@@ -4,6 +4,7 @@ namespace App\Livewire\Lessons;
 
 use App\Actions\Lessons\CancelOccurrence;
 use App\Enums\LessonOccurrenceStatus;
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\LessonOccurrence;
 use Flux\Flux;
@@ -24,14 +25,14 @@ class Schedule extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Lessons]);
 
         $this->club = $club;
     }
 
     public function cancelOccurrence(int $occurrenceId, CancelOccurrence $cancelOccurrence): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Lessons]);
 
         $occurrence = LessonOccurrence::query()
             ->where('club_id', $this->club->id)
@@ -46,7 +47,7 @@ class Schedule extends Component
 
     public function restoreOccurrence(int $occurrenceId): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Lessons]);
 
         $occurrence = LessonOccurrence::query()
             ->where('club_id', $this->club->id)

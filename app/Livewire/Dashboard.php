@@ -6,6 +6,7 @@ use App\Enums\EnrollmentType;
 use App\Enums\LessonOccurrenceStatus;
 use App\Enums\MembershipStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\StaffPermission;
 use App\Enums\SubscriptionStatus;
 use App\Models\CheckIn;
 use App\Models\Club;
@@ -26,11 +27,22 @@ use Livewire\Component;
  * Computed properties, read as $this->name:
  *
  * @property-read Collection<int, Club> $staffClubs
+ * @property-read list<int> $billingClubIds
  * @property-read array{labels: list<string>, values: list<int>} $newMembersPerMonth
  */
 #[Title('Dashboard')]
 class Dashboard extends Component
 {
+    /**
+     * Someone who manages a single club lands on that club's dashboard instead.
+     */
+    public function mount(): void
+    {
+        if ($club = Auth::user()->soleStaffClub()) {
+            $this->redirectRoute('clubs.dashboard', ['club' => $club], navigate: true);
+        }
+    }
+
     #[Computed]
     public function greeting(): string
     {
@@ -148,7 +160,7 @@ class Dashboard extends Component
     #[Computed]
     public function failedChargesByClub(): \Illuminate\Support\Collection
     {
-        $clubIds = $this->staffClubIds();
+        $clubIds = $this->billingClubIds;
 
         if ($clubIds === []) {
             return collect();
@@ -202,7 +214,18 @@ class Dashboard extends Component
     #[Computed]
     public function revenuePerMonth(): array
     {
-        return app(ClubStatistics::class)->revenuePerMonth($this->staffClubIds());
+        return app(ClubStatistics::class)->revenuePerMonth($this->billingClubIds);
+    }
+
+    /**
+     * Clubs whose finances this user may see; revenue and failed charges only count those.
+     *
+     * @return list<int>
+     */
+    #[Computed]
+    public function billingClubIds(): array
+    {
+        return Auth::user()->staffClubIdsWith(StaffPermission::Billing);
     }
 
     /**

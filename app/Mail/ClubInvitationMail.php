@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use App\Enums\ClubInvitationRole;
 use App\Models\ClubInvitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -21,9 +20,7 @@ class ClubInvitationMail extends Mailable
         $club = $this->invitation->club->name;
 
         return new Envelope(
-            subject: $this->invitation->role === ClubInvitationRole::Trainer
-                ? __('You have been invited as a trainer at :club', ['club' => $club])
-                : __('You have been invited as a member of :club', ['club' => $club]),
+            subject: $this->invitation->role->invitedTitle($club),
         );
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Subscriptions;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Membership;
 use App\Models\Subscription;
@@ -26,7 +27,7 @@ class Index extends Component
 
     public function mount(Club $club): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Billing]);
 
         $this->club = $club;
     }

@@ -95,6 +95,8 @@ class TicketController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($ticketId);
 
+        $ticket->markReadBy($request->user());
+
         return new TicketResource($this->loadForShow($ticket));
     }
 

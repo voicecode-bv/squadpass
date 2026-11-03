@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Lessons;
 
+use App\Enums\StaffPermission;
 use App\Models\Club;
 use App\Models\Lesson;
 use App\Models\Room;
@@ -49,7 +50,7 @@ class Form extends Component
 
     public function mount(Club $club, ?Lesson $lesson = null): void
     {
-        $this->authorize('manage', $club);
+        $this->authorize('access', [$club, StaffPermission::Lessons]);
 
         $this->club = $club;
         $this->starts_on = now($club->timezone)->toDateString();
@@ -92,7 +93,7 @@ class Form extends Component
 
     public function save(OccurrenceGenerator $generator): void
     {
-        $this->authorize('manage', $this->club);
+        $this->authorize('access', [$this->club, StaffPermission::Lessons]);
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
