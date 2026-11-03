@@ -47,6 +47,90 @@
 
                         <flux:error name="photo" />
                     </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Logo for light mode') }}</flux:label>
+                        <flux:description>{{ __('Shown above the navigation in light mode and at the top of every email your members receive. Use a PNG or JPG of 112 pixels high and at most 480 pixels wide, with a transparent or white background, up to 2 MB.') }}</flux:description>
+
+                        @php($logoPreview = $logo?->isPreviewable() ? $logo->temporaryUrl() : $club->logoUrl())
+
+                        <div class="flex flex-wrap items-center gap-4">
+                            @if ($logoPreview)
+                                <div class="flex h-24 w-40 items-center justify-center rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-700">
+                                    <img src="{{ $logoPreview }}" alt="{{ $club->name }}" class="max-h-full max-w-full object-contain" />
+                                </div>
+                            @else
+                                <div class="flex h-24 w-40 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-400 dark:bg-zinc-800">
+                                    {{ __('No logo yet') }}
+                                </div>
+                            @endif
+
+                            <div class="flex flex-col gap-2">
+                                <flux:input type="file" wire:model="logo" accept="image/png,image/jpeg,image/gif" :label="__('Upload a logo')" label:sr-only />
+
+                                @if ($club->logo_path)
+                                    <flux:button type="button" variant="ghost" size="sm" wire:click="deleteLogo">{{ __('Remove logo') }}</flux:button>
+                                @endif
+                            </div>
+                        </div>
+
+                        <flux:error name="logo" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>{{ __('Logo for dark mode') }}</flux:label>
+                        <flux:description>{{ __('Shown above the navigation in dark mode; without one, the light logo is used. Use a PNG of 112 pixels high and at most 480 pixels wide, with a transparent background and light colours, up to 2 MB.') }}</flux:description>
+
+                        @php($darkLogoPreview = $darkLogo?->isPreviewable() ? $darkLogo->temporaryUrl() : ($club->logo_dark_path ? $club->darkLogoUrl() : null))
+
+                        <div class="flex flex-wrap items-center gap-4">
+                            @if ($darkLogoPreview)
+                                <div class="flex h-24 w-40 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 p-3">
+                                    <img src="{{ $darkLogoPreview }}" alt="{{ $club->name }}" class="max-h-full max-w-full object-contain" />
+                                </div>
+                            @else
+                                <div class="flex h-24 w-40 items-center justify-center rounded-xl bg-zinc-100 px-3 text-center text-sm text-zinc-400 dark:bg-zinc-800">
+                                    {{ __('Uses the light logo') }}
+                                </div>
+                            @endif
+
+                            <div class="flex flex-col gap-2">
+                                <flux:input type="file" wire:model="darkLogo" accept="image/png,image/jpeg,image/gif" :label="__('Upload a logo')" label:sr-only />
+
+                                @if ($club->logo_dark_path)
+                                    <flux:button type="button" variant="ghost" size="sm" wire:click="deleteDarkLogo">{{ __('Remove logo') }}</flux:button>
+                                @endif
+                            </div>
+                        </div>
+
+                        <flux:error name="darkLogo" />
+                    </flux:field>
+                </section>
+
+                <section class="sp-panel flex flex-col gap-6 p-5">
+                    <h2 class="sp-card-title">{{ __('Brand colour') }}</h2>
+
+                    <flux:switch wire:model.live="custom_brand_color" :label="__('Use our own brand colour')" :description="__('Replaces SquadPass blue in the app, the member portal, the public sign-up and trial pages, and the emails of your club. Light colours are darkened where white text sits on them, so everything stays readable.')" />
+
+                    @if ($custom_brand_color)
+                        <div class="flex flex-wrap items-end gap-6">
+                            <flux:input type="color" wire:model.live.debounce.250ms="brand_color" :label="__('Colour')" class="w-24" />
+
+                            <div class="flex flex-col gap-2">
+                                <span class="sp-card-subtitle">{{ __('Preview') }}</span>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex overflow-hidden rounded-lg">
+                                        @foreach ([100, 300, 500, 600, 700, 900] as $shade)
+                                            <span class="size-8" style="background-color: {{ $this->brandPreview[$shade] }}"></span>
+                                        @endforeach
+                                    </div>
+                                    <span class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background-color: {{ $this->brandPreview[600] }}">{{ __('Button') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <flux:error name="brand_color" />
+                    @endif
                 </section>
 
                 @can('manage-platform')
@@ -80,6 +164,22 @@
                         </div>
                     @endif
                 </section>
+
+                <section class="sp-panel mt-6 flex flex-col gap-6 p-5">
+                    <h2 class="sp-card-title">{{ __('Trial lessons') }}</h2>
+
+                    <flux:switch wire:model.live="trial_lessons_enabled" :label="__('Offer trial lessons')" :description="__('Visitors book a trial lesson without an account. Choose per lesson whether it is offered and what it costs.')" />
+
+                    @if ($trial_lessons_enabled)
+                        <flux:input
+                            :value="route('clubs.trial', $club)"
+                            :label="__('Trial lesson link')"
+                            :description="__('Share this link on your website or social media.')"
+                            readonly
+                            copyable
+                        />
+                    @endif
+                </section>
             </flux:tab.panel>
 
             <flux:tab.panel name="lessons">
@@ -106,6 +206,23 @@
                             wire:model="credit_expiry_days"
                             :label="__('Credits expire after (days)')"
                             :description="__('Counted from the moment credits are added for a new billing period.')"
+                            required
+                        />
+                    @endif
+                </section>
+
+                <section class="sp-panel mt-6 flex flex-col gap-6 p-5">
+                    <h2 class="sp-card-title">{{ __('Lesson reminders') }}</h2>
+
+                    <flux:switch wire:model.live="lesson_reminders" :label="__('Email members before their lessons')" :description="__('Everyone booked for a lesson gets a reminder email. Members can turn this off in their profile.')" />
+
+                    @if ($lesson_reminders)
+                        <flux:input
+                            type="number"
+                            min="1"
+                            max="72"
+                            wire:model="lesson_reminder_hours"
+                            :label="__('Send the reminder (hours before the lesson)')"
                             required
                         />
                     @endif

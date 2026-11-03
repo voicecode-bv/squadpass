@@ -29,6 +29,9 @@ class Profile extends Component
 
     public string $email = '';
 
+    /** Whether the person wants an email before their lessons. */
+    public bool $lesson_reminders = true;
+
     public ?TemporaryUploadedFile $avatar = null;
 
     /**
@@ -40,6 +43,17 @@ class Profile extends Component
         $this->name_prefix = Auth::user()->name_prefix ?? '';
         $this->last_name = Auth::user()->last_name;
         $this->email = Auth::user()->email;
+        $this->lesson_reminders = Auth::user()->lesson_reminders;
+    }
+
+    /**
+     * Saved as soon as the switch flips; it is not part of the profile form.
+     */
+    public function updatedLessonReminders(bool $value): void
+    {
+        Auth::user()->update(['lesson_reminders' => $value]);
+
+        Flux::toast(variant: 'success', text: $value ? __('Lesson reminders turned on.') : __('Lesson reminders turned off.'));
     }
 
     /**

@@ -2,11 +2,13 @@
 
 namespace App\Actions\CheckIns;
 
+use App\Enums\MembershipStatus;
 use App\Exceptions\CheckInException;
 use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
+use App\Models\Membership;
 use App\Models\StripCard;
 use App\Models\Subscription;
 use App\Models\User;
@@ -24,10 +26,17 @@ class CheckInMember
      * A reservation on its own is never free: without a current subscription
      * the visit falls through to a strip, so an ended or overdue subscription
      * cannot keep paying for lessons.
+     *
+     * A trial member has no subscription or strips: their booked trial lesson
+     * (free or paid on booking) is the only visit they are checked in for.
      */
     public function handle(User $member, Club $club, ?LessonOccurrence $occurrence = null, ?User $checkedInBy = null): CheckIn
     {
-        throw_unless($member->isMemberOf($club), CheckInException::membershipRequired());
+        $isTrialVisit = $occurrence !== null
+            && $occurrence->club_id === $club->id
+            && $this->hasTrialBookingFor($member, $occurrence);
+
+        throw_unless($isTrialVisit || $member->isMemberOf($club), CheckInException::membershipRequired());
 
         if ($occurrence) {
             throw_unless($occurrence->club_id === $club->id, CheckInException::noCoverage());
@@ -40,7 +49,7 @@ class CheckInMember
             throw_if($alreadyCheckedIn, CheckInException::alreadyCheckedIn());
         }
 
-        return DB::transaction(function () use ($member, $club, $occurrence, $checkedInBy): CheckIn {
+        return DB::transaction(function () use ($member, $club, $occurrence, $checkedInBy, $isTrialVisit): CheckIn {
             $attributes = [
                 'club_id' => $club->id,
                 'user_id' => $member->id,
@@ -48,6 +57,10 @@ class CheckInMember
                 'checked_in_by' => $checkedInBy?->id,
                 'checked_in_at' => now(),
             ];
+
+            if ($isTrialVisit) {
+                return CheckIn::create($attributes);
+            }
 
             $subscription = Subscription::currentFor($club->id, $member->id);
 
@@ -77,6 +90,20 @@ class CheckInMember
 
             throw CheckInException::noCoverage();
         });
+    }
+
+    protected function hasTrialBookingFor(User $member, LessonOccurrence $occurrence): bool
+    {
+        $isTrialMember = Membership::query()
+            ->where('club_id', $occurrence->club_id)
+            ->where('user_id', $member->id)
+            ->where('status', MembershipStatus::Trial)
+            ->exists();
+
+        return $isTrialMember && LessonEnrollment::query()
+            ->where('lesson_occurrence_id', $occurrence->id)
+            ->where('user_id', $member->id)
+            ->exists();
     }
 
     protected function isEnrolledFor(User $member, LessonOccurrence $occurrence): bool

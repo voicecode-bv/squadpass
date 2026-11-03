@@ -23,10 +23,11 @@ use Illuminate\Support\Carbon;
  * @property LessonOccurrenceStatus $status
  * @property int|null $capacity_override
  * @property int $booked_count
+ * @property Carbon|null $reminders_sent_at set once the lesson reminders went out
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['lesson_id', 'club_id', 'starts_at', 'ends_at', 'status', 'capacity_override', 'booked_count'])]
+#[Fillable(['lesson_id', 'club_id', 'starts_at', 'ends_at', 'status', 'capacity_override', 'booked_count', 'reminders_sent_at'])]
 class LessonOccurrence extends Model
 {
     /** @use HasFactory<LessonOccurrenceFactory> */
@@ -43,6 +44,7 @@ class LessonOccurrence extends Model
             'status' => LessonOccurrenceStatus::class,
             'capacity_override' => 'integer',
             'booked_count' => 'integer',
+            'reminders_sent_at' => 'datetime',
         ];
     }
 

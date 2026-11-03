@@ -36,6 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $password
  * @property bool $is_superadmin
  * @property string|null $avatar_path
+ * @property bool $lesson_reminders whether the person wants an email before their lessons
  * @property Carbon|null $product_tour_completed_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -45,7 +46,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'first_name', 'name_prefix', 'last_name', 'name_confirmed_at', 'email', 'password', 'avatar_path'])]
+#[Fillable(['name', 'first_name', 'name_prefix', 'last_name', 'name_confirmed_at', 'email', 'password', 'avatar_path', 'lesson_reminders'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -54,6 +55,16 @@ class User extends Authenticatable implements PasskeyUser
 
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * Defaults that mirror the database, so a freshly created user behaves the
+     * same before and after a refresh.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'lesson_reminders' => true,
+    ];
 
     /**
      * Keep the full name and its parts in sync. Changing the parts recomposes
@@ -97,6 +108,7 @@ class User extends Authenticatable implements PasskeyUser
             'name_confirmed_at' => 'datetime',
             'password' => 'hashed',
             'is_superadmin' => 'boolean',
+            'lesson_reminders' => 'boolean',
             'product_tour_completed_at' => 'datetime',
             'demo_expires_at' => 'datetime',
         ];

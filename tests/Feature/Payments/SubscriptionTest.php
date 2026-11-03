@@ -10,7 +10,9 @@ use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Notifications\PaymentFailed;
 use App\Services\Mollie\MollieGateway;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\Fakes\FakeMollieGateway;
 
@@ -149,6 +151,20 @@ test('a failed recurring payment marks the subscription past due and a paid one 
 
     expect($subscription->refresh()->status)->toBe(SubscriptionStatus::PastDue);
 })->skip('paid-after-failed transition is blocked by forward-only statuses; manual recovery is a staff action (v2)');
+
+test('a failed recurring payment emails the member once', function () {
+    $subscription = payFirstPayment($this);
+    $subscription->update(['next_billing_at' => today()]);
+    $this->artisan('subscriptions:charge');
+    Notification::fake();
+
+    $recurring = Payment::query()->latest('id')->firstOrFail();
+    $this->gateway->setPaymentStatus($recurring->mollie_payment_id, PaymentStatus::Failed);
+    $this->post(route('webhooks.mollie', $this->club), ['id' => $recurring->mollie_payment_id]);
+    $this->post(route('webhooks.mollie', $this->club), ['id' => $recurring->mollie_payment_id]);
+
+    Notification::assertSentToTimes($this->member, PaymentFailed::class, 1);
+});
 
 test('cancelling keeps access until the end of the paid period', function () {
     $subscription = payFirstPayment($this);

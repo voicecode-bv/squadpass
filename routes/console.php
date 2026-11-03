@@ -16,3 +16,6 @@ Schedule::command('addons:charge')->dailyAt('06:30');
 Schedule::command('club-subscriptions:charge')->dailyAt('06:45');
 Schedule::command('demo:prune')->hourly();
 Schedule::command('credits:expire')->hourly();
+Schedule::command('lessons:send-reminders')->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command('credits:warn-expiring')->dailyAt('09:00')->withoutOverlapping();
+Schedule::command('news:notify')->everyFiveMinutes()->withoutOverlapping();

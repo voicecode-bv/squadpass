@@ -73,6 +73,23 @@
 
         <flux:switch wire:model="active" :label="__('Active')" :description="__('Inactive lessons stop generating new occurrences.')" />
 
+        @if ($club->trial_lessons_enabled)
+            <div class="flex flex-col gap-4">
+                <flux:switch wire:model.live="trial_enabled" :label="__('Offer as trial lesson')" :description="__('Visitors can book this lesson on the public trial lesson page.')" />
+
+                @if ($trial_enabled)
+                    <flux:input
+                        wire:model="trial_price"
+                        :label="__('Trial lesson price (€)')"
+                        :description="$club->acceptsOnlinePayments() ? __('Leave empty for a free trial lesson. Paid trial lessons are paid online via Mollie.') : __('Leave empty for a free trial lesson. Paid trial lessons need online payments via Mollie.')"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                    />
+                @endif
+            </div>
+        @endif
+
         <div class="flex justify-between">
             <flux:button variant="ghost" :href="route('clubs.lessons', $club)" wire:navigate>{{ __('Cancel') }}</flux:button>
             <flux:button type="submit" variant="primary">{{ $lesson ? __('Save changes') : __('Create lesson') }}</flux:button>

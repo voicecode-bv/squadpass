@@ -21,10 +21,11 @@ use Illuminate\Support\Carbon;
  * @property int $amount
  * @property int $remaining
  * @property Carbon|null $expires_at null means the credits never expire
+ * @property Carbon|null $expiry_warned_at set once the member was warned about the upcoming expiry
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['club_id', 'user_id', 'subscription_id', 'amount', 'remaining', 'expires_at'])]
+#[Fillable(['club_id', 'user_id', 'subscription_id', 'amount', 'remaining', 'expires_at', 'expiry_warned_at'])]
 class CreditGrant extends Model
 {
     /** @use HasFactory<CreditGrantFactory> */
@@ -39,6 +40,7 @@ class CreditGrant extends Model
             'amount' => 'integer',
             'remaining' => 'integer',
             'expires_at' => 'datetime',
+            'expiry_warned_at' => 'datetime',
         ];
     }
 

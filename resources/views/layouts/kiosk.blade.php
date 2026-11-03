@@ -11,6 +11,7 @@
         @vite('resources/js/echo.js')
     </head>
     <body class="bg-canvas min-h-screen antialiased">
+        <x-club-brand-style :resolve="true" />
         <div class="flex min-h-svh flex-col items-center justify-center p-6">
             {{ $slot }}
         </div>

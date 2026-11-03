@@ -37,6 +37,12 @@ class Index extends Component
 
     public bool $pinned = false;
 
+    /** Email every active member once the post is published. */
+    public bool $notify_members = false;
+
+    /** When members were emailed about the post being edited, formatted for display; null when not yet. */
+    public ?string $membersNotifiedAt = null;
+
     /** now | schedule | draft */
     public string $publication = 'now';
 
@@ -72,6 +78,8 @@ class Index extends Component
         $this->title = $post->title;
         $this->body = $post->body;
         $this->pinned = $post->pinned;
+        $this->notify_members = $post->notify_members;
+        $this->membersNotifiedAt = $post->members_notified_at?->timezone($this->club->timezone)->translatedFormat('j F Y H:i');
         $this->publication = match (true) {
             $post->isDraft() => 'draft',
             $post->isScheduled() => 'schedule',
@@ -92,6 +100,7 @@ class Index extends Component
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:10000'],
             'pinned' => ['boolean'],
+            'notify_members' => ['boolean'],
             'publication' => ['required', Rule::in(['now', 'schedule', 'draft'])],
             'scheduledFor' => ['exclude_unless:publication,schedule', 'required', 'date_format:Y-m-d\TH:i'],
         ]);
@@ -100,6 +109,7 @@ class Index extends Component
             'title' => $validated['title'],
             'body' => $validated['body'],
             'pinned' => $validated['pinned'],
+            'notify_members' => $validated['notify_members'],
             'published_at' => match ($validated['publication']) {
                 'draft' => null,
                 'schedule' => Carbon::createFromFormat('Y-m-d\TH:i', $validated['scheduledFor'], $this->club->timezone)->utc(),
@@ -190,7 +200,7 @@ class Index extends Component
 
     private function resetForm(): void
     {
-        $this->reset('editingPostId', 'title', 'body', 'pinned', 'publication', 'scheduledFor');
+        $this->reset('editingPostId', 'title', 'body', 'pinned', 'notify_members', 'membersNotifiedAt', 'publication', 'scheduledFor');
         $this->resetValidation();
     }
 }

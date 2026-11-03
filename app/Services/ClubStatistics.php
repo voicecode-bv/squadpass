@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\MembershipStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\SubscriptionStatus;
 use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\Subscription;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -26,12 +29,29 @@ class ClubStatistics
      * @param  list<int>  $clubIds
      * @return array{labels: list<string>, values: list<int>}
      */
-    public function newMembersPerMonth(array $clubIds): array
+    public function newMembersPerMonth(array $clubIds, int $months = 12): array
     {
         return $this->monthlySeries(
             $clubIds,
-            Membership::query(),
+            Membership::query()->where('joined_at', '>=', $this->periodStart($months)),
             'SUM(CASE WHEN joined_at >= ? AND joined_at < ? THEN 1 ELSE 0 END)',
+            months: $months,
+        );
+    }
+
+    /**
+     * Memberships that ended per month, oldest month first.
+     *
+     * @param  list<int>  $clubIds
+     * @return array{labels: list<string>, values: list<int>}
+     */
+    public function endedMembersPerMonth(array $clubIds, int $months = 12): array
+    {
+        return $this->monthlySeries(
+            $clubIds,
+            Membership::query()->where('ended_at', '>=', $this->periodStart($months)),
+            'SUM(CASE WHEN ended_at >= ? AND ended_at < ? THEN 1 ELSE 0 END)',
+            months: $months,
         );
     }
 
@@ -41,13 +61,15 @@ class ClubStatistics
      * @param  list<int>  $clubIds
      * @return array{labels: list<string>, values: list<int>}
      */
-    public function activeMembersPerMonth(array $clubIds): array
+    public function activeMembersPerMonth(array $clubIds, int $months = 12): array
     {
         return $this->monthlySeries(
             $clubIds,
-            Membership::query(),
+            // Someone on a trial lesson is not a member yet; converting sets joined_at to that day.
+            Membership::query()->where('status', '!=', MembershipStatus::Trial),
             'SUM(CASE WHEN joined_at < ? AND (ended_at IS NULL OR ended_at >= ?) THEN 1 ELSE 0 END)',
             fn (array $bucket) => [$bucket['end'], $bucket['end']],
+            $months,
         );
     }
 
@@ -57,12 +79,50 @@ class ClubStatistics
      * @param  list<int>  $clubIds
      * @return array{labels: list<string>, values: list<int>}
      */
-    public function revenuePerMonth(array $clubIds): array
+    public function revenuePerMonth(array $clubIds, int $months = 12, ?string $payableType = null): array
     {
         return $this->monthlySeries(
             $clubIds,
-            Payment::query()->where('status', PaymentStatus::Paid),
+            Payment::query()
+                ->where('status', PaymentStatus::Paid)
+                ->where('paid_at', '>=', $this->periodStart($months))
+                ->when($payableType, fn (Builder $query) => $query->where('payable_type', $payableType)),
             'SUM(CASE WHEN paid_at >= ? AND paid_at < ? THEN amount_cents ELSE 0 END)',
+            months: $months,
+        );
+    }
+
+    /**
+     * Subscriptions cancelled per month, oldest first.
+     *
+     * @param  list<int>  $clubIds
+     * @return array{labels: list<string>, values: list<int>}
+     */
+    public function cancellationsPerMonth(array $clubIds, int $months = 12): array
+    {
+        return $this->monthlySeries(
+            $clubIds,
+            Subscription::query()->where('cancelled_at', '>=', $this->periodStart($months)),
+            'SUM(CASE WHEN cancelled_at >= ? AND cancelled_at < ? THEN 1 ELSE 0 END)',
+            months: $months,
+        );
+    }
+
+    /**
+     * Subscriptions running at the start of each month (started before it and not
+     * cancelled yet), the base for the churn rate. Oldest first.
+     *
+     * @param  list<int>  $clubIds
+     * @return array{labels: list<string>, values: list<int>}
+     */
+    public function subscriptionsAtMonthStart(array $clubIds, int $months = 12): array
+    {
+        return $this->monthlySeries(
+            $clubIds,
+            Subscription::query()->where('status', '!=', SubscriptionStatus::Pending),
+            'SUM(CASE WHEN starts_at < ? AND (cancelled_at IS NULL OR cancelled_at >= ?) THEN 1 ELSE 0 END)',
+            fn (array $bucket) => [$bucket['start'], $bucket['start']],
+            $months,
         );
     }
 
@@ -70,14 +130,15 @@ class ClubStatistics
      * Aggregate one SUM(CASE ...) column per month in a single scoped query.
      *
      * @param  list<int>  $clubIds
-     * @param  Builder<Membership>|Builder<Payment>  $query
+     * @param  Builder<Membership>|Builder<Payment>|Builder<Subscription>  $query
      * @param  literal-string  $sumCase  aggregate per month, with two placeholders for the month's bindings
      * @param  callable(array{label: string, start: string, end: string}): array{string, string}|null  $bindingsFor
+     * @param  int  $months  number of trailing months, at most 12
      * @return array{labels: list<string>, values: list<int>}
      */
-    protected function monthlySeries(array $clubIds, Builder $query, string $sumCase, ?callable $bindingsFor = null): array
+    protected function monthlySeries(array $clubIds, Builder $query, string $sumCase, ?callable $bindingsFor = null, int $months = 12): array
     {
-        $buckets = $this->monthBuckets();
+        $buckets = $this->monthBuckets($months);
         $labels = array_column($buckets, 'label');
 
         if ($clubIds === []) {
@@ -104,11 +165,24 @@ class ClubStatistics
     }
 
     /**
-     * The trailing twelve calendar months, oldest first, with exclusive end dates.
+     * The first day of the oldest month in the period, to bound the scanned rows.
+     */
+    protected function periodStart(int $months): string
+    {
+        return now()->startOfMonth()->subMonths($this->clampMonths($months) - 1)->toDateString();
+    }
+
+    protected function clampMonths(int $months): int
+    {
+        return max(1, min($months, count(self::MONTH_COLUMNS)));
+    }
+
+    /**
+     * The trailing calendar months, oldest first, with exclusive end dates.
      *
      * @return list<array{label: string, start: string, end: string}>
      */
-    protected function monthBuckets(): array
+    protected function monthBuckets(int $months = 12): array
     {
         return array_map(
             function (int $offset): array {
@@ -120,7 +194,7 @@ class ClubStatistics
                     'end' => $start->copy()->addMonth()->toDateString(),
                 ];
             },
-            range(11, 0),
+            range($this->clampMonths($months) - 1, 0),
         );
     }
 }

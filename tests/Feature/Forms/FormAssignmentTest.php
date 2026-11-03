@@ -10,8 +10,10 @@ use App\Models\Club;
 use App\Models\Form;
 use App\Models\FormAssignment;
 use App\Models\User;
+use App\Notifications\FormAssigned;
 use App\Services\Forms\FormField;
 use App\Services\Forms\FormSchema;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -117,4 +119,15 @@ test('a non-staff member cannot open the responses of a form', function () {
     $this->actingAs($this->member)
         ->get(route('clubs.forms.submissions', [$this->club, $form]))
         ->assertForbidden();
+});
+
+test('assigning a form emails the member once', function () {
+    Notification::fake();
+    $form = Form::factory()->for($this->club)->assignedOnly()->published()->create();
+
+    $component = Livewire::actingAs($this->owner)->test(Submissions::class, ['club' => $this->club, 'form' => $form]);
+    $component->call('assign', $this->member->id);
+    $component->call('assign', $this->member->id);
+
+    Notification::assertSentToTimes($this->member, FormAssigned::class, 1);
 });

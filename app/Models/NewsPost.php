@@ -19,11 +19,13 @@ use Illuminate\Support\Carbon;
  * @property string $title
  * @property string $body
  * @property bool $pinned
+ * @property bool $notify_members email the club's members once the post is published
+ * @property Carbon|null $members_notified_at set once that email went out
  * @property Carbon|null $published_at null for a draft; in the future when scheduled
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['club_id', 'author_id', 'title', 'body', 'pinned', 'published_at'])]
+#[Fillable(['club_id', 'author_id', 'title', 'body', 'pinned', 'notify_members', 'members_notified_at', 'published_at'])]
 class NewsPost extends Model
 {
     /** @use HasFactory<NewsPostFactory> */
@@ -36,6 +38,8 @@ class NewsPost extends Model
     {
         return [
             'pinned' => 'boolean',
+            'notify_members' => 'boolean',
+            'members_notified_at' => 'datetime',
             'published_at' => 'datetime',
         ];
     }

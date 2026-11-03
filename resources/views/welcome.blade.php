@@ -5,6 +5,7 @@
         ['question' => __('How long before I can start?'), 'answer' => __('You can start immediately: your club is ready the moment you create it. Want your own branded app in the App Store and Google Play? It takes about 7 days from your request until your app is live.')],
         ['question' => __('Can I try SquadPass first?'), 'answer' => __('Every new club gets a free trial of :days days with all features. You only choose a plan once you want to keep going.', ['days' => \App\Enums\ClubPlan::TRIAL_DAYS])],
         ['question' => __('How long am I tied to SquadPass?'), 'answer' => __('No long contracts or small print. Your plan and add-ons run per month and can be cancelled monthly. After cancelling you keep using everything until the end of the paid month.')],
+        ['question' => __('Can I offer SquadPass under my own brand?'), 'answer' => __('Yes, SquadPass is white label. Upload your own logo (also for dark mode) and choose your brand colour: the app, the member portal, the sign-up and trial lesson pages and every email to your members then use your style. Only a small "Powered by SquadPass" remains.')],
         ['question' => __('Can I import my current members?'), 'answer' => __('Yes. Upload your existing member list as a CSV file, for example an export from Excel or your current system. Names, email addresses, membership numbers, member since, phone numbers and dates of birth come along, and you choose whether members get an invitation right away.')],
         ['question' => __('How do you offer support?'), 'answer' => __('The setup wizard and product tour help you on your way. Still have a question? Create a support ticket from your dashboard or send us an email, and we will get back to you as soon as possible.')],
     ];
@@ -103,6 +104,8 @@
             @endforeach
         </div>
     </section>
+
+    <x-marketing.white-label />
 
     <x-marketing.segments />
 

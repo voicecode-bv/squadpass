@@ -14,7 +14,7 @@
             $switcherClubs = ($user->is_superadmin ? \App\Models\Club::query() : $user->staffClubs())
                 ->orderBy('clubs.name')
                 ->limit(\App\Models\User::CLUB_SWITCHER_LIMIT + 1)
-                ->get(['clubs.id', 'clubs.name', 'clubs.slug', 'clubs.photo_path']);
+                ->get(['clubs.id', 'clubs.name', 'clubs.slug', 'clubs.photo_path', 'clubs.logo_path', 'clubs.logo_dark_path', 'clubs.brand_color']);
             $switcherHasMore = $switcherClubs->count() > \App\Models\User::CLUB_SWITCHER_LIMIT;
             $switcherClubs = $switcherClubs->take(\App\Models\User::CLUB_SWITCHER_LIMIT);
 
@@ -39,9 +39,12 @@
                 ->get(['tickets.id', 'tickets.club_id', 'tickets.user_id', 'tickets.number', 'tickets.subject', 'tickets.last_message_at']);
         @endphp
 
+        {{-- Members without a club to manage wear the colour of their only club. --}}
+        <x-club-brand-style :club="$currentClub ?? ($managesClubs ? null : \App\Services\ClubBranding::memberClubFor($user))" />
+
         <flux:sidebar sticky collapsible="mobile" class="bg-white dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ $homeUrl }}" wire:navigate />
+                <x-app-logo :sidebar="true" :club="$currentClub" href="{{ $homeUrl }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
@@ -70,6 +73,12 @@
                     @elseif ($user->memberships()->exists())
                         <flux:sidebar.item icon="megaphone" :href="route('portal.news')" :current="request()->routeIs('portal.news')" wire:navigate>
                             {{ __('News') }}
+                        </flux:sidebar.item>
+                    @endif
+
+                    @if ($currentClub && $user->can('access', [$currentClub, \App\Enums\StaffPermission::Reports]))
+                        <flux:sidebar.item icon="chart-bar" :href="route('clubs.reports', $currentClub)" :current="request()->routeIs('clubs.reports')" wire:navigate>
+                            {{ __('Reports') }}
                         </flux:sidebar.item>
                     @endif
 
@@ -222,6 +231,20 @@
             @endif
 
             <flux:spacer />
+
+            {{-- Flips between light and dark; Flux stores the choice like the Appearance settings page does. --}}
+            <flux:button
+                x-data
+                x-on:click="$flux.dark = ! $flux.dark"
+                variant="ghost"
+                square
+                class="shrink-0"
+                :aria-label="__('Switch between light and dark mode')"
+                data-test="appearance-toggle"
+            >
+                <flux:icon.moon variant="mini" class="dark:hidden" />
+                <flux:icon.sun variant="mini" class="hidden dark:block" />
+            </flux:button>
 
             <x-unread-tickets :tickets="$unreadTickets" :limit="$unreadTicketLimit" />
 

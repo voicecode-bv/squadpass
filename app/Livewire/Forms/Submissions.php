@@ -10,6 +10,7 @@ use App\Models\Form;
 use App\Models\FormAssignment;
 use App\Models\FormSubmission;
 use App\Models\User;
+use App\Notifications\FormAssigned;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -62,10 +63,14 @@ class Submissions extends Component
 
         $member = $this->clubMember($userId);
 
-        FormAssignment::query()->firstOrCreate(
+        $assignment = FormAssignment::query()->firstOrCreate(
             ['form_id' => $this->form->id, 'user_id' => $member->id],
             ['assigned_by' => Auth::id()],
         );
+
+        if ($assignment->wasRecentlyCreated) {
+            $member->notify(new FormAssigned($this->form));
+        }
 
         unset($this->assignedUserIds);
         $this->resetPage();

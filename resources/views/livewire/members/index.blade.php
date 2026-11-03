@@ -68,6 +68,7 @@
                             \App\Enums\MembershipStatus::Active => 'green',
                             \App\Enums\MembershipStatus::Paused => 'yellow',
                             \App\Enums\MembershipStatus::Ended => 'zinc',
+                            \App\Enums\MembershipStatus::Trial => 'blue',
                         }">{{ $membership->status->label() }}</flux:badge>
                     </flux:table.cell>
                     <flux:table.cell>{{ $membership->joined_at->format('d-m-Y') }}</flux:table.cell>
@@ -77,7 +78,7 @@
                             <flux:menu>
                                 @if ($membership->status !== \App\Enums\MembershipStatus::Active)
                                     <flux:menu.item wire:click="updateStatus({{ $membership->id }}, 'active')" icon="play">
-                                        {{ __('Reactivate') }}
+                                        {{ $membership->status === \App\Enums\MembershipStatus::Trial ? __('Convert to member') : __('Reactivate') }}
                                     </flux:menu.item>
                                 @endif
                                 @if ($membership->status === \App\Enums\MembershipStatus::Active)
@@ -87,7 +88,7 @@
                                 @endif
                                 @if ($membership->status !== \App\Enums\MembershipStatus::Ended)
                                     <flux:menu.item wire:click="updateStatus({{ $membership->id }}, 'ended')" icon="x-mark" variant="danger">
-                                        {{ __('End membership') }}
+                                        {{ $membership->status === \App\Enums\MembershipStatus::Trial ? __('No conversion') : __('End membership') }}
                                     </flux:menu.item>
                                 @endif
                             </flux:menu>

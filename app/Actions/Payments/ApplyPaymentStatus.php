@@ -2,21 +2,29 @@
 
 namespace App\Actions\Payments;
 
+use App\Actions\Lessons\ConfirmTrialLesson;
+use App\Actions\Lessons\ReleaseTrialLesson;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Jobs\CreateMoneybirdCreditInvoice;
 use App\Jobs\CreateMoneybirdInvoice;
+use App\Models\LessonEnrollment;
 use App\Models\Payment;
 use App\Models\StripCard;
 use App\Models\StripCardPlan;
 use App\Models\Subscription;
+use App\Notifications\PaymentFailed;
 use App\Services\Credits\CreditLedger;
 use App\Services\Mollie\MolliePaymentResult;
 use Illuminate\Support\Facades\DB;
 
 class ApplyPaymentStatus
 {
-    public function __construct(protected CreditLedger $ledger) {}
+    public function __construct(
+        protected CreditLedger $ledger,
+        protected ConfirmTrialLesson $confirmTrialLesson,
+        protected ReleaseTrialLesson $releaseTrialLesson,
+    ) {}
 
     /**
      * Apply a Mollie payment state idempotently: statuses only move forward,
@@ -65,6 +73,7 @@ class ApplyPaymentStatus
             'strip_card' => $this->fulfillStripCard($payment),
             'subscription_first' => $this->activateSubscription($payment, $result),
             'subscription_recurring' => $this->recoverSubscription($payment),
+            'trial_lesson' => $this->confirmTrialLesson($payment),
             default => null,
         };
     }
@@ -76,6 +85,8 @@ class ApplyPaymentStatus
             // pending subscription so the member can try again.
             'subscription_first' => $this->abandonPendingSubscription($payment),
             'subscription_recurring' => $this->markSubscriptionPastDue($payment),
+            // An unpaid trial lesson holds no spot: free it so others (or the visitor) can book.
+            'trial_lesson' => $this->releaseTrialLesson($payment),
             default => null,
         };
     }
@@ -129,6 +140,30 @@ class ApplyPaymentStatus
 
         if ($subscription && $subscription->status === SubscriptionStatus::Active) {
             $subscription->update(['status' => SubscriptionStatus::PastDue]);
+        }
+
+        // Let the member know once the transaction commits; a retried webhook
+        // never gets here twice because the payment status is final by then.
+        $payment->user->notify((new PaymentFailed($payment))->afterCommit());
+    }
+
+    protected function confirmTrialLesson(Payment $payment): void
+    {
+        /** @var LessonEnrollment|null $enrollment */
+        $enrollment = $payment->payable;
+
+        if ($enrollment) {
+            $this->confirmTrialLesson->handle($enrollment, (bool) ($payment->metadata['account_created'] ?? false));
+        }
+    }
+
+    protected function releaseTrialLesson(Payment $payment): void
+    {
+        /** @var LessonEnrollment|null $enrollment */
+        $enrollment = $payment->payable;
+
+        if ($enrollment) {
+            $this->releaseTrialLesson->handle($enrollment);
         }
     }
 

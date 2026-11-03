@@ -75,6 +75,10 @@
             </div>
         </form>
 
+        <section class="mb-6">
+            <flux:switch wire:model.live="lesson_reminders" :label="__('Lesson reminders')" :description="__('Get an email before lessons you are booked for, when your club sends them.')" />
+        </section>
+
         @if ($this->showDeleteUser)
             <livewire:settings.delete-user-form />
         @endif

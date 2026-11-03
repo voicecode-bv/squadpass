@@ -45,6 +45,12 @@ class Form extends Component
 
     public bool $active = true;
 
+    /** Offered on the public trial lesson page. */
+    public bool $trial_enabled = false;
+
+    /** Trial price in euros; empty means free. */
+    public string $trial_price = '';
+
     /** @var array<int, int|string> */
     public array $trainer_ids = [];
 
@@ -72,6 +78,8 @@ class Form extends Component
             $this->starts_on = $lesson->starts_on->toDateString();
             $this->ends_on = $lesson->ends_on?->toDateString() ?? '';
             $this->active = $lesson->active;
+            $this->trial_enabled = $lesson->trial_enabled;
+            $this->trial_price = $lesson->trial_price_cents ? number_format($lesson->trial_price_cents / 100, 2, '.', '') : '';
             $this->trainer_ids = $lesson->trainers()->pluck('trainers.id')->all();
         }
     }
@@ -110,6 +118,8 @@ class Form extends Component
             'starts_on' => ['required', 'date'],
             'ends_on' => ['nullable', 'date', 'after:starts_on'],
             'active' => ['boolean'],
+            'trial_enabled' => ['boolean'],
+            'trial_price' => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'trainer_ids' => ['array'],
             'trainer_ids.*' => ['integer'],
         ]);
@@ -128,6 +138,10 @@ class Form extends Component
             'starts_on' => $validated['starts_on'],
             'ends_on' => $validated['ends_on'] ?: null,
             'active' => $validated['active'],
+            'trial_enabled' => $validated['trial_enabled'],
+            'trial_price_cents' => filled($validated['trial_price']) && (float) $validated['trial_price'] > 0
+                ? (int) round($validated['trial_price'] * 100)
+                : null,
         ];
 
         if ($this->lesson) {

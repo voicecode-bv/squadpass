@@ -110,6 +110,24 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | The theme is a Blade view (resources/views/mail/squadpass-theme.blade.php)
+    | so it can use the club's brand colour from the mail's data.
+    |
+    */
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'squadpass-theme'),
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),

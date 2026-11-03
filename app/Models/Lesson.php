@@ -26,17 +26,29 @@ use Illuminate\Support\Carbon;
  * @property Carbon $starts_on
  * @property Carbon|null $ends_on
  * @property bool $active
+ * @property bool $trial_enabled bookable as a trial lesson on the public trial page
+ * @property int|null $trial_price_cents price of a trial lesson; null means free
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable([
     'club_id', 'name', 'description', 'room_id', 'capacity',
-    'day_of_week', 'start_time', 'duration_minutes', 'starts_on', 'ends_on', 'active',
+    'day_of_week', 'start_time', 'duration_minutes', 'starts_on', 'ends_on', 'active', 'trial_enabled', 'trial_price_cents',
 ])]
 class Lesson extends Model
 {
     /** @use HasFactory<LessonFactory> */
     use HasFactory;
+
+    /**
+     * Defaults that mirror the database, so a freshly created lesson behaves the
+     * same before and after a refresh.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'trial_enabled' => false,
+    ];
 
     /**
      * @return array<string, string>
@@ -50,6 +62,8 @@ class Lesson extends Model
             'starts_on' => 'date',
             'ends_on' => 'date',
             'active' => 'boolean',
+            'trial_enabled' => 'boolean',
+            'trial_price_cents' => 'integer',
         ];
     }
 
@@ -102,5 +116,15 @@ class Lesson extends Model
     protected function active(Builder $query): void
     {
         $query->where('active', true);
+    }
+
+    public function hasPaidTrial(): bool
+    {
+        return $this->trial_price_cents !== null && $this->trial_price_cents > 0;
+    }
+
+    public function formattedTrialPrice(): string
+    {
+        return '€ '.number_format(($this->trial_price_cents ?? 0) / 100, 2, ',', '.');
     }
 }

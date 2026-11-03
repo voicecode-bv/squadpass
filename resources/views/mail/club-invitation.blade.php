@@ -1,4 +1,4 @@
-<x-mail::message>
+<x-mail::message :club="$club">
 # {{ $role->invitedTitle($club->name) }}
 
 {{ __('Accept the invitation via the button below. If you do not have an account yet, you can create one first — the invitation stays linked.') }}

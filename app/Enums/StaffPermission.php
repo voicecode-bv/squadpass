@@ -18,6 +18,7 @@ enum StaffPermission: string
     case News = 'news';
     case Setup = 'setup';
     case ClubDetails = 'club_details';
+    case Reports = 'reports';
 
     public function label(): string
     {
@@ -32,6 +33,7 @@ enum StaffPermission: string
             self::News => __('News'),
             self::Setup => __('Trainers & rooms'),
             self::ClubDetails => __('Club details'),
+            self::Reports => __('Reports'),
         };
     }
 
@@ -48,6 +50,7 @@ enum StaffPermission: string
             self::News => __('Post news and announcements for members.'),
             self::Setup => __('Invite trainers and manage rooms.'),
             self::ClubDetails => __('Name, photo, online registration, cancellation deadline and credit expiry.'),
+            self::Reports => __('Members, attendance and trial lesson figures; revenue also needs Billing.'),
         };
     }
 
@@ -61,7 +64,7 @@ enum StaffPermission: string
         return [
             'manager' => ['label' => __('Manager'), 'permissions' => self::cases()],
             'desk' => ['label' => __('Front desk'), 'permissions' => [self::Members, self::CheckIns, self::Lessons, self::News]],
-            'finance' => ['label' => __('Finance'), 'permissions' => [self::Members, self::Billing]],
+            'finance' => ['label' => __('Finance'), 'permissions' => [self::Members, self::Billing, self::Reports]],
             'support' => ['label' => __('Support'), 'permissions' => [self::Members, self::Tickets, self::News]],
         ];
     }

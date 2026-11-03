@@ -49,6 +49,9 @@
 
                 @if (Route::has('login'))
                     <nav class="flex items-center gap-3">
+                        <a href="#white-label" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white lg:inline-block">
+                            {{ __('White label') }}
+                        </a>
                         <a href="#pricing" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
                             {{ __('Pricing') }}
                         </a>

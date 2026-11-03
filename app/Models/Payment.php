@@ -86,8 +86,14 @@ class Payment extends Model
     {
         return match ($this->purpose()) {
             'strip_card' => __('Strip card'),
+            'trial_lesson' => __('Trial lesson'),
             'subscription_first', 'subscription_recurring' => __('Subscription'),
             default => __('Payment'),
         };
+    }
+
+    public function formattedAmount(): string
+    {
+        return '€ '.number_format($this->amount_cents / 100, 2, ',', '.');
     }
 }

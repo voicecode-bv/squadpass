@@ -44,7 +44,7 @@ test('the owner invites a staff member with the ticked permissions', function ()
     $invitation = ClubInvitation::query()->sole();
 
     expect($invitation->role)->toBe(ClubInvitationRole::Staff)
-        ->and($invitation->permissions)->toBe(['members', 'billing']);
+        ->and($invitation->permissions)->toBe(['members', 'billing', 'reports']);
     Mail::assertSent(ClubInvitationMail::class, fn (ClubInvitationMail $mail) => $mail->hasTo('jan@example.com'));
 });
 

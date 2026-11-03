@@ -79,6 +79,12 @@
 
             <flux:switch wire:model="pinned" :label="__('Pin to top')" :description="__('Pinned posts stay at the top of the news feed.')" />
 
+            @if ($membersNotifiedAt)
+                <flux:text class="text-sm">{{ __('Members were emailed about this post on :date.', ['date' => $membersNotifiedAt]) }}</flux:text>
+            @else
+                <flux:switch wire:model="notify_members" :label="__('Email members')" :description="__('Every active member gets an email once the post is published.')" />
+            @endif
+
             <div class="flex justify-end">
                 <flux:button type="submit" variant="primary">
                     {{ match ($publication) { 'draft' => __('Save draft'), 'schedule' => __('Schedule for later'), default => $editingPostId ? __('Save changes') : __('Publish') } }}

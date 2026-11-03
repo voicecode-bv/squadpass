@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ClubInvitationRole;
 use App\Http\Controllers\CheckInCodeImageController;
 use App\Http\Controllers\FormSignatureController;
 use App\Http\Controllers\ImpersonationController;
@@ -24,6 +25,12 @@ use App\Livewire\SubscriptionPlans;
 use App\Livewire\Subscriptions;
 use App\Livewire\Tickets;
 use App\Livewire\Trainers;
+use App\Mail\ClubInvitationMail;
+use App\Models\Club;
+use App\Models\ClubInvitation;
+use App\Models\User;
+use App\Notifications\CreditsExpiring;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -50,6 +57,7 @@ Route::get('check-in-code/{code}', CheckInCodeImageController::class)
 
 Route::livewire('invitations/{token}', Invitations\Accept::class)->name('invitations.accept');
 Route::livewire('join/{club}', Clubs\Join::class)->name('clubs.join');
+Route::livewire('trial/{club}', Clubs\TrialLesson::class)->name('clubs.trial');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('dashboard', Dashboard::class)->name('dashboard');
@@ -61,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('clubs/{club}')->scopeBindings()->group(function () {
         Route::livewire('dashboard', Clubs\Dashboard::class)->name('clubs.dashboard');
+        Route::livewire('reports', Clubs\Reports::class)->name('clubs.reports');
         Route::livewire('onboarding', Clubs\Onboarding::class)->name('clubs.onboarding');
         Route::livewire('settings', Clubs\SettingsOverview::class)->name('clubs.settings');
         Route::livewire('settings/club', Clubs\Settings::class)->name('clubs.settings.club');
@@ -112,5 +121,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('tickets/{ticket}', Portal\TicketShow::class)->name('portal.tickets.show');
     });
 });
+
+/*
+ * Local-only preview of the email template for a club, e.g.
+ * /dev/mail-preview/perfect-performance/credits. Nothing is sent or stored.
+ */
+if (app()->isLocal()) {
+    Route::get('dev/mail-preview/{club:slug}/{mail?}', function (Club $club, string $mail = 'credits') {
+        return match ($mail) {
+            'credits' => (new CreditsExpiring($club, 3, now()->addDays(3)))->toMail(auth()->user() ?? new User),
+            'invitation' => new ClubInvitationMail((new ClubInvitation([
+                'role' => ClubInvitationRole::Staff,
+                'token' => 'preview',
+                'expires_at' => now()->addWeek(),
+            ]))->setRelation('club', $club)),
+            'account' => (new ResetPassword('preview'))->toMail(auth()->user() ?? new User(['email' => 'preview@example.com'])),
+            default => abort(404),
+        };
+    })->name('dev.mail-preview');
+}
 
 require __DIR__.'/settings.php';

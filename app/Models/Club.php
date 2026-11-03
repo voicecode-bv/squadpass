@@ -12,6 +12,7 @@ use App\Enums\StaffRole;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\ClubPlanException;
 use App\Jobs\SyncMoneybirdContact;
+use App\Services\BrandPalette;
 use App\Services\Mollie\MollieAccount;
 use Carbon\CarbonInterface;
 use Database\Factories\ClubFactory;
@@ -30,6 +31,9 @@ use Illuminate\Support\Facades\Storage;
  * @property string $name
  * @property string $slug
  * @property string|null $photo_path
+ * @property string|null $logo_path light-mode logo, shown above the navigation and at the top of the club's emails
+ * @property string|null $logo_dark_path dark-mode logo above the navigation; falls back to the light logo
+ * @property string|null $brand_color hex colour that replaces SquadPass blue in the app and emails
  * @property string $timezone
  * @property string $currency
  * @property string|null $mollie_api_key
@@ -51,8 +55,10 @@ use Illuminate\Support\Facades\Storage;
  * @property int $next_membership_number
  * @property int $next_ticket_number
  * @property bool $self_signup
+ * @property bool $trial_lessons_enabled visitors can book a trial lesson on the public trial page
  * @property int $cancellation_deadline_hours members cancelling later than this many hours before a lesson keep no credit
  * @property int|null $credit_expiry_days days after which granted credits expire; null means never
+ * @property int|null $lesson_reminder_hours members get a reminder email this many hours before a lesson; null means off
  * @property bool $is_demo demo club: every add-on unlocked, integrations managed by superadmins only
  * @property Carbon|null $demo_expires_at set on a visitor's demo sandbox, which is deleted once it passes
  * @property Carbon|null $onboarded_at
@@ -60,10 +66,10 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'mollie_profile_name', 'mollie_last_error', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
+#[Fillable(['name', 'slug', 'photo_path', 'logo_path', 'logo_dark_path', 'brand_color', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'mollie_profile_name', 'mollie_last_error', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
     'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at', 'moneybird_setup_completed_at',
-    'self_signup', 'cancellation_deadline_hours', 'credit_expiry_days', 'onboarded_at', 'trial_ends_at',
+    'self_signup', 'trial_lessons_enabled', 'cancellation_deadline_hours', 'credit_expiry_days', 'lesson_reminder_hours', 'onboarded_at', 'trial_ends_at',
 ])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
 class Club extends Model implements MollieAccount
@@ -81,6 +87,7 @@ class Club extends Model implements MollieAccount
         'moneybird_invoice_delivery' => 'draft',
         'moneybird_sync_contacts' => true,
         'is_demo' => false,
+        'trial_lessons_enabled' => false,
         'cancellation_deadline_hours' => 3,
         'credit_expiry_days' => 30,
     ];
@@ -127,9 +134,11 @@ class Club extends Model implements MollieAccount
             'next_membership_number' => 'integer',
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
+            'trial_lessons_enabled' => 'boolean',
             'is_demo' => 'boolean',
             'cancellation_deadline_hours' => 'integer',
             'credit_expiry_days' => 'integer',
+            'lesson_reminder_hours' => 'integer',
             'demo_expires_at' => 'datetime',
             'onboarded_at' => 'datetime',
             'trial_ends_at' => 'date',
@@ -355,6 +364,38 @@ class Club extends Model implements MollieAccount
             : null;
     }
 
+    /**
+     * Public URL of the light-mode logo (also used in emails), or null when none is set.
+     */
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path
+            ? Storage::disk('public')->url($this->logo_path)
+            : null;
+    }
+
+    /**
+     * Public URL of the dark-mode logo, falling back to the light logo.
+     */
+    public function darkLogoUrl(): ?string
+    {
+        return $this->logo_dark_path
+            ? Storage::disk('public')->url($this->logo_dark_path)
+            : $this->logoUrl();
+    }
+
+    /**
+     * The 50–950 palette replacing SquadPass blue, or null when the club keeps blue.
+     *
+     * @return array<int, string>|null
+     */
+    public function brandPalette(): ?array
+    {
+        return BrandPalette::isValidHex($this->brand_color)
+            ? BrandPalette::fromHex($this->brand_color)
+            : null;
+    }
+
     public function isOnboarded(): bool
     {
         return $this->onboarded_at !== null;
@@ -402,6 +443,8 @@ class Club extends Model implements MollieAccount
                 $membership->update([
                     'status' => MembershipStatus::Active,
                     'ended_at' => null,
+                    // A converted trial member is a member from today; trial_started_at keeps the trial.
+                    ...($membership->status === MembershipStatus::Trial ? ['joined_at' => now()->toDateString()] : []),
                 ]);
 
                 return $membership;

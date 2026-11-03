@@ -1,4 +1,4 @@
-<x-mail::message>
+<x-mail::message :club="$club">
 # {{ __('You are now a member of :club', ['club' => $club->name]) }}
 
 {{ __(':club has added you to SquadPass with membership number :number. Here you can book lessons and keep track of your subscription.', ['club' => $club->name, 'number' => $membershipNumber]) }}

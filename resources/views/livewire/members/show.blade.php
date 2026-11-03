@@ -17,6 +17,7 @@
                     \App\Enums\MembershipStatus::Active => 'green',
                     \App\Enums\MembershipStatus::Paused => 'yellow',
                     \App\Enums\MembershipStatus::Ended => 'zinc',
+                    \App\Enums\MembershipStatus::Trial => 'blue',
                 }">{{ $membership->status->label() }}</flux:badge>
                 @if ($membership->moneybird_contact_id)
                     <flux:badge size="sm" color="green">{{ __('Moneybird') }}</flux:badge>
