@@ -2,12 +2,14 @@
 
 use App\Enums\ClubInvitationRole;
 use App\Http\Controllers\CheckInCodeImageController;
+use App\Http\Controllers\FeatureLandingController;
 use App\Http\Controllers\FormSignatureController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\LeaveDemoController;
 use App\Http\Controllers\MollieWebhookController;
 use App\Http\Controllers\PlatformMollieWebhookController;
 use App\Http\Controllers\SegmentLandingController;
+use App\Http\Controllers\SeoController;
 use App\Livewire\Admin;
 use App\Livewire\CheckIns;
 use App\Livewire\Clubs;
@@ -34,7 +36,11 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('voor/{segment}', SegmentLandingController::class)->name('segments.show');
+Route::get('functies', [FeatureLandingController::class, 'index'])->name('features.index');
+Route::get('functies/{feature}', [FeatureLandingController::class, 'show'])->name('features.show');
 
 // Stopping impersonation only needs an authenticated session; the impersonated
 // member may well be unverified, which must not lock staff out of their session.

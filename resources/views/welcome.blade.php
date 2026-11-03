@@ -87,21 +87,28 @@
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ([
-                ['icon' => 'users', 'title' => __('Member management'), 'text' => __('Invite members, track memberships and keep every detail in one place.')],
-                ['icon' => 'calendar-days', 'title' => __('Lessons & schedules'), 'text' => __('Plan recurring lessons, manage capacity and let members enroll themselves.')],
-                ['icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell digital strip cards that members redeem with a single check-in.')],
-                ['icon' => 'credit-card', 'title' => __('Subscriptions & payments'), 'text' => __('Monthly and yearly plans with automatic credit tracking. Add online payments when you are ready.')],
-                ['icon' => 'finger-print', 'title' => __('Check-in desk'), 'text' => __('Check members in at the door and instantly see their coverage.')],
-                ['icon' => 'device-phone-mobile', 'title' => __('Member portal'), 'text' => __('Members book lessons, buy cards and follow their visits from any device.')],
+                ['feature' => \App\Enums\MarketingFeature::MemberManagement, 'icon' => 'users', 'title' => __('Member management'), 'text' => __('Invite members, track memberships and keep every detail in one place.')],
+                ['feature' => \App\Enums\MarketingFeature::LessonSchedule, 'icon' => 'calendar-days', 'title' => __('Lessons & schedules'), 'text' => __('Plan recurring lessons, manage capacity and let members enroll themselves.')],
+                ['feature' => \App\Enums\MarketingFeature::StripCards, 'icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell digital strip cards that members redeem with a single check-in.')],
+                ['feature' => \App\Enums\MarketingFeature::DirectDebit, 'icon' => 'credit-card', 'title' => __('Subscriptions & payments'), 'text' => __('Monthly and yearly plans with automatic credit tracking. Add online payments when you are ready.')],
+                ['feature' => \App\Enums\MarketingFeature::CheckIn, 'icon' => 'finger-print', 'title' => __('Check-in desk'), 'text' => __('Check members in at the door and instantly see their coverage.')],
+                ['feature' => \App\Enums\MarketingFeature::LessonSchedule, 'icon' => 'device-phone-mobile', 'title' => __('Member portal'), 'text' => __('Members book lessons, buy cards and follow their visits from any device.')],
             ] as $feature)
-                <div class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
+                <a href="{{ route('features.show', $feature['feature']) }}" class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
                     <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
                         <flux:icon :icon="$feature['icon']" class="size-5" />
                     </span>
                     <h3 class="mt-4 text-lg font-semibold text-white">{{ $feature['title'] }}</h3>
                     <p class="mt-2 leading-relaxed text-zinc-400">{{ $feature['text'] }}</p>
-                </div>
+                </a>
             @endforeach
+        </div>
+
+        <div class="mt-10 text-center">
+            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-1.5 font-semibold text-blue-300 transition hover:text-white">
+                {{ __('View all features') }}
+                <flux:icon.arrow-right variant="micro" class="size-4" />
+            </a>
         </div>
     </section>
 

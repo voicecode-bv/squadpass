@@ -1,5 +1,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+{{-- App, account and club pages have nothing to offer in search results; only the marketing layout is indexed. --}}
+<meta name="robots" content="noindex, nofollow" />
 
 {{-- Club pages sit under clubs/{club}, so the bound model names the club in the title. --}}
 @php

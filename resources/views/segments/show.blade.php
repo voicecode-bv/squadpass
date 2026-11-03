@@ -28,27 +28,7 @@
 
             <p class="max-w-xl text-lg leading-relaxed text-zinc-400">{{ $segment->intro() }}</p>
 
-            <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-                @guest
-                    <a href="#signup" class="shrink-0 rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-4 py-3 text-sm font-semibold sm:px-6 sm:text-base text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
-                        {{ __('Start your free trial') }}
-                    </a>
-                    <livewire:clubs.start-demo />
-                @else
-                    <a href="#pricing" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-300 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
-                        {{ __('See pricing') }}
-                    </a>
-                @endguest
-            </div>
-
-            <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-400">
-                @foreach ([__(':days days free', ['days' => $days]), __('No payment details needed'), __('Cancel monthly')] as $promise)
-                    <li class="flex items-center gap-2">
-                        <flux:icon.check variant="micro" class="size-4 text-blue-300" />
-                        {{ $promise }}
-                    </li>
-                @endforeach
-            </ul>
+            <x-marketing.hero-actions />
         </div>
 
         {{-- Schedule mockup --}}
@@ -132,34 +112,7 @@
         </div>
     </section>
 
-    {{-- How it works --}}
-    <section class="py-16 lg:py-24">
-        <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Up and running today') }}</h2>
-        </div>
-
-        <ol class="mt-14 grid gap-6 lg:grid-cols-3">
-            @foreach ([
-                ['title' => __('Create your club'), 'text' => __('Account and club in one step, without payment details.')],
-                ['title' => __('Set it up with the wizard'), 'text' => __('Prepare your schedule, prices and staff, or import your existing member list.')],
-                ['title' => __('Invite your members'), 'text' => __('Members book, pay and check in via the portal or your own app.')],
-            ] as $step)
-                <li class="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
-                    <span class="flex size-10 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">{{ $loop->iteration }}</span>
-                    <h3 class="mt-4 text-lg font-semibold text-white">{{ $step['title'] }}</h3>
-                    <p class="mt-2 leading-relaxed text-zinc-400">{{ $step['text'] }}</p>
-                </li>
-            @endforeach
-        </ol>
-
-        @guest
-            <div class="mt-10 text-center">
-                <a href="#signup" class="inline-block rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
-                    {{ __('Start your free trial') }}
-                </a>
-            </div>
-        @endguest
-    </section>
+    <x-marketing.how-it-works />
 
     <x-marketing.pricing :addon-prices="$addonPrices" />
 
@@ -168,6 +121,8 @@
     <x-marketing.faq :items="$faqs" />
 
     <x-marketing.signup :title="$segment->signupTitle()" :text="__('Create your club in minutes and try every feature free for :days days.', ['days' => $days])" />
+
+    <x-marketing.features />
 
     <x-marketing.segments :except="$segment" :title="__('SquadPass for every club')" />
 </x-marketing.layout>

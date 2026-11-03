@@ -10,7 +10,7 @@
         <p class="mt-4 text-lg text-zinc-400">{{ __('See how SquadPass works for your business.') }}</p>
     </div>
 
-    <div class="mt-14 grid gap-6 sm:grid-cols-2 {{ $except === null ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }}">
+    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach (\App\Enums\ClubSegment::cases() as $segment)
             @continue($segment === $except)
             <a href="{{ route('segments.show', $segment) }}" class="group flex flex-col rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">

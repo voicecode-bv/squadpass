@@ -32,6 +32,11 @@
             </ul>
 
             <p class="mt-8 text-sm text-zinc-500">{{ __('Included in every plan. Set it up yourself in your club settings in a few minutes.') }}</p>
+
+            <a href="{{ route('features.show', \App\Enums\MarketingFeature::WhiteLabel) }}" class="mt-4 inline-flex items-center gap-1.5 font-semibold text-blue-300 transition hover:text-white">
+                {{ __('Read more about white label') }}
+                <flux:icon.arrow-right variant="micro" class="size-4" />
+            </a>
         </div>
 
         {{-- Mock-up of a club in its own colour; decorative only. --}}

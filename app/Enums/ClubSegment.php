@@ -13,6 +13,10 @@ enum ClubSegment: string
     case BoutiqueFitness = 'boutique-fitness';
     case FitnessClub = 'sportschool';
     case BoxingSchool = 'boksschool';
+    case YogaStudio = 'yogastudio';
+    case PilatesStudio = 'pilatesstudio';
+    case CrossfitBox = 'crossfit-box';
+    case Bootcamp = 'bootcamp';
 
     public function label(): string
     {
@@ -22,6 +26,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('Boutique fitness studios'),
             self::FitnessClub => __('Gyms'),
             self::BoxingSchool => __('Boxing schools'),
+            self::YogaStudio => __('Yoga studios'),
+            self::PilatesStudio => __('Pilates studios'),
+            self::CrossfitBox => __('CrossFit boxes'),
+            self::Bootcamp => __('Bootcamps'),
         };
     }
 
@@ -36,6 +44,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('Class booking, credits and full classes.'),
             self::FitnessClub => __('Member management, check-in and automatic direct debit.'),
             self::BoxingSchool => __('Sessions per level and digital declarations.'),
+            self::YogaStudio => __('Class booking, class passes and teachers.'),
+            self::PilatesStudio => __('Small groups, reformer classes and credits.'),
+            self::CrossfitBox => __('WOD schedule, memberships and check-in.'),
+            self::Bootcamp => __('Outdoor sessions, strip cards and trial sessions.'),
         };
     }
 
@@ -47,6 +59,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => 'bolt',
             self::FitnessClub => 'building-storefront',
             self::BoxingSchool => 'rocket-launch',
+            self::YogaStudio => 'leaf',
+            self::PilatesStudio => 'heart',
+            self::CrossfitBox => 'trophy',
+            self::Bootcamp => 'dumbbell',
         };
     }
 
@@ -58,6 +74,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('Software for boutique fitness: class booking, credits and memberships'),
             self::FitnessClub => __('Software for gyms: member management, check-in and direct debit'),
             self::BoxingSchool => __('Software for boxing and martial arts schools: training, members and fees'),
+            self::YogaStudio => __('Software for yoga studios: class booking, class passes and payments'),
+            self::PilatesStudio => __('Software for pilates studios: reformer classes, credits and memberships'),
+            self::CrossfitBox => __('Software for CrossFit boxes: WOD schedule, memberships and check-in'),
+            self::Bootcamp => __('Software for bootcamps: sessions, strip cards and payments'),
         };
     }
 
@@ -71,6 +91,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('Let members book classes themselves, sell credits and memberships and fill every class with SquadPass. Made for yoga, pilates, spinning and HIIT studios. :days days free.', $days),
             self::FitnessClub => __('Manage members, memberships, group classes and automatic direct debit for your gym in one platform. Switch easily with CSV import. :days days free.', $days),
             self::BoxingSchool => __('Plan boxing sessions per level, let members enroll themselves and collect fees automatically. Also for kickboxing, MMA and other martial arts. :days days free.', $days),
+            self::YogaStudio => __('Let students book yoga classes themselves, sell class passes and memberships and collect payments automatically with SquadPass. :days days free, cancel monthly.', $days),
+            self::PilatesStudio => __('Fill every reformer and mat class: clients book their spot, pay with credits or a membership and check in at the door. SquadPass for pilates studios. :days days free.', $days),
+            self::CrossfitBox => __('Plan your WODs and classes, collect memberships by direct debit and let athletes check in with a QR code. SquadPass for CrossFit boxes. :days days free.', $days),
+            self::Bootcamp => __('Plan outdoor sessions, sell strip cards and let new participants book a trial session online. SquadPass for bootcamps and outdoor training. :days days free.', $days),
         };
     }
 
@@ -82,6 +106,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('For boutique fitness studios'),
             self::FitnessClub => __('For gyms'),
             self::BoxingSchool => __('For boxing and martial arts schools'),
+            self::YogaStudio => __('For yoga studios'),
+            self::PilatesStudio => __('For pilates studios'),
+            self::CrossfitBox => __('For CrossFit boxes'),
+            self::Bootcamp => __('For bootcamps'),
         };
     }
 
@@ -98,6 +126,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => [__('Full classes,'), __('without the hassle.')],
             self::FitnessClub => [__('Your gym,'), __('fully under control.')],
             self::BoxingSchool => [__('Focus on the ring,'), __('not on the paperwork.')],
+            self::YogaStudio => [__('More time on the mat,'), __('less time behind the screen.')],
+            self::PilatesStudio => [__('Every reformer booked,'), __('without the spreadsheet.')],
+            self::CrossfitBox => [__('Your box runs on strength,'), __('your admin on autopilot.')],
+            self::Bootcamp => [__('Train outside,'), __('let the admin run itself.')],
         };
     }
 
@@ -109,6 +141,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('For yoga, pilates, spinning, HIIT and bootcamp: members book their own spot, pay with credits or a membership and check in at the door. You keep the overview and fill every class.'),
             self::FitnessClub => __('Member administration, memberships, group classes and direct debit in one clear platform. Switch easily with your existing member list and keep a grip on your revenue.'),
             self::BoxingSchool => __('Whether you teach boxing, kickboxing or MMA: SquadPass plans your sessions per level, tracks who trains and collects fees automatically.'),
+            self::YogaStudio => __('From vinyasa to yin: students book their own spot, pay with a class pass or membership and get a reminder before class. You keep the calm, SquadPass keeps the overview.'),
+            self::PilatesStudio => __('Reformer and mat classes have limited spots. With SquadPass clients book and cancel themselves, credits are tracked automatically and you see at a glance which classes are full.'),
+            self::CrossfitBox => __('Put your WODs and classes in the schedule, collect memberships automatically and let athletes check in with their QR code. Your coaches focus on coaching, not on paperwork.'),
+            self::Bootcamp => __('Whether you train in the park or on the beach: participants book their session online, pay with a strip card or subscription and get a reminder beforehand.'),
         };
     }
 
@@ -147,6 +183,26 @@ enum ClubSegment: string
                 $lesson('19:00', 'Kickboksen beginners', 20, 24),
                 $lesson('20:30', 'Sparring gevorderden', 12, 12),
             ]],
+            self::YogaStudio => ['club' => 'Yoga Loft Haarlem', 'lessons' => [
+                $lesson('07:30', 'Vinyasa flow', 16, 18),
+                $lesson('12:15', 'Lunch yoga', 9, 14),
+                $lesson('20:00', 'Yin yoga', 18, 18),
+            ]],
+            self::PilatesStudio => ['club' => 'Core Pilates Leiden', 'lessons' => [
+                $lesson('08:00', 'Reformer basis', 8, 8),
+                $lesson('12:30', 'Mat pilates', 11, 15),
+                $lesson('19:00', 'Reformer advanced', 6, 8),
+            ]],
+            self::CrossfitBox => ['club' => 'CrossFit Groningen', 'lessons' => [
+                $lesson('06:30', 'WOD', 14, 16),
+                $lesson('12:00', 'Olympic lifting', 8, 10),
+                $lesson('18:30', 'WOD', 16, 16),
+            ]],
+            self::Bootcamp => ['club' => 'Bootcamp Vondelpark', 'lessons' => [
+                $lesson('07:00', 'Ochtendbootcamp', 18, 20),
+                $lesson('12:30', 'Lunch bootcamp', 9, 15),
+                $lesson('19:00', 'Bootcamp intensief', 20, 20),
+            ]],
         };
     }
 
@@ -182,6 +238,26 @@ enum ClubSegment: string
                 ['title' => __('Overcrowded sessions'), 'text' => __('Set a maximum per session. Members reserve their spot, so every session stays safe and easy to coach.')],
                 ['title' => __('No idea who trains'), 'text' => __('With QR check-in you see exactly who attended, even at busy sessions.')],
                 ['title' => __('Loose forms and signatures'), 'text' => __('Let members fill in and sign an enrollment and health declaration online before they step into the ring.')],
+            ],
+            self::YogaStudio => [
+                ['title' => __('Booking via direct messages'), 'text' => __('Students book their spot in the schedule themselves, and you see in advance how full every class is.')],
+                ['title' => __('Paper class cards'), 'text' => __('Class passes are digital and every booking is deducted automatically. Students always see how many classes they have left.')],
+                ['title' => __('Late cancellations'), 'text' => __('Set a cancellation deadline: whoever cancels too late keeps the class used, so freed spots go to someone else in time.')],
+            ],
+            self::PilatesStudio => [
+                ['title' => __('Waiting for a free reformer'), 'text' => __('Set the number of reformers as the capacity. Once a class is full nobody else can book, and freed spots are available again right away.')],
+                ['title' => __('Credits in a notebook'), 'text' => __('Credits from strip cards and memberships are updated automatically with every booking and cancellation.')],
+                ['title' => __('Intake on paper'), 'text' => __('New clients fill in an intake with health questions online and sign it digitally before their first class.')],
+            ],
+            self::CrossfitBox => [
+                ['title' => __('Overcrowded WODs'), 'text' => __('Set a maximum per class so every athlete gets attention from the coach. Members reserve their spot themselves.')],
+                ['title' => __('Chasing membership fees'), 'text' => __('Memberships are collected automatically by direct debit, and you see straight away which charge failed.')],
+                ['title' => __('No idea who trains'), 'text' => __('With QR check-in you see exactly who attended, and your reports show attendance per class.')],
+            ],
+            self::Bootcamp => [
+                ['title' => __('Group apps for every session'), 'text' => __('Participants book in the schedule themselves and get an email reminder, without you posting in a group chat.')],
+                ['title' => __('Cash and payment requests'), 'text' => __('Strip cards and subscriptions are paid online via iDEAL or collected by direct debit.')],
+                ['title' => __('New people who never show up'), 'text' => __('Let newcomers book a trial session online. You get their details right away and convert them into a member with one click.')],
             ],
         };
     }
@@ -232,6 +308,38 @@ enum ClubSegment: string
                 ['icon' => 'qr-code', 'title' => __('Check in at training'), 'text' => __('Members check in with their QR code; you instantly see whether their membership is valid.')],
                 ['icon' => 'users', 'title' => __('Coaches and volunteers'), 'text' => __('Give coaches and volunteers their own account, at no extra cost per user.')],
             ],
+            self::YogaStudio => [
+                ['icon' => 'calendar-days', 'title' => __('Class schedule'), 'text' => __('Plan recurring classes per room and teacher, each with its own number of spots.')],
+                ['icon' => 'ticket', 'title' => __('Class passes'), 'text' => __('Sell 5- or 10-class passes online. Every booking is deducted automatically.')],
+                ['icon' => 'credit-card', 'title' => __('Memberships'), 'text' => __('Offer unlimited yoga or a set number of classes per month, collected by direct debit.')],
+                ['icon' => 'user-plus', 'title' => __('Trial classes'), 'text' => __('New students book a free or paid trial class on your trial page.')],
+                ['icon' => 'bell', 'title' => __('Class reminders'), 'text' => __('Students get an email before their class, so fewer spots go unused.')],
+                ['icon' => 'sparkles', 'title' => __('Your own style'), 'text' => __('Your logo and colours in the member portal, on your pages and in every email.')],
+            ],
+            self::PilatesStudio => [
+                ['icon' => 'users', 'title' => __('Small groups'), 'text' => __('Set the capacity per class to the number of reformers or mats you have.')],
+                ['icon' => 'ticket', 'title' => __('Credits and strip cards'), 'text' => __('Sell intro packs and 10-class cards that clients buy online and use right away.')],
+                ['icon' => 'clock', 'title' => __('Cancellation deadline'), 'text' => __('Clients cancel themselves up to your deadline; late cancellations keep the credit used.')],
+                ['icon' => 'clipboard-document-check', 'title' => __('Intake and health questions'), 'text' => __('Let new clients fill in and digitally sign an intake form in advance. Everything is stored securely.')],
+                ['icon' => 'credit-card', 'title' => __('Memberships'), 'text' => __('Monthly or yearly memberships with a set number of classes, collected automatically.')],
+                ['icon' => 'chart-bar', 'title' => __('Occupancy per class'), 'text' => __('See which classes fill up and which have room, so you plan your schedule better.')],
+            ],
+            self::CrossfitBox => [
+                ['icon' => 'calendar-days', 'title' => __('WOD and class schedule'), 'text' => __('Plan WODs, open gym and specialty classes with their own capacity and coach.')],
+                ['icon' => 'credit-card', 'title' => __('Memberships by direct debit'), 'text' => __('Monthly memberships are collected automatically by SEPA direct debit with the Mollie integration.')],
+                ['icon' => 'qr-code', 'title' => __('QR check-in'), 'text' => __('Athletes check in with their QR code at the desk or on a tablet at the entrance.')],
+                ['icon' => 'ticket', 'title' => __('Drop-ins and strip cards'), 'text' => __('Sell drop-in visits and strip cards for athletes who train flexibly.')],
+                ['icon' => 'users', 'title' => __('Coaches with their own account'), 'text' => __('Give every coach access to the schedule and check-in, at no extra cost per user.')],
+                ['icon' => 'chart-bar', 'title' => __('Reports'), 'text' => __('Follow members, churn, revenue and attendance per class over the past months.')],
+            ],
+            self::Bootcamp => [
+                ['icon' => 'map-pin', 'title' => __('Sessions per location'), 'text' => __('Plan sessions per park or location, with a maximum number of participants per group.')],
+                ['icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell digital strip cards that participants buy online and use for any session.')],
+                ['icon' => 'user-plus', 'title' => __('Trial sessions'), 'text' => __('Share your trial page and newcomers book a free or paid trial session themselves.')],
+                ['icon' => 'bell', 'title' => __('Reminders'), 'text' => __('Participants get an email before every session, so you know who is coming.')],
+                ['icon' => 'credit-card', 'title' => __('Subscriptions'), 'text' => __('Offer unlimited training or a set number of sessions per month, collected automatically.')],
+                ['icon' => 'device-phone-mobile', 'title' => __('Booking on any phone'), 'text' => __('Participants book and cancel from their phone in the member portal.')],
+            ],
         };
     }
 
@@ -269,6 +377,26 @@ enum ClubSegment: string
                 ['question' => __('Can I have members sign a health declaration?'), 'answer' => __('Absolutely. With the form builder you create your own declaration with health questions, consent and a digital signature.')],
                 ['question' => __('Can members report absence for a session?'), 'answer' => __('Yes, via the member portal or the app. That way you and your coaches know in advance how many fighters are coming.')],
             ],
+            self::YogaStudio => [
+                ['question' => __('Can students book a class themselves?'), 'answer' => __('Yes. Students book their spot in the member portal and see how many spots are left. Once a class is full, nobody else can join.')],
+                ['question' => __('Can I sell class passes and memberships side by side?'), 'answer' => __('Absolutely. You combine class passes, memberships with unlimited or a set number of classes, and single classes exactly the way your studio works.')],
+                ['question' => __('Can I work with several teachers and rooms?'), 'answer' => __('Yes. You add teachers and rooms and link every class to them. Teachers get their own account at no extra cost.')],
+            ],
+            self::PilatesStudio => [
+                ['question' => __('Can I limit a class to the number of reformers?'), 'answer' => __('Yes. You set the capacity per class, for example eight reformers. Once all spots are booked, the class is full.')],
+                ['question' => __('What happens if a client cancels too late?'), 'answer' => __('You choose the cancellation deadline yourself. Whoever cancels before it gets their credit back; whoever cancels later keeps it used.')],
+                ['question' => __('Can I sell intro packs?'), 'answer' => __('Absolutely. Create for example a three-class strip card for new clients. With the Mollie integration they buy it online and can book straight away.')],
+            ],
+            self::CrossfitBox => [
+                ['question' => __('Can athletes reserve their spot in a WOD?'), 'answer' => __('Yes. Athletes book their class in the member portal, and you set a maximum per class so the coach can keep an eye on everyone.')],
+                ['question' => __('How do drop-in visitors pay?'), 'answer' => __('Sell a drop-in or strip card that visitors buy online via iDEAL or card with the Mollie integration.')],
+                ['question' => __('Can coaches check athletes in?'), 'answer' => __('Yes. Coaches get their own account with access to the check-in desk, and you decide per person which parts they may use.')],
+            ],
+            self::Bootcamp => [
+                ['question' => __('Does SquadPass work for outdoor training?'), 'answer' => __('Yes. You add your locations, such as a park or beach, and link every session to them. Participants see where to be when they book.')],
+                ['question' => __('Can newcomers try a session first?'), 'answer' => __('Yes. Share your trial page and newcomers book a free or paid trial session themselves. You get their details right away.')],
+                ['question' => __('Can participants book from their phone?'), 'answer' => __('Absolutely. The member portal works on every phone, and with the branded app add-on participants book in your own app.')],
+            ],
         };
     }
 
@@ -280,6 +408,10 @@ enum ClubSegment: string
             self::BoutiqueFitness => __('Ready to fill your classes?'),
             self::FitnessClub => __('Ready to run your gym smarter?'),
             self::BoxingSchool => __('Ready for the next round?'),
+            self::YogaStudio => __('Ready to give your studio some breathing space?'),
+            self::PilatesStudio => __('Ready to fill every reformer?'),
+            self::CrossfitBox => __('Ready to level up your box?'),
+            self::Bootcamp => __('Ready to grow your bootcamp?'),
         };
     }
 }

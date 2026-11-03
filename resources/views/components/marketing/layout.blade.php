@@ -20,7 +20,49 @@
         <meta property="og:description" content="{{ $description }}">
         <meta property="og:url" content="{{ $canonical }}">
         <meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}">
-        <meta name="twitter:card" content="summary">
+        <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{ config('app.name') }}: {{ __('Club management, lessons & payments') }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ asset('images/og-image.png') }}">
+
+        {{-- Who makes SquadPass and what it costs, so search engines can describe the product. --}}
+        @php
+            $pricedPlans = array_values(array_filter(\App\Enums\ClubPlan::cases(), fn (\App\Enums\ClubPlan $plan): bool => $plan->priceCents() !== null));
+        @endphp
+        <script type="application/ld+json">
+            {!! json_encode([
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    [
+                        '@type' => 'Organization',
+                        '@id' => route('home').'#organization',
+                        'name' => config('app.name'),
+                        'url' => route('home'),
+                        'logo' => asset('images/logos/squadpass-mark.png'),
+                        'email' => config('mail.from.address'),
+                    ],
+                    [
+                        '@type' => 'SoftwareApplication',
+                        'name' => config('app.name'),
+                        'url' => route('home'),
+                        'description' => $description,
+                        'applicationCategory' => 'BusinessApplication',
+                        'operatingSystem' => 'Web, iOS, Android',
+                        'publisher' => ['@id' => route('home').'#organization'],
+                        'offers' => array_map(fn (\App\Enums\ClubPlan $plan): array => [
+                            '@type' => 'Offer',
+                            'name' => $plan->label(),
+                            'description' => $plan->description(),
+                            'price' => number_format($plan->priceCents() / 100, 2, '.', ''),
+                            'priceCurrency' => 'EUR',
+                            'url' => route('home').'#pricing',
+                        ], $pricedPlans),
+                    ],
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}
+        </script>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -49,7 +91,10 @@
 
                 @if (Route::has('login'))
                     <nav class="flex items-center gap-3">
-                        <a href="#white-label" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white lg:inline-block">
+                        <a href="{{ route('features.index') }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white md:inline-block">
+                            {{ __('Features') }}
+                        </a>
+                        <a href="{{ route('features.show', \App\Enums\MarketingFeature::WhiteLabel) }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white lg:inline-block">
                             {{ __('White label') }}
                         </a>
                         <a href="#pricing" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
@@ -82,11 +127,24 @@
             </main>
 
             <footer class="border-t border-white/10 py-8 text-sm text-zinc-500">
-                <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 sm:justify-start" aria-label="{{ __('SquadPass for every club') }}">
-                    @foreach (\App\Enums\ClubSegment::cases() as $footerSegment)
-                        <a href="{{ route('segments.show', $footerSegment) }}" class="transition hover:text-white">{{ $footerSegment->label() }}</a>
-                    @endforeach
-                </nav>
+                <div class="grid gap-8 sm:grid-cols-2">
+                    <nav aria-label="{{ __('Features') }}">
+                        <p class="font-semibold text-zinc-300">{{ __('Features') }}</p>
+                        <ul class="mt-3 flex flex-col gap-2">
+                            @foreach (\App\Enums\MarketingFeature::cases() as $footerFeature)
+                                <li><a href="{{ route('features.show', $footerFeature) }}" class="transition hover:text-white">{{ $footerFeature->label() }}</a></li>
+                            @endforeach
+                        </ul>
+                    </nav>
+                    <nav aria-label="{{ __('SquadPass for every club') }}">
+                        <p class="font-semibold text-zinc-300">{{ __('SquadPass for every club') }}</p>
+                        <ul class="mt-3 flex flex-col gap-2">
+                            @foreach (\App\Enums\ClubSegment::cases() as $footerSegment)
+                                <li><a href="{{ route('segments.show', $footerSegment) }}" class="transition hover:text-white">{{ $footerSegment->label() }}</a></li>
+                            @endforeach
+                        </ul>
+                    </nav>
+                </div>
                 <div class="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
                     <span>&copy; {{ now()->year }} {{ config('app.name', 'Laravel') }} · {{ __('Made with :heart in the Netherlands', ['heart' => '❤️']) }}</span>
                     <span>{{ __('Made for clubs that keep moving.') }}</span>
