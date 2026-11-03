@@ -6,6 +6,7 @@ use App\Models\CheckIn;
 use App\Models\Club;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -58,4 +59,30 @@ test('a membership of another club is not found on this club route', function ()
     $this->actingAs($this->owner)
         ->get(route('clubs.members.show', [$this->club, $otherMembership]))
         ->assertNotFound();
+});
+
+test('staff see the credits left across the active subscriptions of the member', function () {
+    $plan = SubscriptionPlan::factory()->for($this->club)->create(['credits' => 8]);
+    Subscription::factory()->for($this->club)->for($plan, 'plan')->active()->create(['user_id' => $this->member->id, 'credits_remaining' => 5]);
+    Subscription::factory()->for($this->club)->for($plan, 'plan')->active()->create(['user_id' => $this->member->id, 'credits_remaining' => 2]);
+    Subscription::factory()->for($this->club)->for($plan, 'plan')->pastDue()->create(['user_id' => $this->member->id, 'credits_remaining' => 4]);
+    Subscription::factory()->for($this->club)->for($plan, 'plan')->active()->create(['credits_remaining' => 6]);
+
+    Livewire::actingAs($this->owner)
+        ->test(Show::class, ['club' => $this->club, 'membership' => $this->membership])
+        ->assertSet('creditsRemaining', 7)
+        ->assertSet('activeSubscriptionCount', 2)
+        ->assertSee('5 / 8');
+});
+
+test('the credits left are unlimited when an active subscription is unlimited', function () {
+    $limitedPlan = SubscriptionPlan::factory()->for($this->club)->create(['credits' => 8]);
+    $unlimitedPlan = SubscriptionPlan::factory()->for($this->club)->create(['credits' => null]);
+    Subscription::factory()->for($this->club)->for($limitedPlan, 'plan')->active()->create(['user_id' => $this->member->id, 'credits_remaining' => 3]);
+    Subscription::factory()->for($this->club)->for($unlimitedPlan, 'plan')->active()->create(['user_id' => $this->member->id, 'credits_remaining' => null]);
+
+    Livewire::actingAs($this->owner)
+        ->test(Show::class, ['club' => $this->club, 'membership' => $this->membership])
+        ->assertSet('creditsRemaining', null)
+        ->assertSee(__('Unlimited'));
 });

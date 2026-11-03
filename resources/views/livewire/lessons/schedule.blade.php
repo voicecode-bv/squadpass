@@ -38,7 +38,7 @@
                                 {{ __('Restore') }}
                             </flux:button>
                         @else
-                            <flux:button variant="ghost" size="sm" wire:click="cancelOccurrence({{ $occurrence->id }})">
+                            <flux:button variant="ghost" size="sm" wire:click="cancelOccurrence({{ $occurrence->id }})" wire:confirm="{{ __('Cancel this lesson? Booked members lose their spot and get their credit back. Restoring the lesson does not rebook them.') }}">
                                 {{ __('Cancel') }}
                             </flux:button>
                         @endif

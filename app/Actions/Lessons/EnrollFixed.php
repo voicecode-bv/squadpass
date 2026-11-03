@@ -5,14 +5,18 @@ namespace App\Actions\Lessons;
 use App\Enums\EnrollmentType;
 use App\Enums\LessonOccurrenceStatus;
 use App\Exceptions\EnrollmentException;
+use App\Models\CreditTransaction;
 use App\Models\Lesson;
 use App\Models\LessonEnrollment;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Credits\CreditLedger;
 use Illuminate\Support\Facades\DB;
 
 class EnrollFixed
 {
+    public function __construct(protected CreditLedger $ledger) {}
+
     public function handle(User $user, Lesson $lesson): LessonEnrollment
     {
         throw_unless($user->isMemberOf($lesson->club), EnrollmentException::membershipRequired());
@@ -37,6 +41,7 @@ class EnrollFixed
 
             $newlyClaimed = 0;
             $transferredCredits = 0;
+            $transferredEnrollmentIds = [];
 
             foreach ($occurrences as $occurrence) {
                 $existingSingle = LessonEnrollment::query()
@@ -47,6 +52,7 @@ class EnrollFixed
                 if ($existingSingle) {
                     // The single enrollment's claimed spot and spent credit transfer to the fixed enrollment.
                     $transferredCredits += $existingSingle->credits_used;
+                    $transferredEnrollmentIds[] = $existingSingle->id;
                     $existingSingle->delete();
 
                     continue;
@@ -58,11 +64,7 @@ class EnrollFixed
                 $newlyClaimed++;
             }
 
-            if ($usesCredits) {
-                throw_unless($subscription->consumeCredits($newlyClaimed), EnrollmentException::noCredits());
-            }
-
-            return LessonEnrollment::create([
+            $enrollment = LessonEnrollment::create([
                 'club_id' => $lesson->club_id,
                 'user_id' => $user->id,
                 'type' => EnrollmentType::Fixed,
@@ -70,6 +72,19 @@ class EnrollFixed
                 'subscription_id' => $subscription?->id,
                 'credits_used' => ($usesCredits ? $newlyClaimed : 0) + $transferredCredits,
             ]);
+
+            if ($transferredEnrollmentIds !== []) {
+                // Keep the spent credits refundable through the fixed enrollment.
+                CreditTransaction::query()
+                    ->whereIn('lesson_enrollment_id', $transferredEnrollmentIds)
+                    ->update(['lesson_enrollment_id' => $enrollment->id]);
+            }
+
+            if ($usesCredits) {
+                throw_unless($this->ledger->consume($subscription, $newlyClaimed, $enrollment, actor: $user), EnrollmentException::noCredits());
+            }
+
+            return $enrollment;
         });
     }
 }

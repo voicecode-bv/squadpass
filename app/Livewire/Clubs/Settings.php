@@ -30,6 +30,15 @@ class Settings extends Component
 
     public bool $self_signup = true;
 
+    /** Members cancelling later than this many hours before a lesson keep no credit. */
+    public int $cancellation_deadline_hours = 3;
+
+    /** Whether granted credits expire at all. */
+    public bool $credits_expire = true;
+
+    /** Days after which granted credits expire, when they expire. */
+    public int $credit_expiry_days = 30;
+
     /** Demo club flag, only editable by superadmins. */
     public bool $is_demo = false;
 
@@ -41,6 +50,7 @@ class Settings extends Component
     public const array TAB_FIELDS = [
         'general' => ['name', 'photo', 'is_demo'],
         'registration' => ['self_signup'],
+        'lessons' => ['cancellation_deadline_hours', 'credits_expire', 'credit_expiry_days'],
         'integrations' => [],
     ];
 
@@ -56,6 +66,9 @@ class Settings extends Component
         $this->name = $club->name;
         $this->self_signup = $club->self_signup ?? true;
         $this->is_demo = $club->is_demo;
+        $this->cancellation_deadline_hours = $club->cancellation_deadline_hours;
+        $this->credits_expire = $club->credit_expiry_days !== null;
+        $this->credit_expiry_days = $club->credit_expiry_days ?? 30;
 
         if (! array_key_exists($this->tab, self::TAB_FIELDS)) {
             $this->tab = array_key_first(self::TAB_FIELDS);
@@ -72,6 +85,9 @@ class Settings extends Component
                 'photo' => ['nullable', 'image', 'max:4096'],
                 'self_signup' => ['boolean'],
                 'is_demo' => ['boolean'],
+                'cancellation_deadline_hours' => ['required', 'integer', 'min:0', 'max:168'],
+                'credits_expire' => ['boolean'],
+                'credit_expiry_days' => ['exclude_unless:credits_expire,true', 'required', 'integer', 'min:1', 'max:730'],
             ]);
         } catch (ValidationException $exception) {
             $this->showTabWithError($exception);
@@ -82,6 +98,8 @@ class Settings extends Component
         $attributes = [
             'name' => $validated['name'],
             'self_signup' => $validated['self_signup'],
+            'cancellation_deadline_hours' => $validated['cancellation_deadline_hours'],
+            'credit_expiry_days' => $validated['credits_expire'] ? $validated['credit_expiry_days'] : null,
         ];
 
         if ($this->photo) {

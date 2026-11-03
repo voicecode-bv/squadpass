@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
 use App\Models\Subscription;
+use App\Services\Credits\CreditLedger;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 class OccurrenceGenerator
 {
     public const int WEEKS_AHEAD = 8;
+
+    public function __construct(protected CreditLedger $ledger) {}
 
     /**
      * Generate missing occurrences for a lesson within the rolling window.
@@ -136,7 +139,7 @@ class OccurrenceGenerator
                 continue;
             }
 
-            if ($usesCredits && ! $subscription->consumeCredits(1)) {
+            if ($usesCredits && ! $this->ledger->consume($subscription, 1, $enrollment, $occurrence)) {
                 $occurrence->releaseSpot();
 
                 break;

@@ -8,10 +8,13 @@ use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Credits\CreditLedger;
 use Illuminate\Support\Facades\DB;
 
 class EnrollSingle
 {
+    public function __construct(protected CreditLedger $ledger) {}
+
     public function handle(User $user, LessonOccurrence $occurrence): LessonEnrollment
     {
         throw_unless($user->isMemberOf($occurrence->club), EnrollmentException::membershipRequired());
@@ -38,11 +41,12 @@ class EnrollSingle
             throw_unless($absence, EnrollmentException::alreadyEnrolled());
 
             // Rejoining after an absence reclaims the spot (and a credit) on the fixed enrollment.
-            return DB::transaction(function () use ($occurrence, $fixed, $absence, $subscription, $usesCredits): LessonEnrollment {
+            // A late absence kept its credit spent, so rejoining that lesson is free.
+            return DB::transaction(function () use ($occurrence, $fixed, $absence, $subscription, $usesCredits, $user): LessonEnrollment {
                 throw_unless($occurrence->claimSpot(), EnrollmentException::full($occurrence));
 
-                if ($usesCredits) {
-                    throw_unless($subscription->consumeCredits(1), EnrollmentException::noCredits());
+                if ($usesCredits && ! $absence->credit_forfeited) {
+                    throw_unless($this->ledger->consume($subscription, 1, $fixed, $occurrence, $user), EnrollmentException::noCredits());
 
                     $fixed->increment('credits_used');
                 }
@@ -56,11 +60,7 @@ class EnrollSingle
         return DB::transaction(function () use ($occurrence, $user, $subscription, $usesCredits): LessonEnrollment {
             throw_unless($occurrence->claimSpot(), EnrollmentException::full($occurrence));
 
-            if ($usesCredits) {
-                throw_unless($subscription->consumeCredits(1), EnrollmentException::noCredits());
-            }
-
-            return LessonEnrollment::create([
+            $enrollment = LessonEnrollment::create([
                 'club_id' => $occurrence->club_id,
                 'user_id' => $user->id,
                 'type' => EnrollmentType::Single,
@@ -68,6 +68,12 @@ class EnrollSingle
                 'subscription_id' => $subscription?->id,
                 'credits_used' => $usesCredits ? 1 : 0,
             ]);
+
+            if ($usesCredits) {
+                throw_unless($this->ledger->consume($subscription, 1, $enrollment, $occurrence, $user), EnrollmentException::noCredits());
+            }
+
+            return $enrollment;
         });
     }
 }

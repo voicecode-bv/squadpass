@@ -73,11 +73,26 @@
                                     {{ $enrollment->occurrence->club->name }} ·
                                     {{ $enrollment->occurrence->starts_at->timezone($timezone)->isoFormat('dd D MMM HH:mm') }}
                                 </flux:text>
+                                @if ($enrollment->credits_used > 0)
+                                    <flux:text @class(['mt-1 text-xs', 'text-amber-600 dark:text-amber-400' => ! $enrollment->occurrence->isFreeToCancel()])>
+                                        @if ($enrollment->occurrence->isFreeToCancel())
+                                            {{ __('Free cancellation until :time', ['time' => $enrollment->occurrence->freeCancellationUntil()->timezone($timezone)->isoFormat('dd D MMM HH:mm')]) }}
+                                        @else
+                                            {{ __('Cancellation deadline passed: your credit will not be refunded') }}
+                                        @endif
+                                    </flux:text>
+                                @endif
                             </div>
                         </div>
-                        <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 transition hover:scale-105">
-                            {{ __('Cancel') }}
-                        </flux:button>
+                        @if ($enrollment->credits_used > 0 && ! $enrollment->occurrence->isFreeToCancel())
+                            <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" wire:confirm="{{ __('The cancellation deadline has passed. If you cancel now, your credit will not be refunded. Continue?') }}" class="shrink-0 transition hover:scale-105">
+                                {{ __('Cancel') }}
+                            </flux:button>
+                        @else
+                            <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 transition hover:scale-105">
+                                {{ __('Cancel') }}
+                            </flux:button>
+                        @endif
                     </div>
                 </x-portal.card>
             @endforeach

@@ -11,6 +11,7 @@ use App\Models\LessonOccurrence;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -39,7 +40,7 @@ class OccurrenceShow extends Component
             ->where('club_id', $this->club->id)
             ->findOrFail($enrollmentId);
 
-        $cancelEnrollment->handle($enrollment);
+        $cancelEnrollment->handle($enrollment, Auth::user());
 
         unset($this->participants);
         $this->occurrence->refresh();
@@ -56,7 +57,7 @@ class OccurrenceShow extends Component
             ->findOrFail($enrollmentId);
 
         try {
-            $markAbsence->handle($enrollment, $this->occurrence);
+            $markAbsence->handle($enrollment, $this->occurrence, Auth::user());
         } catch (EnrollmentException $exception) {
             Flux::toast(variant: 'danger', text: $exception->getMessage());
 

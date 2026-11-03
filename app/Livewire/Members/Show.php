@@ -8,6 +8,7 @@ use App\Enums\SubscriptionStatus;
 use App\Exceptions\MoneybirdContactConflict;
 use App\Models\CheckIn;
 use App\Models\Club;
+use App\Models\CreditTransaction;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use App\Models\Membership;
@@ -26,6 +27,8 @@ use Livewire\Component;
  * Computed properties, read as $this->name:
  *
  * @property-read Collection<int, Form> $forms
+ * @property-read Collection<int, CreditTransaction> $creditTransactions
+ * @property-read array{total: int, limited: int, remaining: int} $activeSubscriptionTotals
  */
 #[Title('Member')]
 class Show extends Component
@@ -39,11 +42,17 @@ class Show extends Component
      *
      * @var list<string>
      */
-    public const array TABS = ['membership', 'subscriptions', 'payments', 'forms', 'check-ins'];
+    public const array TABS = ['membership', 'subscriptions', 'credits', 'payments', 'forms', 'check-ins'];
+
+    /** Page size of the credit timeline. */
+    public const int CREDIT_TIMELINE_PAGE = 50;
 
     /** Active tab, kept in the URL so a tab can be linked to directly. */
     #[Url]
     public string $tab = 'membership';
+
+    /** How many credit timeline lines are shown; grows with "Show more". */
+    public int $creditTimelineLimit = self::CREDIT_TIMELINE_PAGE;
 
     public function mount(Club $club, Membership $membership): void
     {
@@ -83,11 +92,41 @@ class Show extends Component
     #[Computed]
     public function activeSubscriptionCount(): int
     {
-        return Subscription::query()
+        return $this->activeSubscriptionTotals['total'];
+    }
+
+    /**
+     * Credits left across the member's active subscriptions; null when one of them is unlimited.
+     */
+    #[Computed]
+    public function creditsRemaining(): ?int
+    {
+        $totals = $this->activeSubscriptionTotals;
+
+        return $totals['limited'] < $totals['total'] ? null : $totals['remaining'];
+    }
+
+    /**
+     * Aggregates the member's active subscriptions in a single query.
+     *
+     * @return array{total: int, limited: int, remaining: int}
+     */
+    #[Computed]
+    public function activeSubscriptionTotals(): array
+    {
+        $totals = Subscription::query()
             ->where('club_id', $this->club->id)
             ->where('user_id', $this->membership->user_id)
             ->where('status', SubscriptionStatus::Active)
-            ->count();
+            ->toBase()
+            ->selectRaw('COUNT(*) AS total, COUNT(credits_remaining) AS limited, COALESCE(SUM(credits_remaining), 0) AS remaining')
+            ->first();
+
+        return [
+            'total' => (int) $totals->total,
+            'limited' => (int) $totals->limited,
+            'remaining' => (int) $totals->remaining,
+        ];
     }
 
     #[Computed]
@@ -122,6 +161,30 @@ class Show extends Component
             ->where('user_id', $this->membership->user_id)
             ->with('plan')
             ->latest('starts_at')
+            ->get();
+    }
+
+    public function showMoreCreditTransactions(): void
+    {
+        $this->authorize('manage', $this->club);
+
+        $this->creditTimelineLimit += self::CREDIT_TIMELINE_PAGE;
+    }
+
+    /**
+     * The newest lines of the member's credit timeline, one extra to know whether there are more.
+     *
+     * @return Collection<int, CreditTransaction>
+     */
+    #[Computed]
+    public function creditTransactions(): Collection
+    {
+        return CreditTransaction::query()
+            ->where('club_id', $this->club->id)
+            ->where('user_id', $this->membership->user_id)
+            ->with(['club:id,name,timezone', 'lesson:id,name', 'occurrence:id,starts_at', 'actor:id,name'])
+            ->orderByDesc('id')
+            ->limit($this->creditTimelineLimit + 1)
             ->get();
     }
 

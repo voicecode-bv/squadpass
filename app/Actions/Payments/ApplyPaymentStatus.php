@@ -10,11 +10,14 @@ use App\Models\Payment;
 use App\Models\StripCard;
 use App\Models\StripCardPlan;
 use App\Models\Subscription;
+use App\Services\Credits\CreditLedger;
 use App\Services\Mollie\MolliePaymentResult;
 use Illuminate\Support\Facades\DB;
 
 class ApplyPaymentStatus
 {
+    public function __construct(protected CreditLedger $ledger) {}
+
     /**
      * Apply a Mollie payment state idempotently: statuses only move forward,
      * and fulfillment runs exactly once when a payment becomes paid.
@@ -90,8 +93,12 @@ class ApplyPaymentStatus
             'status' => SubscriptionStatus::Active,
             'mollie_mandate_id' => $result->mandateId,
             'next_billing_at' => $subscription->plan->interval->addTo($subscription->starts_at),
-            'credits_remaining' => $subscription->plan->credits,
+            'credits_remaining' => $subscription->plan->isUnlimited() ? null : 0,
         ]);
+
+        if (! $subscription->plan->isUnlimited()) {
+            $this->ledger->grant($subscription, $subscription->plan->credits);
+        }
     }
 
     protected function recoverSubscription(Payment $payment): void

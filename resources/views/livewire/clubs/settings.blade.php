@@ -6,6 +6,7 @@
             <flux:tabs wire:model="tab">
                 <flux:tab name="general">{{ __('General') }}</flux:tab>
                 <flux:tab name="registration">{{ __('Registration') }}</flux:tab>
+                <flux:tab name="lessons">{{ __('Lessons & credits') }}</flux:tab>
                 <flux:tab name="integrations">{{ __('Integrations') }}</flux:tab>
             </flux:tabs>
 
@@ -74,6 +75,36 @@
                                 {{ __('Download QR code') }}
                             </flux:button>
                         </div>
+                    @endif
+                </section>
+            </flux:tab.panel>
+
+            <flux:tab.panel name="lessons">
+                <section class="sp-panel flex flex-col gap-6 p-5">
+                    <h2 class="sp-card-title">{{ __('Cancellations and credits') }}</h2>
+
+                    <flux:input
+                        type="number"
+                        min="0"
+                        max="168"
+                        wire:model="cancellation_deadline_hours"
+                        :label="__('Cancellation deadline (hours before the lesson)')"
+                        :description="__('Members who cancel at least this long before a lesson get their credit back. Later cancellations still free up the spot, but the credit stays spent. Use 0 to always refund.')"
+                        required
+                    />
+
+                    <flux:switch wire:model.live="credits_expire" :label="__('Credits expire')" :description="__('Expired credits are removed from the balance. A change applies to credits added from now on.')" />
+
+                    @if ($credits_expire)
+                        <flux:input
+                            type="number"
+                            min="1"
+                            max="730"
+                            wire:model="credit_expiry_days"
+                            :label="__('Credits expire after (days)')"
+                            :description="__('Counted from the moment credits are added for a new billing period.')"
+                            required
+                        />
                     @endif
                 </section>
             </flux:tab.panel>

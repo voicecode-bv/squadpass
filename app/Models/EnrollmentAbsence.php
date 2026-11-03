@@ -11,12 +11,23 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $lesson_enrollment_id
  * @property int $lesson_occurrence_id
+ * @property bool $credit_forfeited the credit stayed spent because the absence was reported after the cancellation deadline
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['lesson_enrollment_id', 'lesson_occurrence_id'])]
+#[Fillable(['lesson_enrollment_id', 'lesson_occurrence_id', 'credit_forfeited'])]
 class EnrollmentAbsence extends Model
 {
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'credit_forfeited' => 'boolean',
+        ];
+    }
+
     /**
      * @return BelongsTo<LessonEnrollment, $this>
      */

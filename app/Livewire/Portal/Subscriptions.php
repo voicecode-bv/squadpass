@@ -7,6 +7,7 @@ use App\Actions\Payments\StartSubscription;
 use App\Enums\MembershipStatus;
 use App\Exceptions\PaymentException;
 use App\Models\Club;
+use App\Models\CreditTransaction;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use Flux\Flux;
@@ -21,10 +22,17 @@ use Livewire\Component;
  * Computed properties, read as $this->name:
  *
  * @property-read Collection<int, SubscriptionPlan> $availablePlans
+ * @property-read Collection<int, CreditTransaction> $creditTransactions
  */
 #[Title('My subscriptions')]
 class Subscriptions extends Component
 {
+    /** Page size of the credit timeline. */
+    public const int CREDIT_TIMELINE_PAGE = 25;
+
+    /** How many credit timeline lines are shown; grows with "Show more". */
+    public int $creditTimelineLimit = self::CREDIT_TIMELINE_PAGE;
+
     public function subscribe(int $planId, StartSubscription $startSubscription): void
     {
         $plan = SubscriptionPlan::query()
@@ -54,6 +62,27 @@ class Subscriptions extends Component
         unset($this->subscriptions, $this->availablePlans, $this->payableClubIds);
 
         Flux::toast(variant: 'success', text: __('Subscription cancelled. You keep access until the end of the paid period.'));
+    }
+
+    public function showMoreCreditTransactions(): void
+    {
+        $this->creditTimelineLimit += self::CREDIT_TIMELINE_PAGE;
+    }
+
+    /**
+     * The member's newest credit timeline lines across clubs, one extra to know whether there are more.
+     *
+     * @return Collection<int, CreditTransaction>
+     */
+    #[Computed]
+    public function creditTransactions(): Collection
+    {
+        return CreditTransaction::query()
+            ->where('user_id', Auth::id())
+            ->with(['club:id,name,timezone', 'lesson:id,name', 'occurrence:id,starts_at'])
+            ->orderByDesc('id')
+            ->limit($this->creditTimelineLimit + 1)
+            ->get();
     }
 
     /**

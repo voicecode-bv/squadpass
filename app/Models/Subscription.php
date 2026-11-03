@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -122,6 +123,53 @@ class Subscription extends Model
         static::query()->whereKey($this->id)->increment('credits_remaining', $count);
 
         $this->credits_remaining += $count;
+    }
+
+    /**
+     * Atomically add newly granted credits; an unlimited balance becomes limited.
+     */
+    public function addCredits(int $count): void
+    {
+        if ($this->isUnlimited()) {
+            static::query()->whereKey($this->id)->update(['credits_remaining' => $count]);
+            $this->credits_remaining = $count;
+
+            return;
+        }
+
+        $this->refundCredits($count);
+    }
+
+    /**
+     * Atomically remove expired credits, never dropping the balance below zero.
+     */
+    public function removeCredits(int $count): void
+    {
+        if ($this->isUnlimited() || $count <= 0) {
+            return;
+        }
+
+        $removed = static::query()
+            ->whereKey($this->id)
+            ->where('credits_remaining', '>=', $count)
+            ->decrement('credits_remaining', $count);
+
+        if ($removed === 0) {
+            static::query()
+                ->whereKey($this->id)
+                ->where('credits_remaining', '<', $count)
+                ->update(['credits_remaining' => 0]);
+        }
+
+        $this->credits_remaining = (int) static::query()->whereKey($this->id)->value('credits_remaining');
+    }
+
+    /**
+     * @return HasMany<CreditGrant, $this>
+     */
+    public function creditGrants(): HasMany
+    {
+        return $this->hasMany(CreditGrant::class);
     }
 
     /**

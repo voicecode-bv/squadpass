@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Lessons;
 
+use App\Actions\Lessons\CancelOccurrence;
 use App\Enums\LessonOccurrenceStatus;
 use App\Models\Club;
 use App\Models\LessonOccurrence;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -27,7 +29,7 @@ class Schedule extends Component
         $this->club = $club;
     }
 
-    public function cancelOccurrence(int $occurrenceId): void
+    public function cancelOccurrence(int $occurrenceId, CancelOccurrence $cancelOccurrence): void
     {
         $this->authorize('manage', $this->club);
 
@@ -35,9 +37,11 @@ class Schedule extends Component
             ->where('club_id', $this->club->id)
             ->findOrFail($occurrenceId);
 
-        $occurrence->update(['status' => LessonOccurrenceStatus::Cancelled]);
+        $released = $cancelOccurrence->handle($occurrence, Auth::user());
 
-        Flux::toast(variant: 'success', text: __('Lesson occurrence cancelled.'));
+        Flux::toast(variant: 'success', text: __('Lesson occurrence cancelled.').($released > 0
+            ? ' '.trans_choice(':count booking was released and its credit refunded.|:count bookings were released and their credits refunded.', $released)
+            : ''));
     }
 
     public function restoreOccurrence(int $occurrenceId): void

@@ -3,6 +3,7 @@
 namespace App\Livewire\Portal;
 
 use App\Actions\Lessons\CancelEnrollment;
+use App\Concerns\DescribesCreditOutcome;
 use App\Enums\EnrollmentType;
 use App\Models\LessonEnrollment;
 use Flux\Flux;
@@ -16,17 +17,22 @@ use Livewire\Component;
 #[Title('My enrollments')]
 class MyEnrollments extends Component
 {
+    use DescribesCreditOutcome;
+
     public function cancel(int $enrollmentId, CancelEnrollment $cancelEnrollment): void
     {
         $enrollment = LessonEnrollment::query()
             ->where('user_id', Auth::id())
             ->findOrFail($enrollmentId);
 
-        $cancelEnrollment->handle($enrollment);
+        $outcome = $cancelEnrollment->handle($enrollment, Auth::user());
 
         unset($this->fixedEnrollments, $this->singleEnrollments);
 
-        Flux::toast(variant: 'success', text: __('Enrollment cancelled.'));
+        Flux::toast(
+            variant: $outcome['forfeited'] > 0 ? 'warning' : 'success',
+            text: $this->creditOutcomeMessage(__('Enrollment cancelled.'), $outcome),
+        );
     }
 
     /**

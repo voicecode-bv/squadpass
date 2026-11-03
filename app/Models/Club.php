@@ -50,6 +50,8 @@ use Illuminate\Support\Facades\Storage;
  * @property int $next_membership_number
  * @property int $next_ticket_number
  * @property bool $self_signup
+ * @property int $cancellation_deadline_hours members cancelling later than this many hours before a lesson keep no credit
+ * @property int|null $credit_expiry_days days after which granted credits expire; null means never
  * @property bool $is_demo demo club: every add-on unlocked, integrations managed by superadmins only
  * @property Carbon|null $demo_expires_at set on a visitor's demo sandbox, which is deleted once it passes
  * @property Carbon|null $onboarded_at
@@ -60,7 +62,7 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable(['name', 'slug', 'photo_path', 'timezone', 'currency', 'mollie_api_key', 'mollie_profile_id', 'mollie_profile_name', 'mollie_last_error', 'platform_mollie_customer_id', 'moneybird_access_token', 'moneybird_administration_id',
     'moneybird_ledger_account_id', 'moneybird_tax_rate_id', 'moneybird_workflow_id', 'moneybird_document_style_id',
     'moneybird_invoice_delivery', 'moneybird_sync_contacts', 'moneybird_last_error', 'moneybird_last_synced_at', 'moneybird_setup_completed_at',
-    'self_signup', 'onboarded_at', 'trial_ends_at',
+    'self_signup', 'cancellation_deadline_hours', 'credit_expiry_days', 'onboarded_at', 'trial_ends_at',
 ])]
 #[Hidden(['mollie_api_key', 'moneybird_access_token'])]
 class Club extends Model implements MollieAccount
@@ -78,6 +80,8 @@ class Club extends Model implements MollieAccount
         'moneybird_invoice_delivery' => 'draft',
         'moneybird_sync_contacts' => true,
         'is_demo' => false,
+        'cancellation_deadline_hours' => 3,
+        'credit_expiry_days' => 30,
     ];
 
     /**
@@ -123,6 +127,8 @@ class Club extends Model implements MollieAccount
             'next_ticket_number' => 'integer',
             'self_signup' => 'boolean',
             'is_demo' => 'boolean',
+            'cancellation_deadline_hours' => 'integer',
+            'credit_expiry_days' => 'integer',
             'demo_expires_at' => 'datetime',
             'onboarded_at' => 'datetime',
             'trial_ends_at' => 'date',

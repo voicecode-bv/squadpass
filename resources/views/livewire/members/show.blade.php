@@ -42,6 +42,7 @@
     <x-portal.kpi-band :items="[
         ['label' => __('Strips remaining').' · '.__('Right now'), 'value' => $this->stripsRemaining, 'countUp' => $this->stripsRemaining],
         ['label' => __('Active subscriptions').' · '.__('Right now'), 'value' => $this->activeSubscriptionCount, 'countUp' => $this->activeSubscriptionCount],
+        ['label' => __('Credits left').' · '.__('Right now'), 'value' => $this->creditsRemaining ?? __('Unlimited'), 'countUp' => $this->creditsRemaining],
         ['label' => __('Check-ins').' · '.__('This month'), 'value' => $this->checkInsThisMonth, 'countUp' => $this->checkInsThisMonth],
     ]" />
 
@@ -49,6 +50,7 @@
         <flux:tabs wire:model="tab" scrollable scrollable:fade>
             <flux:tab name="membership">{{ __('Membership') }}</flux:tab>
             <flux:tab name="subscriptions">{{ __('Subscriptions & strip cards') }}</flux:tab>
+            <flux:tab name="credits">{{ __('Credits') }}</flux:tab>
             <flux:tab name="payments">{{ __('Payments') }}</flux:tab>
             <flux:tab name="forms">{{ __('Forms') }}</flux:tab>
             <flux:tab name="check-ins">{{ __('Check-ins') }}</flux:tab>
@@ -85,6 +87,7 @@
                                 <flux:table.column class="w-2/5">{{ __('Plan') }}</flux:table.column>
                                 <flux:table.column>{{ __('Started') }}</flux:table.column>
                                 <flux:table.column>{{ __('Next billing') }}</flux:table.column>
+                                <flux:table.column>{{ __('Credits') }}</flux:table.column>
                                 <flux:table.column align="end">{{ __('Status') }}</flux:table.column>
                             </flux:table.columns>
                             <flux:table.rows>
@@ -93,6 +96,7 @@
                                         <flux:table.cell class="sp-strong">{{ $subscription->plan->name }} · {{ $subscription->plan->formattedPrice() }}</flux:table.cell>
                                         <flux:table.cell>{{ $subscription->starts_at->format('d-m-Y') }}</flux:table.cell>
                                         <flux:table.cell>{{ $subscription->next_billing_at?->format('d-m-Y') ?? '-' }}</flux:table.cell>
+                                        <flux:table.cell>{{ $subscription->isUnlimited() ? __('Unlimited') : $subscription->credits_remaining.' / '.($subscription->plan->credits ?? '-') }}</flux:table.cell>
                                         <flux:table.cell align="end">
                                             <flux:badge size="sm" :color="match($subscription->status) {
                                                 \App\Enums\SubscriptionStatus::Active => 'green',
@@ -142,6 +146,31 @@
                         </flux:table>
                     </x-table-card>
                 @endif
+            </section>
+        </flux:tab.panel>
+
+        <flux:tab.panel name="credits">
+            @php
+                $creditTransactions = $this->creditTransactions->take($creditTimelineLimit);
+                $hasMoreCreditTransactions = $this->creditTransactions->count() > $creditTimelineLimit;
+            @endphp
+
+            <section class="sp-panel animate-rise flex flex-col gap-6 p-5" data-test="credit-timeline">
+                <div>
+                    <h2 class="sp-card-title">{{ __('Credit history') }}</h2>
+                    <p class="sp-card-subtitle mt-1">
+                        {{ trans_choice('Cancelling is free until :count hour before a lesson|Cancelling is free until :count hours before a lesson', $club->cancellation_deadline_hours) }}
+                        ·
+                        {{ $club->credit_expiry_days ? trans_choice('Credits expire after :count day|Credits expire after :count days', $club->credit_expiry_days) : __('Credits never expire') }}
+                    </p>
+                </div>
+
+                <x-portal.credit-timeline
+                    :transactions="$creditTransactions"
+                    :member-id="$membership->user_id"
+                    :has-more="$hasMoreCreditTransactions"
+                    show-more-action="showMoreCreditTransactions"
+                />
             </section>
         </flux:tab.panel>
 

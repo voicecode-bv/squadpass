@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\Lessons\CancelEnrollment;
 use App\Actions\Lessons\EnrollFixed;
 use App\Actions\Lessons\EnrollSingle;
+use App\Concerns\DescribesCreditOutcome;
 use App\Enums\EnrollmentType;
 use App\Exceptions\EnrollmentException;
 use App\Http\Controllers\Controller;
@@ -18,6 +19,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class EnrollmentController extends Controller
 {
+    use DescribesCreditOutcome;
+
     /**
      * The member's fixed enrollments plus upcoming one-time enrollments.
      */
@@ -81,8 +84,12 @@ class EnrollmentController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($enrollmentId);
 
-        $cancelEnrollment->handle($enrollment);
+        $outcome = $cancelEnrollment->handle($enrollment, $request->user());
 
-        return response()->json(['message' => __('Enrollment cancelled.')]);
+        return response()->json([
+            'message' => $this->creditOutcomeMessage(__('Enrollment cancelled.'), $outcome),
+            'credits_refunded' => $outcome['refunded'],
+            'credits_forfeited' => $outcome['forfeited'],
+        ]);
     }
 }

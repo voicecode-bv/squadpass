@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LessonOccurrenceStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\LessonOccurrenceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -130,5 +131,18 @@ class LessonOccurrence extends Model
     public function isCancelled(): bool
     {
         return $this->status === LessonOccurrenceStatus::Cancelled;
+    }
+
+    /**
+     * The last moment a member can cancel and still get their credit back.
+     */
+    public function freeCancellationUntil(): CarbonInterface
+    {
+        return $this->starts_at->copy()->subHours($this->club->cancellation_deadline_hours);
+    }
+
+    public function isFreeToCancel(): bool
+    {
+        return now()->lt($this->freeCancellationUntil());
     }
 }

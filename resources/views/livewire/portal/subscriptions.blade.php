@@ -139,4 +139,21 @@
     @elseif ($this->subscriptions->isEmpty())
         <x-portal.empty icon="credit-card" :heading="__('No subscriptions available')" :text="__('Your clubs do not offer subscriptions yet.')" />
     @endif
+
+    @if ($this->creditTransactions->isNotEmpty())
+        <section class="sp-panel animate-rise flex flex-col gap-6 p-5" data-test="credit-timeline">
+            <div>
+                <h2 class="sp-card-title">{{ __('Credit history') }}</h2>
+                <p class="sp-card-subtitle mt-1">{{ __('What happened to your lesson credits, newest first.') }}</p>
+            </div>
+
+            <x-portal.credit-timeline
+                :transactions="$this->creditTransactions->take($creditTimelineLimit)"
+                :member-id="auth()->id()"
+                :has-more="$this->creditTransactions->count() > $creditTimelineLimit"
+                show-more-action="showMoreCreditTransactions"
+                for-member
+            />
+        </section>
+    @endif
 </div>

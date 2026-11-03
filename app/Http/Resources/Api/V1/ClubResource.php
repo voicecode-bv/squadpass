@@ -25,6 +25,8 @@ class ClubResource extends JsonResource
             'slug' => $this->slug,
             'timezone' => $this->timezone,
             'currency' => $this->currency,
+            'cancellation_deadline_hours' => $this->cancellation_deadline_hours,
+            'credit_expiry_days' => $this->credit_expiry_days,
             'membership_number' => $this->whenPivotLoaded('memberships', fn () => $this->pivot->getAttribute('membership_number')),
             'membership_status' => $this->whenPivotLoaded('memberships', fn () => $this->pivot->getAttribute('status')),
         ];

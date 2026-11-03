@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Lessons\MarkAbsence;
+use App\Concerns\DescribesCreditOutcome;
 use App\Exceptions\EnrollmentException;
 use App\Http\Controllers\Controller;
 use App\Models\LessonEnrollment;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
+    use DescribesCreditOutcome;
+
     /**
      * Mark the member absent for one occurrence of their fixed enrollment.
      */
@@ -29,11 +32,15 @@ class AbsenceController extends Controller
             ->firstOrFail();
 
         try {
-            $markAbsence->handle($enrollment, $occurrence);
+            $outcome = $markAbsence->handle($enrollment, $occurrence, $request->user());
         } catch (EnrollmentException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }
 
-        return response()->json(['message' => __('Marked absent for this lesson.')]);
+        return response()->json([
+            'message' => $this->creditOutcomeMessage(__('Marked absent for this lesson.'), $outcome),
+            'credits_refunded' => $outcome['refunded'],
+            'credits_forfeited' => $outcome['forfeited'],
+        ]);
     }
 }

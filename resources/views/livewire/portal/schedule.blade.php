@@ -109,6 +109,10 @@
                 $spotsLeft = max(0, $selected->effectiveCapacity() - $selected->booked_count);
                 $filledPercentage = min(100, (int) round($selected->booked_count / $capacity * 100));
                 $trainers = $selected->lesson->trainers->map(fn ($trainer) => $trainer->user->name)->join(', ');
+                $usesCredits = isset($this->creditClubIds[$selected->club_id]);
+                $freeCancellationUntil = $selected->freeCancellationUntil()->timezone($timezone);
+                $isLateCancellation = $usesCredits && ! $selected->isFreeToCancel();
+                $lateCancellationWarning = __('The cancellation deadline has passed. If you cancel now, your credit will not be refunded. Continue?');
             @endphp
 
             <div class="flex flex-col gap-6">
@@ -152,12 +156,35 @@
                     </span>
                 </div>
 
+                @if ($isAttending && $usesCredits)
+                    @if ($isLateCancellation)
+                        <flux:callout variant="warning" icon="exclamation-triangle" data-test="late-cancellation">
+                            <flux:callout.heading>{{ __('Cancellation deadline passed') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ trans_choice('Cancelling was free until :time (:count hour before the start). You can still cancel to free up your spot, but your credit will not be refunded.|Cancelling was free until :time (:count hours before the start). You can still cancel to free up your spot, but your credit will not be refunded.', $selected->club->cancellation_deadline_hours, ['time' => $freeCancellationUntil->isoFormat('dd D MMM HH:mm')]) }}
+                            </flux:callout.text>
+                        </flux:callout>
+                    @else
+                        <flux:text class="text-sm" data-test="free-cancellation">
+                            {{ trans_choice('Free cancellation until :time (:count hour before the start). After that, your credit will not be refunded.|Free cancellation until :time (:count hours before the start). After that, your credit will not be refunded.', $selected->club->cancellation_deadline_hours, ['time' => $freeCancellationUntil->isoFormat('dd D MMM HH:mm')]) }}
+                        </flux:text>
+                    @endif
+                @endif
+
                 <div class="flex flex-wrap justify-end gap-2">
                     @if ($isAttending)
                         @if ($isSingleEnrolled)
-                            <flux:button size="sm" variant="danger" wire:click="cancelSingle({{ $selected->id }})">{{ __('Cancel') }}</flux:button>
+                            @if ($isLateCancellation)
+                                <flux:button size="sm" variant="danger" wire:click="cancelSingle({{ $selected->id }})" wire:confirm="{{ $lateCancellationWarning }}">{{ __('Cancel') }}</flux:button>
+                            @else
+                                <flux:button size="sm" variant="danger" wire:click="cancelSingle({{ $selected->id }})">{{ __('Cancel') }}</flux:button>
+                            @endif
                         @else
-                            <flux:button size="sm" variant="ghost" wire:click="markAbsent({{ $selected->id }})">{{ __('Absent this time') }}</flux:button>
+                            @if ($isLateCancellation)
+                                <flux:button size="sm" variant="ghost" wire:click="markAbsent({{ $selected->id }})" wire:confirm="{{ $lateCancellationWarning }}">{{ __('Absent this time') }}</flux:button>
+                            @else
+                                <flux:button size="sm" variant="ghost" wire:click="markAbsent({{ $selected->id }})">{{ __('Absent this time') }}</flux:button>
+                            @endif
                             <flux:button size="sm" variant="danger" wire:click="cancelFixed({{ $selected->id }})">{{ __('Cancel recurring enrollment') }}</flux:button>
                         @endif
                     @elseif ($spotsLeft > 0)

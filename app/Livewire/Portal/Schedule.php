@@ -6,13 +6,16 @@ use App\Actions\Lessons\CancelEnrollment;
 use App\Actions\Lessons\EnrollFixed;
 use App\Actions\Lessons\EnrollSingle;
 use App\Actions\Lessons\MarkAbsence;
+use App\Concerns\DescribesCreditOutcome;
 use App\Enums\EnrollmentType;
 use App\Enums\LessonOccurrenceStatus;
 use App\Enums\MembershipStatus;
+use App\Enums\SubscriptionStatus;
 use App\Exceptions\EnrollmentException;
 use App\Models\EnrollmentAbsence;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
+use App\Models\Subscription;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -30,6 +33,8 @@ use Livewire\Component;
 #[Title('Lesson schedule')]
 class Schedule extends Component
 {
+    use DescribesCreditOutcome;
+
     public ?int $selectedOccurrenceId = null;
 
     /**
@@ -89,11 +94,11 @@ class Schedule extends Component
             ->where('lesson_occurrence_id', $occurrenceId)
             ->firstOrFail();
 
-        $cancelEnrollment->handle($enrollment);
+        $outcome = $cancelEnrollment->handle($enrollment, Auth::user());
 
         $this->refreshLists();
 
-        Flux::toast(variant: 'success', text: __('Enrollment cancelled.'));
+        $this->toastCreditOutcome(__('Enrollment cancelled.'), $outcome);
     }
 
     public function cancelFixed(int $occurrenceId, CancelEnrollment $cancelEnrollment): void
@@ -106,11 +111,11 @@ class Schedule extends Component
             ->where('lesson_id', $occurrence->lesson_id)
             ->firstOrFail();
 
-        $cancelEnrollment->handle($enrollment);
+        $outcome = $cancelEnrollment->handle($enrollment, Auth::user());
 
         $this->refreshLists();
 
-        Flux::toast(variant: 'success', text: __('Recurring enrollment cancelled.'));
+        $this->toastCreditOutcome(__('Recurring enrollment cancelled.'), $outcome);
     }
 
     public function markAbsent(int $occurrenceId, MarkAbsence $markAbsence): void
@@ -123,7 +128,7 @@ class Schedule extends Component
             ->firstOrFail();
 
         try {
-            $markAbsence->handle($enrollment, $occurrence);
+            $outcome = $markAbsence->handle($enrollment, $occurrence, Auth::user());
         } catch (EnrollmentException $exception) {
             Flux::toast(variant: 'danger', text: $exception->getMessage());
 
@@ -132,7 +137,7 @@ class Schedule extends Component
 
         $this->refreshLists();
 
-        Flux::toast(variant: 'success', text: __('Marked absent for this lesson.'));
+        $this->toastCreditOutcome(__('Marked absent for this lesson.'), $outcome);
     }
 
     /**
@@ -192,6 +197,27 @@ class Schedule extends Component
     }
 
     /**
+     * Clubs where the member pays lessons with credits, so the cancellation deadline matters.
+     *
+     * @return array<int, true>
+     */
+    #[Computed]
+    public function creditClubIds(): array
+    {
+        $ids = Subscription::query()
+            ->where('user_id', Auth::id())
+            ->whereNotNull('credits_remaining')
+            ->where(fn ($query) => $query
+                ->where('status', SubscriptionStatus::Active)
+                ->orWhere(fn ($cancelled) => $cancelled
+                    ->where('status', SubscriptionStatus::Cancelled)
+                    ->whereDate('ends_at', '>=', today())))
+            ->pluck('club_id');
+
+        return array_fill_keys($ids->map(fn ($id): int => (int) $id)->all(), true);
+    }
+
+    /**
      * The occurrence shown in the detail modal, taken from the loaded list so
      * the modal costs no extra queries.
      */
@@ -223,6 +249,16 @@ class Schedule extends Component
         return Auth::user()->memberships()
             ->where('status', MembershipStatus::Active)
             ->pluck('club_id');
+    }
+
+    /**
+     * Confirm a cancellation and tell the member what happened to their credits.
+     *
+     * @param  array{refunded: int, forfeited: int}  $outcome
+     */
+    protected function toastCreditOutcome(string $message, array $outcome): void
+    {
+        Flux::toast(variant: $outcome['forfeited'] > 0 ? 'warning' : 'success', text: $this->creditOutcomeMessage($message, $outcome));
     }
 
     /**
