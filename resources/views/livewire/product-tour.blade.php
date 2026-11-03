@@ -4,7 +4,7 @@
             @php($steps = $this->steps)
 
             <div x-data="{ step: 0, total: {{ count($steps) }} }" class="space-y-6">
-                <div class="flex items-center gap-1.5" aria-hidden="true">
+                <div class="flex items-center gap-1.5 pe-10" aria-hidden="true">
                     @foreach ($steps as $index => $tourStep)
                         <button
                             type="button"
