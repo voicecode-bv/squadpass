@@ -8,8 +8,9 @@
         <form method="POST" action="{{ route('register.store') }}" class="relative flex flex-col gap-6">
             @csrf
             <!-- Name -->
-            <div class="grid gap-4 sm:grid-cols-[2fr_1fr_2fr]">
-                <flux:input name="first_name" :label="__('First name')" :value="old('first_name')" type="text" required autofocus autocomplete="given-name" />
+            <flux:input name="first_name" :label="__('First name')" :value="old('first_name')" type="text" required autofocus autocomplete="given-name" />
+
+            <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">
                 <flux:input name="name_prefix" :label="__('Name prefix')" :value="old('name_prefix')" type="text" autocomplete="additional-name" :placeholder="__('e.g. van der')" />
                 <flux:input name="last_name" :label="__('Last name')" :value="old('last_name')" type="text" required autocomplete="family-name" />
             </div>

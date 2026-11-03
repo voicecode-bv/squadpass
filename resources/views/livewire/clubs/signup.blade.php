@@ -12,8 +12,9 @@
             placeholder="Padel Club Amsterdam"
         />
 
-        <div class="grid gap-4 sm:grid-cols-[2fr_1fr_2fr]">
-            <flux:input wire:model="first_name" :label="__('First name')" type="text" required autocomplete="given-name" />
+        <flux:input wire:model="first_name" :label="__('First name')" type="text" required autocomplete="given-name" />
+
+        <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">
             <flux:input wire:model="name_prefix" :label="__('Name prefix')" type="text" autocomplete="additional-name" :placeholder="__('e.g. van der')" />
             <flux:input wire:model="last_name" :label="__('Last name')" type="text" required autocomplete="family-name" />
         </div>
