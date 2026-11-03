@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\SpamProtection;
 use Database\Seeders\DemoClubSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
@@ -159,3 +160,42 @@ test('starting the demo right after the page loads explains why it did not work'
 
     expect(Club::query()->count())->toBe(0);
 });
+
+test('starting a demo remembers the sandbox in a cookie', function () {
+    $component = Livewire::test(StartDemo::class);
+    $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
+
+    $component->call('start');
+
+    $cookie = collect(Cookie::getQueuedCookies())->firstWhere(fn ($cookie) => $cookie->getName() === StartDemo::COOKIE);
+    expect($cookie->getValue())->toBe((string) auth()->id());
+});
+
+test('a visitor with a live sandbox returns to it instead of starting a new one', function () {
+    [$owner, $club] = app(StartDemoSandbox::class)->handle();
+
+    Livewire::withCookie(StartDemo::COOKIE, (string) $owner->id)
+        ->test(StartDemo::class)
+        ->assertSet('canResume', true)
+        ->assertSee(__('Continue your demo'))
+        ->call('start')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('clubs.dashboard', $club));
+
+    expect(auth()->id())->toBe($owner->id)
+        ->and(Club::query()->count())->toBe(1);
+});
+
+test('the demo cookie never logs in to an expired sandbox or a real account', function (string $owner) {
+    $ownerId = match ($owner) {
+        'expired' => tap(app(StartDemoSandbox::class)->handle()[0], fn (User $user) => $this->travel(StartDemoSandbox::LIFETIME_HOURS + 1)->hours())->id,
+        'real' => User::factory()->create()->id,
+    };
+
+    Livewire::withCookie(StartDemo::COOKIE, (string) $ownerId)
+        ->test(StartDemo::class)
+        ->assertSet('canResume', false)
+        ->call('start');
+
+    expect(auth()->id())->not->toBe($ownerId);
+})->with(['expired', 'real']);

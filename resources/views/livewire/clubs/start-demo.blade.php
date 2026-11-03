@@ -7,7 +7,7 @@
     >
         <span wire:loading.remove wire:target="start" class="inline-flex items-center gap-2">
             <flux:icon.play variant="micro" class="size-4" />
-            {{ __('Try the demo') }}
+            {{ $canResume ? __('Continue your demo') : __('Try the demo') }}
         </span>
         <span wire:loading.flex wire:target="start" class="items-center gap-2">
             <flux:icon.loading variant="micro" class="size-4" />

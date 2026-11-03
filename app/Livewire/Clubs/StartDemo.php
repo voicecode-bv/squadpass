@@ -4,9 +4,11 @@ namespace App\Livewire\Clubs;
 
 use App\Actions\Demo\StartDemoSandbox;
 use App\Models\Club;
+use App\Models\User;
 use App\Services\SpamProtection;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -24,6 +26,9 @@ class StartDemo extends Component
     /** Upper bound on live sandboxes, so a bot farm cannot fill the database. */
     public const int MAX_ACTIVE_SANDBOXES = 200;
 
+    /** Remembers the visitor's sandbox owner (encrypted by the cookie middleware), so "Try the demo" reopens it. */
+    public const string COOKIE = 'squadpass_demo';
+
     /**
      * Honeypot: hidden from people, so any value means a bot filled the form.
      */
@@ -32,15 +37,28 @@ class StartDemo extends Component
     #[Locked]
     public string $formStartedAt = '';
 
+    /** Whether this visitor already has a live sandbox to return to. */
+    #[Locked]
+    public bool $canResume = false;
+
     public function mount(SpamProtection $spamProtection): void
     {
         $this->formStartedAt = $spamProtection->startedAtToken();
+        $this->canResume = $this->resumableSandbox() !== null;
     }
 
     public function start(StartDemoSandbox $startDemoSandbox, SpamProtection $spamProtection, ?string $turnstileToken = null): void
     {
         if (Auth::check()) {
             $this->redirectRoute('dashboard');
+
+            return;
+        }
+
+        if ($sandbox = $this->resumableSandbox()) {
+            [$owner, $club] = $sandbox;
+
+            $this->loginAndOpen($owner, $club);
 
             return;
         }
@@ -73,6 +91,39 @@ class StartDemo extends Component
 
         [$owner, $club] = $startDemoSandbox->handle();
 
+        Cookie::queue(self::COOKIE, (string) $owner->id, StartDemoSandbox::LIFETIME_HOURS * 60);
+
+        $this->loginAndOpen($owner, $club);
+    }
+
+    /**
+     * The sandbox this browser started earlier, while it is still live.
+     *
+     * @return array{User, Club}|null
+     */
+    protected function resumableSandbox(): ?array
+    {
+        $ownerId = request()->cookie(self::COOKIE);
+
+        if (! is_string($ownerId) || ! ctype_digit($ownerId)) {
+            return null;
+        }
+
+        $owner = User::query()
+            ->whereKey((int) $ownerId)
+            ->where('demo_expires_at', '>', now())
+            ->first();
+
+        $club = $owner?->staffClubs()
+            ->where('is_demo', true)
+            ->where('demo_expires_at', '>', now())
+            ->first();
+
+        return $owner && $club ? [$owner, $club] : null;
+    }
+
+    protected function loginAndOpen(User $owner, Club $club): void
+    {
         Auth::login($owner);
         session()->regenerate();
 
