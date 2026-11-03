@@ -15,6 +15,7 @@ enum StaffPermission: string
     case Billing = 'billing';
     case Forms = 'forms';
     case Tickets = 'tickets';
+    case News = 'news';
     case Setup = 'setup';
     case ClubDetails = 'club_details';
 
@@ -28,6 +29,7 @@ enum StaffPermission: string
             self::Billing => __('Billing'),
             self::Forms => __('Forms'),
             self::Tickets => __('Support'),
+            self::News => __('News'),
             self::Setup => __('Trainers & rooms'),
             self::ClubDetails => __('Club details'),
         };
@@ -43,6 +45,7 @@ enum StaffPermission: string
             self::Billing => __('Strip cards, subscriptions, invoices and payments.'),
             self::Forms => __('Build forms and read submissions.'),
             self::Tickets => __('Answer support tickets from members.'),
+            self::News => __('Post news and announcements for members.'),
             self::Setup => __('Invite trainers and manage rooms.'),
             self::ClubDetails => __('Name, photo, online registration, cancellation deadline and credit expiry.'),
         };
@@ -57,9 +60,9 @@ enum StaffPermission: string
     {
         return [
             'manager' => ['label' => __('Manager'), 'permissions' => self::cases()],
-            'desk' => ['label' => __('Front desk'), 'permissions' => [self::Members, self::CheckIns, self::Lessons]],
+            'desk' => ['label' => __('Front desk'), 'permissions' => [self::Members, self::CheckIns, self::Lessons, self::News]],
             'finance' => ['label' => __('Finance'), 'permissions' => [self::Members, self::Billing]],
-            'support' => ['label' => __('Support'), 'permissions' => [self::Members, self::Tickets]],
+            'support' => ['label' => __('Support'), 'permissions' => [self::Members, self::Tickets, self::News]],
         ];
     }
 

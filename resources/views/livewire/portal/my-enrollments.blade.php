@@ -33,14 +33,14 @@
 
                     <div class="relative flex items-center justify-between gap-4">
                         <div class="min-w-0">
-                            <flux:heading class="sp-card-title truncate transition group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $enrollment->lesson->name }}</flux:heading>
+                            <flux:heading class="truncate text-base leading-tight font-semibold text-zinc-900 dark:text-white">{{ $enrollment->lesson->name }}</flux:heading>
                             <flux:text class="truncate text-sm">
                                 {{ $enrollment->lesson->club->name }} ·
                                 {{ ucfirst(\Illuminate\Support\Carbon::now()->startOfWeek()->addDays($enrollment->lesson->day_of_week - 1)->dayName) }}
                                 {{ substr($enrollment->lesson->start_time, 0, 5) }}
                             </flux:text>
                         </div>
-                        <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 transition hover:scale-105">
+                        <flux:button size="sm" variant="ghost" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 text-red-600! dark:text-red-400!">
                             {{ __('Cancel recurring enrollment') }}
                         </flux:button>
                     </div>
@@ -68,7 +68,7 @@
                                 <span class="text-lg leading-none font-bold">{{ $enrollment->occurrence->starts_at->timezone($timezone)->format('j') }}</span>
                             </div>
                             <div class="min-w-0">
-                                <flux:heading class="sp-card-title truncate transition group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $enrollment->occurrence->lesson->name }}</flux:heading>
+                                <flux:heading class="truncate text-base leading-tight font-semibold text-zinc-900 dark:text-white">{{ $enrollment->occurrence->lesson->name }}</flux:heading>
                                 <flux:text class="truncate text-sm">
                                     {{ $enrollment->occurrence->club->name }} ·
                                     {{ $enrollment->occurrence->starts_at->timezone($timezone)->isoFormat('dd D MMM HH:mm') }}
@@ -85,11 +85,11 @@
                             </div>
                         </div>
                         @if ($enrollment->credits_used > 0 && ! $enrollment->occurrence->isFreeToCancel())
-                            <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" wire:confirm="{{ __('The cancellation deadline has passed. If you cancel now, your credit will not be refunded. Continue?') }}" class="shrink-0 transition hover:scale-105">
+                            <flux:button size="sm" variant="ghost" wire:click="cancel({{ $enrollment->id }})" wire:confirm="{{ __('The cancellation deadline has passed. If you cancel now, your credit will not be refunded. Continue?') }}" class="shrink-0 text-red-600! dark:text-red-400!">
                                 {{ __('Cancel') }}
                             </flux:button>
                         @else
-                            <flux:button size="sm" variant="danger" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 transition hover:scale-105">
+                            <flux:button size="sm" variant="ghost" wire:click="cancel({{ $enrollment->id }})" class="shrink-0 text-red-600! dark:text-red-400!">
                                 {{ __('Cancel') }}
                             </flux:button>
                         @endif

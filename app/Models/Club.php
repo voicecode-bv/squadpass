@@ -187,6 +187,14 @@ class Club extends Model implements MollieAccount
     }
 
     /**
+     * @return HasMany<NewsPost, $this>
+     */
+    public function newsPosts(): HasMany
+    {
+        return $this->hasMany(NewsPost::class);
+    }
+
+    /**
      * @return HasMany<Lesson, $this>
      */
     public function lessons(): HasMany

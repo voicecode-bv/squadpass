@@ -5,13 +5,20 @@
     />
 
     @if (auth()->user()->needsNameReview())
-        <flux:callout icon="information-circle" variant="secondary">
-            <flux:callout.heading>{{ __('Check your name') }}</flux:callout.heading>
-            <flux:callout.text>{{ __('We split your name into first name, name prefix and last name. Check that it is right.') }}</flux:callout.text>
-            <x-slot name="actions">
-                <flux:button size="sm" :href="route('profile.edit')" wire:navigate>{{ __('Check my name') }}</flux:button>
-            </x-slot>
-        </flux:callout>
+        <x-portal.notice :heading="__('Check your name')" :href="route('profile.edit')" :action="__('Check my name')">
+            {{ __('We split your name into first name, name prefix and last name. Check that it is right.') }}
+        </x-portal.notice>
+    @endif
+
+    @if ($this->formsToFillIn->isNotEmpty())
+        <x-portal.notice
+            :heading="trans_choice('You still have :count form to fill in|You still have :count forms to fill in', $this->formsToFillIn->count())"
+            :href="$this->formsToFillIn->count() === 1 ? route('portal.forms.fill', $this->formsToFillIn->first()) : route('portal.forms')"
+            :action="$this->formsToFillIn->count() === 1 ? __('Fill in') : __('View my forms')"
+            data-test="forms-to-fill-in"
+        >
+            {{ $this->formsToFillIn->take(3)->map(fn ($form) => $form->name.' · '.$form->club->name)->join(', ') }}@if ($this->formsToFillIn->count() > 3), …@endif
+        </x-portal.notice>
     @endif
 
     {{-- KPI band --}}

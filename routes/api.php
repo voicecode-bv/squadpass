@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\ClubController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\FormSubmissionController;
+use App\Http\Controllers\Api\V1\NewsController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\StripCardController;
@@ -49,6 +50,8 @@ Route::prefix('v1')->group(function () {
 
         Route::get('trainer/lessons', [TrainerLessonController::class, 'index']);
         Route::get('trainer/occurrences/{occurrence}/participants', [TrainerParticipantController::class, 'index'])->whereNumber('occurrence');
+
+        Route::get('news', [NewsController::class, 'index']);
 
         Route::get('tickets', [TicketController::class, 'index']);
         Route::get('tickets/options', [TicketController::class, 'options']);

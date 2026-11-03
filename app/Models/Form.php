@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Enums\FormAudience;
 use App\Enums\FormStatus;
+use App\Enums\MembershipStatus;
 use Database\Factories\FormFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -107,5 +109,45 @@ class Form extends Model
     protected function published(Builder $query): void
     {
         $query->where('status', FormStatus::Published)->whereNotNull('published_version_id');
+    }
+
+    /**
+     * Published forms a member is asked to fill in: open to all members, or
+     * assigned to them, at clubs where they are an active member.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function forMember(Builder $query, int $userId): void
+    {
+        $query->published()
+            ->whereIn('club_id', fn ($memberships) => $memberships
+                ->select('club_id')
+                ->from('memberships')
+                ->where('user_id', $userId)
+                ->where('status', MembershipStatus::Active->value))
+            ->where(fn ($audience) => $audience
+                ->where('audience', FormAudience::AllMembers->value)
+                ->orWhereHas('assignments', fn ($assignment) => $assignment->where('user_id', $userId)));
+    }
+
+    /**
+     * The member's forms that still need to be filled in: no submission yet, or
+     * one that no longer locks the form (reopened, or a newer version published).
+     *
+     * @return EloquentCollection<int, self>
+     */
+    public static function stillToFillInFor(int $userId): EloquentCollection
+    {
+        $forms = self::query()->forMember($userId)->with('club:id,name,slug')->orderBy('name')->get();
+
+        $submissions = FormSubmission::query()
+            ->where('user_id', $userId)
+            ->where('is_current', true)
+            ->whereIn('form_id', $forms->modelKeys())
+            ->get()
+            ->keyBy('form_id');
+
+        return $forms->reject(fn (self $form): bool => (bool) $submissions->get($form->id)?->locks($form))->values();
     }
 }

@@ -5,6 +5,8 @@ use App\Enums\PaymentStatus;
 use App\Enums\StaffRole;
 use App\Livewire\Dashboard;
 use App\Models\Club;
+use App\Models\Form;
+use App\Models\FormSubmission;
 use App\Models\Lesson;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
@@ -224,4 +226,34 @@ test('a superadmin with a single club keeps the personal dashboard', function ()
     Livewire::actingAs($superadmin)
         ->test(Dashboard::class)
         ->assertNoRedirect();
+});
+
+test('a member is reminded of forms they still have to fill in', function () {
+    $club = Club::factory()->create();
+    $member = User::factory()->create();
+    $club->addMember($member);
+    $open = Form::factory()->for($club)->published()->create(['name' => 'Intakeformulier']);
+    $sentIn = Form::factory()->for($club)->published()->create(['name' => 'Gezondheidsverklaring']);
+    FormSubmission::factory()->create(['form_id' => $sentIn->id, 'user_id' => $member->id]);
+    Form::factory()->published()->create(['name' => 'Formulier van een andere club']);
+
+    Livewire::actingAs($member)
+        ->test(Dashboard::class)
+        ->assertSeeHtml('data-test="forms-to-fill-in"')
+        ->assertSee('Intakeformulier')
+        ->assertDontSee('Gezondheidsverklaring')
+        ->assertDontSee('Formulier van een andere club')
+        ->assertSeeHtml('href="'.route('portal.forms.fill', $open).'"');
+});
+
+test('a member with every form sent in gets no reminder', function () {
+    $club = Club::factory()->create();
+    $member = User::factory()->create();
+    $club->addMember($member);
+    $form = Form::factory()->for($club)->published()->create();
+    FormSubmission::factory()->create(['form_id' => $form->id, 'user_id' => $member->id]);
+
+    Livewire::actingAs($member)
+        ->test(Dashboard::class)
+        ->assertDontSeeHtml('data-test="forms-to-fill-in"');
 });

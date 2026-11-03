@@ -39,26 +39,24 @@
     @else
         <div class="flex flex-col gap-3">
             @foreach ($this->tickets as $ticketIndex => $ticket)
-                <x-portal.card :delay="min(600, $ticketIndex * 60)" wire:key="ticket-{{ $ticket->id }}" class="p-4">
-                    <span class="absolute inset-y-0 left-0 w-1 {{ $ticket->isClosed() ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-blue-600' }}" aria-hidden="true"></span>
-
-                    <a href="{{ route('portal.tickets.show', $ticket) }}" wire:navigate class="relative flex flex-col gap-3 pl-3 sm:flex-row sm:items-center sm:justify-between">
+                <x-portal.card :delay="min(600, $ticketIndex * 60)" wire:key="ticket-{{ $ticket->id }}" data-test="ticket-card-{{ $ticket->id }}">
+                    <a href="{{ route('portal.tickets.show', $ticket) }}" wire:navigate class="flex items-center justify-between gap-4 px-5 py-4">
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono text-xs font-semibold text-zinc-400 dark:text-zinc-500">{{ $ticket->reference() }}</span>
-                                <span class="truncate text-xs text-zinc-400 dark:text-zinc-500">{{ $ticket->club->name }}</span>
-                            </div>
-                            <flux:heading class="sp-card-title truncate transition group-hover:text-blue-600 dark:group-hover:text-blue-400">{{ $ticket->subject }}</flux:heading>
-                            <flux:text class="text-xs">
-                                {{ __('Last update') }}: {{ $ticket->updated_at->timezone($ticket->club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}
-                            </flux:text>
+                            <h3 @class([
+                                'truncate text-base leading-tight font-semibold transition group-hover:text-blue-600 dark:group-hover:text-blue-400',
+                                'text-zinc-900 dark:text-white' => ! $ticket->isClosed(),
+                                'text-zinc-500 dark:text-zinc-400' => $ticket->isClosed(),
+                            ])>{{ $ticket->subject }}</h3>
+                            <p class="sp-card-subtitle mt-1 truncate">
+                                {{ $ticket->reference() }} · {{ $ticket->club->name }} · {{ $ticket->status->label() }} · {{ $ticket->priority->label() }}
+                                · {{ __('Last update') }} {{ $ticket->updated_at->timezone($ticket->club->timezone)->isoFormat('D MMM YYYY, HH:mm') }}
+                            </p>
                         </div>
 
-                        <div class="flex shrink-0 flex-wrap items-center gap-2">
-                            <flux:badge size="sm" :color="$ticket->status->color()">{{ $ticket->status->label() }}</flux:badge>
-                            <flux:badge size="sm" :color="$ticket->priority->color()">{{ $ticket->priority->label() }}</flux:badge>
-                            <flux:icon.arrow-right class="size-4 text-zinc-300 transition duration-300 group-hover:translate-x-1 group-hover:text-blue-500 dark:text-zinc-600" />
-                        </div>
+                        <span class="flex shrink-0 items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">
+                            <span class="max-sm:hidden">{{ __('View') }}</span>
+                            <span aria-hidden="true" class="transition duration-200 group-hover:translate-x-1">&rarr;</span>
+                        </span>
                     </a>
                 </x-portal.card>
             @endforeach

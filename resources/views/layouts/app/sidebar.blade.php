@@ -58,6 +58,21 @@
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
 
+                    {{-- Staff who post news open the club's news; members open their feed. --}}
+                    @php
+                        $managesNews = $currentClub && $user->can('access', [$currentClub, \App\Enums\StaffPermission::News]);
+                    @endphp
+
+                    @if ($managesNews)
+                        <flux:sidebar.item icon="megaphone" :href="route('clubs.news', $currentClub)" :current="request()->routeIs('clubs.news')" wire:navigate>
+                            {{ __('News') }}
+                        </flux:sidebar.item>
+                    @elseif ($user->memberships()->exists())
+                        <flux:sidebar.item icon="megaphone" :href="route('portal.news')" :current="request()->routeIs('portal.news')" wire:navigate>
+                            {{ __('News') }}
+                        </flux:sidebar.item>
+                    @endif
+
                     @if ($currentClub && (
                         $user->can('update', $currentClub)
                         || $user->can('access', [$currentClub, \App\Enums\StaffPermission::ClubDetails])
@@ -145,6 +160,12 @@
                     </flux:sidebar.group>
 
                     <flux:sidebar.group :heading="__('My membership')" data-sidebar-group="membership" class="grid">
+                        {{-- News staff also get their member feed here; the top item opens the club's news for them. --}}
+                        @if ($managesNews)
+                            <flux:sidebar.item icon="megaphone" :href="route('portal.news')" :current="request()->routeIs('portal.news')" wire:navigate>
+                                {{ __('My news') }}
+                            </flux:sidebar.item>
+                        @endif
                         <flux:sidebar.item icon="ticket" :href="route('portal.cards')" :current="request()->routeIs('portal.cards*')" wire:navigate>
                             {{ __('My strip cards') }}
                         </flux:sidebar.item>

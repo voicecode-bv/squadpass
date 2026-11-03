@@ -16,6 +16,7 @@ use App\Livewire\Invitations;
 use App\Livewire\Invoices;
 use App\Livewire\Lessons;
 use App\Livewire\Members;
+use App\Livewire\News;
 use App\Livewire\Portal;
 use App\Livewire\Rooms;
 use App\Livewire\StripCardPlans;
@@ -90,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('forms/{form}/edit', Forms\Builder::class)->name('clubs.forms.edit');
         Route::livewire('forms/{form}/submissions', Forms\Submissions::class)->name('clubs.forms.submissions');
         Route::livewire('forms/{form}/submissions/{submission}', Forms\SubmissionShow::class)->name('clubs.forms.submissions.show');
+        Route::livewire('news', News\Index::class)->name('clubs.news');
         Route::livewire('tickets', Tickets\Index::class)->name('clubs.tickets');
         Route::livewire('tickets/{ticket}', Tickets\Show::class)->name('clubs.tickets.show');
     });
@@ -105,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('forms', Portal\MyForms::class)->name('portal.forms');
         Route::livewire('forms/{form}', Portal\FormFill::class)->name('portal.forms.fill');
         Route::get('forms/{submission}/signature/{field}', FormSignatureController::class)->name('portal.forms.signature');
+        Route::livewire('news', Portal\News::class)->name('portal.news');
         Route::livewire('tickets', Portal\Tickets::class)->name('portal.tickets');
         Route::livewire('tickets/{ticket}', Portal\TicketShow::class)->name('portal.tickets.show');
     });

@@ -10,6 +10,7 @@ use App\Enums\StaffPermission;
 use App\Enums\SubscriptionStatus;
 use App\Models\CheckIn;
 use App\Models\Club;
+use App\Models\Form;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
 use App\Models\Payment;
@@ -28,6 +29,8 @@ use Livewire\Component;
  *
  * @property-read Collection<int, Club> $staffClubs
  * @property-read list<int> $billingClubIds
+ * @property-read Collection<int, Form> $formsToFillIn
+ * @property-read bool $isMember
  * @property-read array{labels: list<string>, values: list<int>} $newMembersPerMonth
  */
 #[Title('Dashboard')]
@@ -41,6 +44,17 @@ class Dashboard extends Component
         if ($club = Auth::user()->soleStaffClub()) {
             $this->redirectRoute('clubs.dashboard', ['club' => $club], navigate: true);
         }
+    }
+
+    /**
+     * Forms the member still has to fill in, for the reminder at the top.
+     *
+     * @return Collection<int, Form>
+     */
+    #[Computed]
+    public function formsToFillIn(): Collection
+    {
+        return $this->isMember ? Form::stillToFillInFor(Auth::user()->id) : new Collection;
     }
 
     #[Computed]

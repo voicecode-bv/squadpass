@@ -2,8 +2,6 @@
 
 namespace App\Livewire\Portal;
 
-use App\Enums\FormAudience;
-use App\Enums\MembershipStatus;
 use App\Models\Form;
 use App\Models\FormSubmission;
 use Illuminate\Contracts\View\View;
@@ -30,19 +28,9 @@ class MyForms extends Component
     #[Computed]
     public function forms(): Collection
     {
-        $userId = Auth::id();
-
         return Form::query()
-            ->published()
+            ->forMember(Auth::user()->id)
             ->with('club')
-            ->whereIn('club_id', fn ($query) => $query
-                ->select('club_id')
-                ->from('memberships')
-                ->where('user_id', $userId)
-                ->where('status', MembershipStatus::Active->value))
-            ->where(fn ($query) => $query
-                ->where('audience', FormAudience::AllMembers->value)
-                ->orWhereHas('assignments', fn ($assignment) => $assignment->where('user_id', $userId)))
             ->orderBy('name')
             ->get();
     }
