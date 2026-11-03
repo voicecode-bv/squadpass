@@ -115,7 +115,7 @@
                             <flux:text class="relative text-sm">{{ $plan->description }}</flux:text>
                         @endif
                         <flux:text class="relative text-sm">
-                            {{ $plan->isUnlimited() ? __('Unlimited lessons') : trans_choice(':count lesson credit per period|:count lesson credits per period', $plan->credits) }}
+                            {{ $plan->isUnlimited() ? __('Unlimited lessons') : trans_choice(':count lesson credit per month|:count lesson credits per month', $plan->credits) }}
                         </flux:text>
                         <div class="relative mt-auto flex items-center justify-between pt-2">
                             <div>

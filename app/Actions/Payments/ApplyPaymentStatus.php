@@ -93,6 +93,7 @@ class ApplyPaymentStatus
             'status' => SubscriptionStatus::Active,
             'mollie_mandate_id' => $result->mandateId,
             'next_billing_at' => $subscription->plan->interval->addTo($subscription->starts_at),
+            'next_credits_at' => $subscription->nextCreditDateAfter(today()),
             'credits_remaining' => $subscription->plan->isUnlimited() ? null : 0,
         ]);
 

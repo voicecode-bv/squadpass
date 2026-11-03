@@ -7,12 +7,11 @@ use App\Enums\SubscriptionStatus;
 use App\Models\MollieCustomer;
 use App\Models\Payment;
 use App\Models\Subscription;
-use App\Services\Credits\CreditLedger;
 use App\Services\Mollie\MollieGateway;
 
 class ChargeSubscription
 {
-    public function __construct(protected MollieGateway $gateway, protected CreditLedger $ledger) {}
+    public function __construct(protected MollieGateway $gateway) {}
 
     /**
      * Charge one due subscription via its mandate and advance the billing date.
@@ -36,16 +35,10 @@ class ChargeSubscription
         }
 
         // Advance the billing date first so a slow webhook can never cause a double
-        // charge, and add the lesson credits for the new period. Leftover credits
-        // stay until their own expiry date.
+        // charge. Lesson credits are added monthly by `credits:grant`, apart from billing.
         $subscription->update([
             'next_billing_at' => $plan->interval->addTo($subscription->next_billing_at ?? today()),
-            ...($plan->isUnlimited() ? ['credits_remaining' => null] : []),
         ]);
-
-        if (! $plan->isUnlimited()) {
-            $this->ledger->grant($subscription, $plan->credits);
-        }
 
         $result = $this->gateway->createPayment(
             account: $club,

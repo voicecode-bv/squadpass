@@ -5,9 +5,10 @@ use App\Actions\Lessons\CancelOccurrence;
 use App\Actions\Lessons\EnrollFixed;
 use App\Actions\Lessons\EnrollSingle;
 use App\Actions\Lessons\MarkAbsence;
-use App\Actions\Payments\ChargeSubscription;
+use App\Enums\BillingInterval;
 use App\Enums\CreditTransactionType;
 use App\Enums\StaffRole;
+use App\Enums\SubscriptionStatus;
 use App\Livewire\Clubs\Settings;
 use App\Livewire\Members\Show;
 use App\Livewire\Portal\Schedule;
@@ -18,14 +19,11 @@ use App\Models\CreditTransaction;
 use App\Models\Lesson;
 use App\Models\LessonEnrollment;
 use App\Models\LessonOccurrence;
-use App\Models\MollieCustomer;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Credits\CreditLedger;
-use App\Services\Mollie\MollieGateway;
 use Livewire\Livewire;
-use Tests\Fakes\FakeMollieGateway;
 
 function policyOccurrence(Lesson $lesson, int $hoursAhead): LessonOccurrence
 {
@@ -182,21 +180,55 @@ test('expired credits are removed from the balance and logged', function () {
         ->and(creditTimeline($this->member))->toBe(['granted:4', 'expired:-4']);
 });
 
-test('the recurring charge adds credits on top of the unexpired leftover', function () {
-    $this->app->instance(MollieGateway::class, new FakeMollieGateway);
-    $this->club->update(['mollie_api_key' => 'test_key']);
-    MollieCustomer::create([
-        'club_id' => $this->club->id,
-        'user_id' => $this->member->id,
-        'mollie_customer_id' => 'cst_x',
-    ]);
-    $this->subscription->update(['next_billing_at' => today()]);
+test('the monthly grant adds credits on top of the unexpired leftover and moves to the next month', function () {
+    $this->travelTo('2026-03-31 03:00');
+    $this->subscription->update(['starts_at' => '2026-01-31', 'next_credits_at' => '2026-03-31']);
 
-    app(ChargeSubscription::class)->handle($this->subscription->refresh());
+    $this->artisan('credits:grant')->assertSuccessful();
 
-    expect($this->subscription->refresh()->credits_remaining)->toBe(8)
-        ->and(CreditGrant::query()->where('subscription_id', $this->subscription->id)->count())->toBe(2);
+    $this->subscription->refresh();
+    expect($this->subscription->credits_remaining)->toBe(8)
+        ->and($this->subscription->next_credits_at->toDateString())->toBe('2026-04-30');
 });
+
+test('a yearly plan still gets its credits every month', function () {
+    $this->travelTo('2026-01-15 03:00');
+    $this->plan->update(['interval' => BillingInterval::Yearly]);
+    $this->subscription->update(['starts_at' => '2026-01-15', 'next_billing_at' => '2027-01-15', 'next_credits_at' => '2026-02-15']);
+
+    $this->travelTo('2026-02-15 03:00');
+    $this->artisan('credits:grant');
+    $this->travelTo('2026-03-15 03:00');
+    $this->artisan('credits:grant');
+
+    $this->subscription->refresh();
+    expect(CreditGrant::query()->where('subscription_id', $this->subscription->id)->count())->toBe(3)
+        ->and($this->subscription->next_credits_at->toDateString())->toBe('2026-04-15')
+        ->and($this->subscription->next_billing_at->toDateString())->toBe('2027-01-15');
+});
+
+test('the monthly grant runs only once per month', function () {
+    $this->subscription->update(['next_credits_at' => today()]);
+
+    $this->artisan('credits:grant');
+    $this->artisan('credits:grant');
+
+    expect($this->subscription->refresh()->credits_remaining)->toBe(8);
+});
+
+test('subscriptions without access get no monthly credits', function (string $state) {
+    $this->subscription->update([
+        'next_credits_at' => today(),
+        ...match ($state) {
+            'past due' => ['status' => SubscriptionStatus::PastDue],
+            'ended' => ['status' => SubscriptionStatus::Cancelled, 'ends_at' => today()->subDay()],
+        },
+    ]);
+
+    $this->artisan('credits:grant');
+
+    expect($this->subscription->refresh()->credits_remaining)->toBe(4);
+})->with(['past due', 'ended']);
 
 test('credits are spent from the grant that expires first', function () {
     $laterGrant = CreditGrant::factory()->create([

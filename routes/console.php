@@ -8,6 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+Schedule::command('credits:grant')->dailyAt('02:45');
 Schedule::command('lessons:generate-occurrences')->dailyAt('03:00');
 Schedule::command('subscriptions:charge')->dailyAt('06:00');
 Schedule::command('enrollments:end-uncovered')->dailyAt('06:15');

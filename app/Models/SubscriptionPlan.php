@@ -19,7 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property int $price_cents
  * @property BillingInterval $interval
- * @property int|null $credits null means unlimited; otherwise lesson credits per billing period
+ * @property int|null $credits null means unlimited; otherwise lesson credits added every month, also on yearly plans
  * @property bool $active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

@@ -12,7 +12,6 @@
     ":count invoice queued.|:count invoices queued.": ":count factuur ingepland.|:count facturen ingepland.",
     ":count invoice synced from Moneybird.|:count invoices synced from Moneybird.": ":count factuur gesynchroniseerd vanuit Moneybird.|:count facturen gesynchroniseerd vanuit Moneybird.",
     ":count invoice|:count invoices": ":count factuur|:count facturen",
-    ":count lesson credit per period|:count lesson credits per period": ":count lescredit per periode|:count lescredits per periode",
     ":count month|:count months": ":count maand|:count maanden",
     ":count paid payment without invoice|:count paid payments without invoice": ":count betaalde betaling zonder factuur|:count betaalde betalingen zonder factuur",
     ":count row processed of :total|:count rows processed of :total": ":count van :total rij verwerkt|:count van :total rijen verwerkt",
@@ -446,13 +445,11 @@
     "Last used :time": "Laatst gebruikt :time",
     "Last visit": "Laatste bezoek",
     "Late": "Te laat",
-    "Leave empty for unlimited. Every lesson reservation (one-time or recurring) uses 1 credit.": "Laat leeg voor onbeperkt. Elke lesreservering (los of vast) kost 1 credit.",
     "Leave empty to price the plan on request: clubs cannot take it out themselves and a superadmin activates it.": "Laat leeg voor een prijs op aanvraag: clubs kunnen het pakket dan niet zelf afsluiten en een superadmin activeert het.",
     "Lesson": "Les",
     "Lesson (optional)": "Les (optioneel)",
     "Lesson created.": "Les aangemaakt.",
     "Lesson created.|:count lessons created.": "Les aangemaakt.|:count lessen aangemaakt.",
-    "Lesson credits per period": "Lescredits per periode",
     "Lesson enrollment": "Lesinschrijving",
     "Lesson occurrence cancelled.": "Lesmoment geannuleerd.",
     "Lesson occurrence restored.": "Lesmoment hersteld.",
@@ -1403,5 +1400,8 @@
     "By the club": "Door de club",
     "What happened to your lesson credits, newest first.": "Wat er met jouw lescredits is gebeurd, nieuwste eerst.",
     ":count booking was released and its credit refunded.|:count bookings were released and their credits refunded.": ":count reservering is vrijgegeven en de credit teruggezet.|:count reserveringen zijn vrijgegeven en de credits teruggezet.",
-    "Cancel this lesson? Booked members lose their spot and get their credit back. Restoring the lesson does not rebook them.": "Deze les annuleren? Ingeschreven leden verliezen hun plek en krijgen hun credit terug. Als je de les herstelt, worden ze niet opnieuw ingeschreven."
+    "Cancel this lesson? Booked members lose their spot and get their credit back. Restoring the lesson does not rebook them.": "Deze les annuleren? Ingeschreven leden verliezen hun plek en krijgen hun credit terug. Als je de les herstelt, worden ze niet opnieuw ingeschreven.",
+    "Lesson credits per month": "Lescredits per maand",
+    "Leave empty for unlimited. Credits are added every month, also on yearly plans. Every lesson reservation (one-time or recurring) uses 1 credit.": "Laat leeg voor onbeperkt. Credits worden elke maand toegevoegd, ook bij jaarabonnementen. Elke lesreservering (eenmalig of vast) kost 1 credit.",
+    ":count lesson credit per month|:count lesson credits per month": ":count lescredit per maand|:count lescredits per maand"
 }

@@ -75,8 +75,8 @@
 
             <flux:input
                 wire:model="credits"
-                :label="__('Lesson credits per period')"
-                :description="__('Leave empty for unlimited. Every lesson reservation (one-time or recurring) uses 1 credit.')"
+                :label="__('Lesson credits per month')"
+                :description="__('Leave empty for unlimited. Credits are added every month, also on yearly plans. Every lesson reservation (one-time or recurring) uses 1 credit.')"
                 type="number"
                 min="1"
             />

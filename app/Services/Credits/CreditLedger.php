@@ -46,6 +46,47 @@ class CreditLedger
     }
 
     /**
+     * Add the monthly credits of a subscription once its credit date has come,
+     * and move that date a month on. Billing has its own schedule: a yearly plan
+     * still gets its credits every month. Safe to run twice for the same month.
+     */
+    public function grantMonthly(Subscription $subscription): bool
+    {
+        $due = $subscription->next_credits_at;
+
+        if ($due === null || $due->isAfter(today())) {
+            return false;
+        }
+
+        $next = $subscription->nextCreditDateAfter(today());
+
+        return DB::transaction(function () use ($subscription, $due, $next): bool {
+            $claimed = Subscription::query()
+                ->whereKey($subscription->id)
+                ->whereDate('next_credits_at', $due)
+                ->update(['next_credits_at' => $next->toDateString()]) === 1;
+
+            if (! $claimed) {
+                return false;
+            }
+
+            $subscription->next_credits_at = $next;
+            $plan = $subscription->plan;
+
+            if ($plan->isUnlimited()) {
+                Subscription::query()->whereKey($subscription->id)->update(['credits_remaining' => null]);
+                $subscription->credits_remaining = null;
+
+                return true;
+            }
+
+            $this->grant($subscription, $plan->credits);
+
+            return true;
+        });
+    }
+
+    /**
      * Spend credits on an enrollment, taking them from the grant that expires first.
      * Unlimited subscriptions always succeed; returns false when too few credits remain.
      */

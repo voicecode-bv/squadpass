@@ -131,8 +131,8 @@ test('an absence refunds one credit and rejoining consumes it again', function (
         ->and($enrollment->refresh()->credits_used)->toBe(2);
 });
 
-test('the recurring charge refills the credits for the new period', function () {
-    $this->app->instance(MollieGateway::class, $gateway = new FakeMollieGateway);
+test('the recurring charge leaves the credits alone', function () {
+    $this->app->instance(MollieGateway::class, new FakeMollieGateway);
 
     $this->club->update(['mollie_api_key' => 'test_key']);
     MollieCustomer::create([
@@ -145,7 +145,7 @@ test('the recurring charge refills the credits for the new period', function () 
 
     app(ChargeSubscription::class)->handle($this->subscription->refresh());
 
-    expect($this->subscription->refresh()->credits_remaining)->toBe(4);
+    expect($this->subscription->refresh()->credits_remaining)->toBe(0);
 });
 
 test('a newly generated occurrence consumes a credit for a recurring member', function () {

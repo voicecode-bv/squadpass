@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\SubscriptionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $ends_at
  * @property Carbon|null $cancelled_at
  * @property Carbon|null $next_billing_at
+ * @property CarbonInterface|null $next_credits_at date the next monthly batch of credits is added, independent of billing
  * @property int|null $credits_remaining null means unlimited
  * @property string|null $mollie_mandate_id
  * @property Carbon|null $created_at
@@ -28,7 +30,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'club_id', 'user_id', 'subscription_plan_id', 'status',
-    'starts_at', 'ends_at', 'cancelled_at', 'next_billing_at', 'credits_remaining', 'mollie_mandate_id',
+    'starts_at', 'ends_at', 'cancelled_at', 'next_billing_at', 'next_credits_at', 'credits_remaining', 'mollie_mandate_id',
 ])]
 class Subscription extends Model
 {
@@ -46,6 +48,7 @@ class Subscription extends Model
             'ends_at' => 'date',
             'cancelled_at' => 'datetime',
             'next_billing_at' => 'date',
+            'next_credits_at' => 'date',
             'credits_remaining' => 'integer',
         ];
     }
@@ -170,6 +173,21 @@ class Subscription extends Model
     public function creditGrants(): HasMany
     {
         return $this->hasMany(CreditGrant::class);
+    }
+
+    /**
+     * The first monthly credit date after the given date. Counted from the start
+     * date, so a subscription started on the 31st never drifts to the 28th.
+     */
+    public function nextCreditDateAfter(CarbonInterface $date): CarbonInterface
+    {
+        $months = 1;
+
+        while ($this->starts_at->copy()->addMonthsNoOverflow($months)->lte($date)) {
+            $months++;
+        }
+
+        return $this->starts_at->copy()->addMonthsNoOverflow($months);
     }
 
     /**

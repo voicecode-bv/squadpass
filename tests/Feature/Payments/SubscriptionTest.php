@@ -62,6 +62,8 @@ test('a paid first payment activates the subscription with mandate and next bill
     expect($subscription->status)->toBe(SubscriptionStatus::Active)
         ->and($subscription->mollie_mandate_id)->toBe('mdt_test123')
         ->and($subscription->next_billing_at->toDateString())
+        ->toBe(today()->addMonthNoOverflow()->toDateString())
+        ->and($subscription->next_credits_at->toDateString())
         ->toBe(today()->addMonthNoOverflow()->toDateString());
 });
 
