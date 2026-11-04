@@ -15,19 +15,15 @@
     </x-portal.hero>
 
     @unless ($this->canAddMembers)
-        <flux:callout icon="lock-closed" variant="warning">
-            <flux:callout.heading>{{ $club->hasMemberAccess() ? __('Member limit reached') : __('No active SquadPass plan') }}</flux:callout.heading>
-            <flux:callout.text>
-                {{ $club->hasMemberAccess()
-                    ? __('Your plan allows :limit active members. Upgrade the plan to add more members.', ['limit' => number_format($club->memberLimit() ?? 0, 0, ',', '.')])
-                    : __('Choose a plan to add members again. Existing members keep their access.') }}
-            </flux:callout.text>
-            @can('update', $club)
-                <x-slot name="actions">
-                    <flux:button size="sm" variant="primary" :href="route('clubs.plan', $club)" wire:navigate>{{ __('View plans') }}</flux:button>
-                </x-slot>
-            @endcan
-        </flux:callout>
+        <x-portal.notice
+            :heading="$club->hasMemberAccess() ? __('Member limit reached') : __('No active SquadPass plan')"
+            :href="auth()->user()->can('update', $club) ? route('clubs.plan', $club) : null"
+            :action="__('View plans')"
+        >
+            {{ $club->hasMemberAccess()
+                ? __('Your plan allows :limit active members. Upgrade the plan to add more members.', ['limit' => number_format($club->memberLimit() ?? 0, 0, ',', '.')])
+                : __('Choose a plan to add members again. Existing members keep their access.') }}
+        </x-portal.notice>
     @endunless
 
     <div class="flex flex-col gap-3 sm:flex-row">
