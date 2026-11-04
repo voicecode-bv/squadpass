@@ -95,6 +95,7 @@ document.addEventListener('alpine:init', () => {
      */
     window.Alpine.data('spCountUp', (target = 0, duration = 900) => ({
         displayed: 0,
+        observer: null,
 
         init() {
             const value = Number(target) || 0;
@@ -105,12 +106,12 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const observer = new IntersectionObserver((entries) => {
+            this.observer = new IntersectionObserver((entries) => {
                 if (! entries[0].isIntersecting) {
                     return;
                 }
 
-                observer.disconnect();
+                this.observer.disconnect();
 
                 const startedAt = performance.now();
                 const step = (now) => {
@@ -125,8 +126,11 @@ document.addEventListener('alpine:init', () => {
                 requestAnimationFrame(step);
             }, { threshold: 0.4 });
 
-            observer.observe(this.$el);
-            this.$cleanup(() => observer.disconnect());
+            this.observer.observe(this.$el);
+        },
+
+        destroy() {
+            this.observer?.disconnect();
         },
     }));
 
@@ -289,10 +293,11 @@ document.addEventListener('alpine:init', () => {
             channel.listen('.member.checked-in', (event) => this.show(event.name, event.coverage, false));
             channel.listen('.check-in.refused', (event) => this.show(event.name, event.reason, true));
 
-            this.$cleanup(() => {
-                clearTimeout(this.timer);
-                window.Echo.leave(`clubs.${clubId}.check-ins`);
-            });
+        },
+
+        destroy() {
+            clearTimeout(this.timer);
+            window.Echo?.leave(`clubs.${clubId}.check-ins`);
         },
 
         show(name, detail, refused) {

@@ -149,9 +149,12 @@
                 </div>
                 <div class="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
                     <span>&copy; {{ now()->year }} {{ config('app.name', 'Laravel') }} · {{ __('Made with :heart in the Netherlands', ['heart' => '❤️']) }}</span>
-                    @production
-                        <button type="button" data-cookie-settings class="transition hover:text-white">{{ __('Cookie settings') }}</button>
-                    @endproduction
+                    <span class="flex gap-4">
+                        <a href="{{ route('privacy') }}" class="transition hover:text-white">{{ __('Privacy statement') }}</a>
+                        @production
+                            <button type="button" data-cookie-settings class="transition hover:text-white">{{ __('Cookie settings') }}</button>
+                        @endproduction
+                    </span>
                     <span>{{ __('Made for clubs that keep moving.') }}</span>
                 </div>
             </footer>

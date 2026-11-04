@@ -27,6 +27,14 @@
             <flux:menu.item icon="information-circle" x-on:click="Livewire.dispatch('open-product-tour')" class="w-full cursor-pointer" data-test="open-product-tour">
                 {{ __('How SquadPass works') }}
             </flux:menu.item>
+            <flux:menu.item :href="route('privacy')" icon="lock-closed">
+                {{ __('Privacy statement') }}
+            </flux:menu.item>
+            @production
+                <flux:menu.item icon="finger-print" data-cookie-settings class="w-full cursor-pointer">
+                    {{ __('Cookie settings') }}
+                </flux:menu.item>
+            @endproduction
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item

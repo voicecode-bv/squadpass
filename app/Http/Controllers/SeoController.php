@@ -38,6 +38,7 @@ class SeoController extends Controller
                 'loc' => route('features.show', $feature),
                 'priority' => '0.8',
             ], MarketingFeature::cases()),
+            ['loc' => route('privacy'), 'priority' => '0.3'],
         ];
 
         // Built here rather than in Blade, where the closing tag of the XML declaration would end the compiled PHP.

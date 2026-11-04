@@ -39,6 +39,7 @@ Route::view('/', 'welcome')->name('home');
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('voor/{segment}', SegmentLandingController::class)->name('segments.show');
+Route::view('privacy', 'privacy')->name('privacy');
 Route::get('functies', [FeatureLandingController::class, 'index'])->name('features.index');
 Route::get('functies/{feature}', [FeatureLandingController::class, 'show'])->name('features.show');
 

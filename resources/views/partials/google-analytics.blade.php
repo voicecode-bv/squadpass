@@ -82,6 +82,7 @@
                 <p id="cookie-banner-title" class="font-semibold">{{ __('We use cookies') }}</p>
                 <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                     {{ __('With your permission we use analytics cookies from Google Analytics to see how SquadPass is used, so we can improve it. You can change your choice at any time via Cookie settings.') }}
+                    <a href="{{ route('privacy') }}" class="font-medium text-blue-600 underline hover:text-blue-700 dark:text-blue-400">{{ __('Privacy statement') }}</a>
                 </p>
                 <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <button type="button" data-cookie-choice="denied" class="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700">

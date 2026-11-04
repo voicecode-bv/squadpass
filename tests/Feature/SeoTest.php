@@ -3,6 +3,7 @@
 use App\Enums\ClubPlan;
 use App\Enums\ClubSegment;
 use App\Enums\MarketingFeature;
+use App\Models\User;
 
 test('the sitemap lists the home page and every segment and feature page', function () {
     $response = $this->get('/sitemap.xml')
@@ -92,4 +93,33 @@ test('google analytics and the cookie banner stay off outside production', funct
         ->assertDontSee('googletagmanager.com', escape: false)
         ->assertDontSee('cookie-banner', escape: false)
         ->assertDontSee('data-cookie-settings', escape: false);
+});
+
+test('the privacy statement is public, indexed and linked from the footer', function () {
+    $this->get(route('privacy'))
+        ->assertOk()
+        ->assertSee('Privacyverklaring')
+        ->assertSee(config('mail.from.address'));
+
+    $this->get(route('home'))->assertSee(route('privacy'), escape: false);
+
+    $this->get('/sitemap.xml')->assertSee('<loc>'.route('privacy').'</loc>', escape: false);
+});
+
+test('the privacy statement offers the cookie settings in production', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->get(route('privacy'))
+        ->assertOk()
+        ->assertSee('data-cookie-settings', escape: false);
+});
+
+test('signed in users find the privacy statement and cookie settings in their menu', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee(route('privacy'), escape: false)
+        ->assertSee('data-cookie-settings', escape: false);
 });
