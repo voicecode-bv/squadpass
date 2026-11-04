@@ -6,7 +6,9 @@ use App\Actions\Clubs\CreateClub;
 use App\Models\Club;
 use App\Models\User;
 use Database\Seeders\DemoClubSeeder;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class StartDemoSandbox
@@ -16,6 +18,9 @@ class StartDemoSandbox
 
     /** Fake members per sandbox: enough to fill the overviews and charts. */
     public const int MEMBER_COUNT = 45;
+
+    /** Club photo every sandbox starts with, copied per club so pruning or replacing it never touches another sandbox. */
+    public const string PHOTO = 'resources/images/demo-club-photo.jpg';
 
     public function __construct(
         protected CreateClub $createClub,
@@ -34,7 +39,7 @@ class StartDemoSandbox
     {
         $expiresAt = now()->addHours(self::LIFETIME_HOURS);
 
-        return DB::transaction(function () use ($expiresAt): array {
+        [$owner, $club] = DB::transaction(function () use ($expiresAt): array {
             $owner = User::query()->forceCreate([
                 'first_name' => 'Demo',
                 'last_name' => 'Eigenaar',
@@ -57,5 +62,11 @@ class StartDemoSandbox
 
             return [$owner, $club];
         });
+
+        $club->update([
+            'photo_path' => Storage::disk('public')->putFile('club-photos', new File(base_path(self::PHOTO))),
+        ]);
+
+        return [$owner, $club];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Livewire\Clubs;
 use App\Actions\Demo\StartDemoSandbox;
 use App\Models\Club;
 use App\Models\User;
+use App\Services\AnalyticsEvents;
 use App\Services\SpamProtection;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +93,8 @@ class StartDemo extends Component
         [$owner, $club] = $startDemoSandbox->handle();
 
         Cookie::queue(self::COOKIE, (string) $owner->id, StartDemoSandbox::LIFETIME_HOURS * 60);
+
+        app(AnalyticsEvents::class)->queue(AnalyticsEvents::DEMO_START);
 
         $this->loginAndOpen($owner, $club);
     }

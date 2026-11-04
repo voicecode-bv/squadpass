@@ -2,7 +2,9 @@
     Google Analytics with Consent Mode v2, only on production so local and test traffic stays out of the statistics.
     Every consent type starts as denied: analytics cookies are only set after the visitor accepts in the cookie banner.
     The choice lives in a first-party functional cookie for a year; anything with [data-cookie-settings] reopens the banner.
+    Events queued on the server (signup, demo start) are pulled on every page, so they never pile up outside production.
 --}}
+@php($queuedAnalyticsEvents = app(\App\Services\AnalyticsEvents::class)->pull())
 @production
     @if (filled($measurementId = config('services.google_analytics.measurement_id')))
         <script>
@@ -74,6 +76,9 @@
 
             gtag('js', new Date());
             gtag('config', @js($measurementId));
+            @foreach ($queuedAnalyticsEvents as $queuedEvent)
+                gtag('event', @js($queuedEvent['name']), @js((object) $queuedEvent['parameters']));
+            @endforeach
         </script>
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ $measurementId }}"></script>
 

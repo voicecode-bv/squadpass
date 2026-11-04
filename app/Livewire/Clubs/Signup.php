@@ -5,6 +5,7 @@ namespace App\Livewire\Clubs;
 use App\Actions\Clubs\CreateClub;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use App\Services\AnalyticsEvents;
 use App\Services\SpamProtection;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
@@ -102,6 +103,8 @@ class Signup extends Component
         // Unverified owners pass through the verification notice first and
         // continue to the onboarding once their email is confirmed.
         session()->put('url.intended', route('clubs.onboarding', $club));
+
+        app(AnalyticsEvents::class)->queue(AnalyticsEvents::SIGN_UP, ['method' => 'club_signup']);
 
         $this->redirectRoute('clubs.onboarding', ['club' => $club]);
     }

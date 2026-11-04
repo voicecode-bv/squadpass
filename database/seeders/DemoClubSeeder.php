@@ -255,7 +255,7 @@ class DemoClubSeeder extends Seeder
         foreach (fake()->randomElements($definitions, fake()->numberBetween(4, 6)) as $definition) {
             $member = $activeMembers->random()['user'];
             $status = fake()->randomElement(TicketStatus::cases());
-            $createdAt = CarbonImmutable::instance(fake()->dateTimeBetween('-6 weeks', '-1 day'));
+            $createdAt = CarbonImmutable::instance(fake()->dateTimeBetween(now()->subWeeks(6), now()->subDay()));
             $lastActivity = $createdAt;
 
             $ticket = Ticket::factory()->for($club)->create([
@@ -367,7 +367,7 @@ class DemoClubSeeder extends Seeder
             $isDemoMember = $isPrimary && $index === 0;
             $joined = $isDemoMember ? now()->subMonths(6)->startOfDay() : $this->randomJoinDate();
             $ended = (! $isDemoMember && fake()->boolean(8) && $joined->lt(now()->subMonth()))
-                ? fake()->dateTimeBetween($joined, 'now')
+                ? fake()->dateTimeBetween($joined, now())
                 : null;
 
             Membership::create([
@@ -449,7 +449,7 @@ class DemoClubSeeder extends Seeder
             }
 
             if ($isDemoMember || ($roll >= 9 && $roll <= 15)) {
-                $purchased = CarbonImmutable::instance(fake()->dateTimeBetween(max($joined, now()->subMonths(10)), 'now'));
+                $purchased = CarbonImmutable::instance(fake()->dateTimeBetween(max($joined, now()->subMonths(10)), now()));
                 $stripsUsed = fake()->numberBetween(0, min(9, (int) $purchased->diffInWeeks(now())));
 
                 $stripCard = StripCard::create([
@@ -536,7 +536,7 @@ class DemoClubSeeder extends Seeder
         $rows = [];
 
         for ($visit = 0; $visit < $visits; $visit++) {
-            $checkedInAt = CarbonImmutable::instance(fake()->dateTimeBetween($windowStart, 'now'))
+            $checkedInAt = CarbonImmutable::instance(fake()->dateTimeBetween($windowStart, now()))
                 ->setTime(fake()->randomElement([7, 8, 9, 10, 16, 18, 19, 20]), fake()->numberBetween(0, 59));
 
             $rows[] = [

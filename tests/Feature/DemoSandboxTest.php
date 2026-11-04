@@ -17,7 +17,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+
+beforeEach(function () {
+    Storage::fake('public');
+});
 
 test('a visitor gets a private, filled demo club and lands in it as its owner', function () {
     $component = Livewire::test(StartDemo::class);
@@ -34,6 +39,7 @@ test('a visitor gets a private, filled demo club and lands in it as its owner', 
         ->and($owner->isDemoSandbox())->toBeTrue()
         ->and($owner->isStaffOf($club, StaffRole::Owner))->toBeTrue()
         ->and($club->memberships()->count())->toBe(StartDemoSandbox::MEMBER_COUNT);
+    Storage::disk('public')->assertExists($club->photo_path);
 
     // Every account in the sandbox is undeliverable and expires with the club.
     $accounts = User::query()->whereNotNull('demo_expires_at')->get();
@@ -82,6 +88,8 @@ test('the prune deletes expired sandboxes and nothing else', function () {
         ->and(Club::query()->find($curatedDemo->id))->not->toBeNull()
         ->and(User::query()->find($realUser->id))->not->toBeNull()
         ->and(User::query()->where('demo_expires_at', '<=', now())->exists())->toBeFalse();
+    Storage::disk('public')->assertMissing($expiredClub->photo_path);
+    Storage::disk('public')->assertExists($liveClub->photo_path);
 });
 
 test('mail to a demo account is never sent', function () {
