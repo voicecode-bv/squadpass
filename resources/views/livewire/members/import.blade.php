@@ -78,6 +78,8 @@
                 </x-table-card>
             </section>
         @endif
+    @elseif (! $this->canAddMembers)
+        @include('partials.member-limit-notice', ['club' => $club])
     @elseif ($headers !== [])
         {{-- Match columns --}}
         <form wire:submit="start" class="flex flex-col gap-6">

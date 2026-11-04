@@ -171,6 +171,24 @@ test('an owner uploads a list, checks the guessed columns and starts the import'
     Queue::assertPushed(ProcessMemberImport::class);
 });
 
+test('without an active plan the import is blocked before anything is stored', function () {
+    Queue::fake();
+    $file = UploadedFile::fake()->createWithContent('leden.csv', "Voornaam;Achternaam;E-mail\nAnna;de Vries;anna@example.com\n");
+
+    $component = Livewire::actingAs($this->owner)
+        ->test(Import::class, ['club' => $this->club])
+        ->set('file', $file);
+
+    $this->club->forceFill(['trial_ends_at' => today()->subDay()])->save();
+
+    $component->call('start')
+        ->assertHasErrors(['file' => __('This club needs an active SquadPass plan to add members.')])
+        ->assertSee(__('No active SquadPass plan'));
+
+    expect(MemberImport::query()->exists())->toBeFalse();
+    Queue::assertNothingPushed();
+});
+
 test('an import needs an email and a name column', function () {
     Queue::fake();
     $file = UploadedFile::fake()->createWithContent('leden.csv', "Iets,Anders\na,b\n");

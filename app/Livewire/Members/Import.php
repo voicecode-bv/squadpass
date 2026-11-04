@@ -3,6 +3,7 @@
 namespace App\Livewire\Members;
 
 use App\Enums\StaffPermission;
+use App\Exceptions\ClubPlanException;
 use App\Jobs\ProcessMemberImport;
 use App\Models\Club;
 use App\Models\MemberImport;
@@ -116,6 +117,15 @@ class Import extends Component
             return;
         }
 
+        // Without a plan or room within its limit every row would be skipped, so say so before the upload is stored.
+        try {
+            $this->club->ensureCanAddMembers();
+        } catch (ClubPlanException $exception) {
+            $this->addError('file', $exception->getMessage());
+
+            return;
+        }
+
         $columnIndexes = implode(',', array_keys($this->headers));
 
         $this->validate([
@@ -183,6 +193,12 @@ class Import extends Component
     /**
      * The import shown on the page, scoped to this club.
      */
+    #[Computed]
+    public function canAddMembers(): bool
+    {
+        return $this->club->canAddMembers();
+    }
+
     #[Computed]
     public function memberImport(): ?MemberImport
     {

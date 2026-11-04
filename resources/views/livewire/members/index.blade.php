@@ -2,7 +2,11 @@
     <x-portal.hero :title="__('Members')" :subtitle="$club->name">
         <x-slot:actions>
             @can('access', [$club, \App\Enums\StaffPermission::MemberImport])
-                <flux:button :href="route('clubs.members.import', $club)" wire:navigate icon="arrow-down-tray">{{ __('Import members') }}</flux:button>
+                @if ($this->canAddMembers)
+                    <flux:button :href="route('clubs.members.import', $club)" wire:navigate icon="arrow-down-tray">{{ __('Import members') }}</flux:button>
+                @else
+                    <flux:button icon="arrow-down-tray" disabled>{{ __('Import members') }}</flux:button>
+                @endif
             @endcan
             @if ($this->canAddMembers)
                 <flux:modal.trigger name="add-member">
@@ -15,15 +19,7 @@
     </x-portal.hero>
 
     @unless ($this->canAddMembers)
-        <x-portal.notice
-            :heading="$club->hasMemberAccess() ? __('Member limit reached') : __('No active SquadPass plan')"
-            :href="auth()->user()->can('update', $club) ? route('clubs.plan', $club) : null"
-            :action="__('View plans')"
-        >
-            {{ $club->hasMemberAccess()
-                ? __('Your plan allows :limit active members. Upgrade the plan to add more members.', ['limit' => number_format($club->memberLimit() ?? 0, 0, ',', '.')])
-                : __('Choose a plan to add members again. Existing members keep their access.') }}
-        </x-portal.notice>
+        @include('partials.member-limit-notice', ['club' => $club])
     @endunless
 
     <div class="flex flex-col gap-3 sm:flex-row">
