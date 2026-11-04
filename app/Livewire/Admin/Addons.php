@@ -19,6 +19,8 @@ use Livewire\WithPagination;
  * Superadmin management of sellable add-ons: naming, pricing and availability.
  * Superadmins also compose bundles here: add-ons without a key of their own
  * that unlock a selection of the single add-ons for one monthly price.
+ *
+ * @property-read Collection<int, Addon> $addons
  */
 #[Title('Add-ons')]
 class Addons extends Component
@@ -79,7 +81,7 @@ class Addons extends Component
         $this->description = $addon->description ?? '';
         $this->price = number_format($addon->price_cents / 100, 2, '.', '');
         $this->is_active = $addon->is_active;
-        $this->includedAddonIds = $addon->includedAddons->pluck('id')->map(fn (int $id): string => (string) $id)->all();
+        $this->includedAddonIds = array_values($addon->includedAddons->map(fn (Addon $included): string => (string) $included->id)->all());
         $this->resetErrorBag();
 
         Flux::modal('edit-addon')->show();

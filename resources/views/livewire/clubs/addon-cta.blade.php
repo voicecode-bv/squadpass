@@ -11,9 +11,7 @@
                     {{ __('Add-on') }}
                 </span>
 
-                @if ($addonKey->logoPath())
-                    <img src="{{ asset($addonKey->logoPath()) }}" alt="{{ $this->addon?->name ?? $addonKey->defaultName() }}" class="h-5 w-auto" />
-                @endif
+                <img src="{{ asset($addonKey->logoPath()) }}" alt="{{ $this->addon?->name ?? $addonKey->defaultName() }}" class="h-5 w-auto" />
             </div>
 
             <h2 class="stagger animate-rise mt-4 text-2xl font-semibold tracking-tight sm:text-3xl" style="--d: 80ms">

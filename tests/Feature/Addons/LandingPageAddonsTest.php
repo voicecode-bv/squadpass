@@ -38,11 +38,10 @@ test('changing an add-on price in the admin refreshes the landing page', functio
     $this->get(route('home'))->assertSee('€ 19,95')->assertDontSee('€ 15,00');
 });
 
-test('the branded mobile app add-on falls back to its icon without a partner logo', function () {
-    expect(AddonKey::MobileApp->logoPath())->toBeNull();
-
+test('the branded mobile app add-on shows its own logo', function () {
     $this->get(route('home'))
         ->assertOk()
+        ->assertSee(asset(AddonKey::MobileApp->logoPath()))
         ->assertSee(__('Branded mobile app'))
         ->assertSee('€ 79,00');
 });

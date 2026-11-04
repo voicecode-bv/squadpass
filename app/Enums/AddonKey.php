@@ -70,15 +70,14 @@ enum AddonKey: string
     }
 
     /**
-     * Public path of the partner's (white) logo, for marketing surfaces.
-     * Null for add-ons we build ourselves, which have no partner to credit.
+     * Public path of the add-on's (white) logo, for marketing surfaces.
      */
-    public function logoPath(): ?string
+    public function logoPath(): string
     {
         return match ($this) {
             self::Mollie => 'images/logos/mollie.svg',
             self::Moneybird => 'images/logos/moneybird.svg',
-            self::MobileApp => null,
+            self::MobileApp => 'images/logos/mobile-app.svg',
         };
     }
 

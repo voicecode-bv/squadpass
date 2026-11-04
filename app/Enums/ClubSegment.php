@@ -17,6 +17,7 @@ enum ClubSegment: string
     case PilatesStudio = 'pilatesstudio';
     case CrossfitBox = 'crossfit-box';
     case Bootcamp = 'bootcamp';
+    case PadelClub = 'padelclub';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Pilates studios'),
             self::CrossfitBox => __('CrossFit boxes'),
             self::Bootcamp => __('Bootcamps'),
+            self::PadelClub => __('Padel clubs'),
         };
     }
 
@@ -48,6 +50,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Small groups, reformer classes and credits.'),
             self::CrossfitBox => __('WOD schedule, memberships and check-in.'),
             self::Bootcamp => __('Outdoor sessions, strip cards and trial sessions.'),
+            self::PadelClub => __('Clinics per level, strip cards and trial lessons.'),
         };
     }
 
@@ -63,6 +66,7 @@ enum ClubSegment: string
             self::PilatesStudio => 'heart',
             self::CrossfitBox => 'trophy',
             self::Bootcamp => 'dumbbell',
+            self::PadelClub => 'sport',
         };
     }
 
@@ -78,6 +82,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Software for pilates studios: reformer classes, credits and memberships'),
             self::CrossfitBox => __('Software for CrossFit boxes: WOD schedule, memberships and check-in'),
             self::Bootcamp => __('Software for bootcamps: sessions, strip cards and payments'),
+            self::PadelClub => __('Software for padel clubs: lessons, clinics and memberships'),
         };
     }
 
@@ -95,6 +100,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Fill every reformer and mat class: clients book their spot, pay with credits or a membership and check in at the door. SquadPass for pilates studios. :days days free.', $days),
             self::CrossfitBox => __('Plan your WODs and classes, collect memberships by direct debit and let athletes check in with a QR code. SquadPass for CrossFit boxes. :days days free.', $days),
             self::Bootcamp => __('Plan outdoor sessions, sell strip cards and let new participants book a trial session online. SquadPass for bootcamps and outdoor training. :days days free.', $days),
+            self::PadelClub => __('Plan padel lessons and clinics per level and court, sell strip cards and memberships and let new players book a trial lesson online. SquadPass for padel clubs. :days days free.', $days),
         };
     }
 
@@ -110,6 +116,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('For pilates studios'),
             self::CrossfitBox => __('For CrossFit boxes'),
             self::Bootcamp => __('For bootcamps'),
+            self::PadelClub => __('For padel clubs'),
         };
     }
 
@@ -130,6 +137,7 @@ enum ClubSegment: string
             self::PilatesStudio => [__('Every reformer booked,'), __('without the spreadsheet.')],
             self::CrossfitBox => [__('Your box runs on strength,'), __('your admin on autopilot.')],
             self::Bootcamp => [__('Train outside,'), __('let the admin run itself.')],
+            self::PadelClub => [__('More time on court,'), __('less time on admin.')],
         };
     }
 
@@ -145,6 +153,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Reformer and mat classes have limited spots. With SquadPass clients book and cancel themselves, credits are tracked automatically and you see at a glance which classes are full.'),
             self::CrossfitBox => __('Put your WODs and classes in the schedule, collect memberships automatically and let athletes check in with their QR code. Your coaches focus on coaching, not on paperwork.'),
             self::Bootcamp => __('Whether you train in the park or on the beach: participants book their session online, pay with a strip card or subscription and get a reminder beforehand.'),
+            self::PadelClub => __('From beginner clinics to competitive training: players book their own spot on court, pay with a strip card or membership and get a reminder before they play. You fill every court, SquadPass keeps the overview.'),
         };
     }
 
@@ -203,6 +212,11 @@ enum ClubSegment: string
                 $lesson('12:30', 'Lunch bootcamp', 9, 15),
                 $lesson('19:00', 'Bootcamp intensief', 20, 20),
             ]],
+            self::PadelClub => ['club' => 'Padel Club Amersfoort', 'lessons' => [
+                $lesson('09:30', 'Clinic beginners', 6, 8),
+                $lesson('17:00', 'Jeugdpadel', 7, 8),
+                $lesson('20:00', 'Training gevorderden', 4, 4),
+            ]],
         };
     }
 
@@ -258,6 +272,11 @@ enum ClubSegment: string
                 ['title' => __('Group apps for every session'), 'text' => __('Participants book in the schedule themselves and get an email reminder, without you posting in a group chat.')],
                 ['title' => __('Cash and payment requests'), 'text' => __('Strip cards and subscriptions are paid online via iDEAL or collected by direct debit.')],
                 ['title' => __('New people who never show up'), 'text' => __('Let newcomers book a trial session online. You get their details right away and convert them into a member with one click.')],
+            ],
+            self::PadelClub => [
+                ['title' => __('Lessons arranged via group chats'), 'text' => __('Players book a lesson or clinic in the schedule themselves, and once a court is full nobody else can join.')],
+                ['title' => __('Paper lesson cards'), 'text' => __('Strip cards are digital and every lesson is deducted automatically. Players always see how many lessons they have left.')],
+                ['title' => __('Newcomers who never come back'), 'text' => __('Let new players book a trial lesson online. You get their details right away and convert them into a member with one click.')],
             ],
         };
     }
@@ -340,6 +359,14 @@ enum ClubSegment: string
                 ['icon' => 'credit-card', 'title' => __('Subscriptions'), 'text' => __('Offer unlimited training or a set number of sessions per month, collected automatically.')],
                 ['icon' => 'device-phone-mobile', 'title' => __('Booking on any phone'), 'text' => __('Participants book and cancel from their phone in the member portal.')],
             ],
+            self::PadelClub => [
+                ['icon' => 'calendar-days', 'title' => __('Lessons and clinics per level'), 'text' => __('Plan private lessons, clinics and junior training with their own trainer and level.')],
+                ['icon' => 'map-pin', 'title' => __('Lessons per court'), 'text' => __('Link every lesson to a court and set the capacity to the number of players, for example four per court.')],
+                ['icon' => 'ticket', 'title' => __('Strip cards'), 'text' => __('Sell a 5- or 10-lesson card that players buy online and use for any lesson.')],
+                ['icon' => 'user-plus', 'title' => __('Trial lessons'), 'text' => __('Share your trial page and new players book a free or paid trial lesson themselves.')],
+                ['icon' => 'credit-card', 'title' => __('Memberships'), 'text' => __('Offer memberships with a set number of lessons per month, collected automatically by direct debit.')],
+                ['icon' => 'users', 'title' => __('Trainers with their own account'), 'text' => __('Give every trainer access to their schedule and check-in, at no extra cost per user.')],
+            ],
         };
     }
 
@@ -397,6 +424,11 @@ enum ClubSegment: string
                 ['question' => __('Can newcomers try a session first?'), 'answer' => __('Yes. Share your trial page and newcomers book a free or paid trial session themselves. You get their details right away.')],
                 ['question' => __('Can participants book from their phone?'), 'answer' => __('Absolutely. The member portal works on every phone, and with the branded app add-on participants book in your own app.')],
             ],
+            self::PadelClub => [
+                ['question' => __('Can I limit a lesson to the number of players per court?'), 'answer' => __('Yes. You set the capacity per lesson, for example four players for a court. Once all spots are booked, the lesson is full.')],
+                ['question' => __('Can players book a lesson or clinic themselves?'), 'answer' => __('Yes. Players book their spot in the member portal or in your own app and see right away how many spots are left.')],
+                ['question' => __('Can I work with several courts and trainers?'), 'answer' => __('Absolutely. You add your courts and trainers and link every lesson to them. Trainers get their own account at no extra cost.')],
+            ],
         };
     }
 
@@ -412,6 +444,7 @@ enum ClubSegment: string
             self::PilatesStudio => __('Ready to fill every reformer?'),
             self::CrossfitBox => __('Ready to level up your box?'),
             self::Bootcamp => __('Ready to grow your bootcamp?'),
+            self::PadelClub => __('Ready to fill every court?'),
         };
     }
 }

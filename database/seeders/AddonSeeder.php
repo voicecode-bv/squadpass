@@ -21,6 +21,7 @@ class AddonSeeder extends Seeder
                 AddonKey::Mollie => 1500,
                 AddonKey::Moneybird => 1000,
                 AddonKey::MobileApp => 7900,
+                null => 0,
             };
 
             $addon->update(['price_cents' => $priceCents, 'is_active' => true]);

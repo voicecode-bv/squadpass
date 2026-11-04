@@ -39,13 +39,7 @@
                 <div class="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20" aria-hidden="true"></div>
 
                 <div class="relative flex items-start justify-between gap-4">
-                    @if ($item['key']->logoPath() !== null)
-                        <img src="{{ asset($item['key']->logoPath()) }}" alt="{{ $item['title'] }}" class="h-7 w-auto" loading="lazy" />
-                    @else
-                        <span class="flex size-9 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30">
-                            <flux:icon :icon="$item['key']->icon()" class="size-5" />
-                        </span>
-                    @endif
+                    <img src="{{ asset($item['key']->logoPath()) }}" alt="{{ $item['title'] }}" class="h-7 w-auto" loading="lazy" />
                     <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-zinc-300 ring-1 ring-white/10">{{ $item['category'] }}</span>
                 </div>
 

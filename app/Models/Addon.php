@@ -112,7 +112,10 @@ class Addon extends Model
             return [$this->key];
         }
 
-        return $this->includedAddons->pluck('key')->filter()->values()->all();
+        return array_values($this->includedAddons
+            ->map(fn (self $addon): ?AddonKey => $addon->key)
+            ->filter()
+            ->all());
     }
 
     /**
@@ -193,7 +196,7 @@ class Addon extends Model
      */
     public static function landingBundles(): array
     {
-        return Cache::remember(self::LANDING_BUNDLES_CACHE_KEY, now()->addHour(), fn (): array => static::query()
+        return Cache::remember(self::LANDING_BUNDLES_CACHE_KEY, now()->addHour(), fn (): array => array_values(static::query()
             ->active()
             ->bundles()
             ->with('includedAddons')
@@ -204,9 +207,9 @@ class Addon extends Model
                 'description' => $bundle->description,
                 'price_cents' => $bundle->price_cents,
                 'separate_price_cents' => $bundle->separatePriceCents(),
-                'included' => $bundle->includedAddons->pluck('name')->all(),
+                'included' => array_values($bundle->includedAddons->map(fn (self $addon): string => $addon->name)->all()),
             ])
-            ->all());
+            ->all()));
     }
 
     public static function forgetLandingCache(): void

@@ -25,6 +25,9 @@ use Throwable;
 
 /**
  * Club owners buy, cancel and resume platform add-ons here.
+ *
+ * @property-read Collection<int, Addon> $addons
+ * @property-read Collection<int, AddonSubscription> $subscriptions
  */
 #[Title('Add-ons')]
 class Addons extends Component
@@ -169,7 +172,7 @@ class Addons extends Component
 
                 return $replaced->isEmpty() ? [] : [$bundle->id => [
                     'credit_cents' => $calculateUpgrade->creditCents($this->club, $bundle),
-                    'replaces' => $replaced->map(fn (AddonSubscription $subscription): string => $subscription->addon->name)->all(),
+                    'replaces' => array_values($replaced->map(fn (AddonSubscription $subscription): string => $subscription->addon->name)->all()),
                 ]];
             })
             ->all();
