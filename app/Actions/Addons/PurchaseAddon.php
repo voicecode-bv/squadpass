@@ -20,11 +20,13 @@ class PurchaseAddon
         protected PlatformMollieAccount $platform,
         protected ResolvePlatformMollieCustomer $resolveCustomer,
         protected RefreshPendingAddonPurchase $refreshPendingPurchase,
+        protected CalculateAddonUpgrade $calculateUpgrade,
     ) {}
 
     /**
      * Start an add-on subscription for a club. The first payment on the platform
-     * Mollie account establishes the mandate and covers the first month.
+     * Mollie account establishes the mandate and covers the first month, minus the
+     * unused value of add-ons this one replaces (e.g. single add-ons in a bundle).
      * Returns the checkout URL.
      */
     public function handle(Club $club, Addon $addon, User $purchaser): string
@@ -53,6 +55,10 @@ class PurchaseAddon
             ->first(fn (AddonSubscription $subscription) => $subscription->blocksNewSubscription());
 
         throw_if($blocking, PaymentException::addonAlreadyActive());
+        throw_if($this->calculateUpgrade->addsNothing($club, $addon), PaymentException::addonAlreadyIncluded());
+
+        $creditCents = $this->calculateUpgrade->creditCents($club, $addon);
+        $amountCents = $addon->price_cents - $creditCents;
 
         $customerId = $this->resolveCustomer->handle($club, $purchaser->email);
 
@@ -67,7 +73,7 @@ class PurchaseAddon
 
         $result = $this->gateway->createPayment(
             account: $this->platform,
-            amountCents: $addon->price_cents,
+            amountCents: $amountCents,
             description: "{$addon->name} — {$club->name}",
             redirectUrl: route('clubs.addons', $club),
             webhookUrl: route('webhooks.mollie.platform'),
@@ -86,7 +92,8 @@ class PurchaseAddon
             'mollie_payment_id' => $result->id,
             'purpose' => AddonPayment::PURPOSE_FIRST,
             'status' => PaymentStatus::Open,
-            'amount_cents' => $addon->price_cents,
+            'amount_cents' => $amountCents,
+            'credit_cents' => $creditCents,
             'currency' => $this->platform->mollieCurrency(),
         ]);
 

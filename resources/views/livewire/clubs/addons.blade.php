@@ -19,12 +19,17 @@
                 @php($subscription = $this->subscriptions->get($addon->id))
                 @php($status = $subscription?->status)
                 @php($unlocked = $subscription?->isCurrent() ?? false)
+                @php($includedIn = $unlocked ? null : ($this->includedVia[$addon->id] ?? null))
+                @php($upgrade = $this->upgrades[$addon->id] ?? null)
+                @php($featureUnlocked = $unlocked || $includedIn !== null)
                 <div wire:key="addon-{{ $addon->id }}" class="sp-panel flex flex-col gap-4 p-6">
                     <div class="flex items-start justify-between gap-4">
-                        <span class="flex size-11 items-center justify-center rounded-xl {{ $unlocked ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' }}">
-                            <flux:icon :name="$addon->key->icon()" class="size-5" />
+                        <span class="flex size-11 items-center justify-center rounded-xl {{ $featureUnlocked ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' }}">
+                            <flux:icon :name="$addon->icon()" class="size-5" />
                         </span>
-                        @if ($subscription)
+                        @if ($includedIn)
+                            <flux:badge size="sm" color="green">{{ __('Included in :bundle', ['bundle' => $includedIn]) }}</flux:badge>
+                        @elseif ($subscription)
                             <flux:badge size="sm" :color="match($status) {
                                 $statuses::Active => 'green',
                                 $statuses::Pending => 'yellow',
@@ -40,6 +45,9 @@
                         @if ($addon->description)
                             <flux:text class="sp-card-subtitle mt-1">{{ $addon->description }}</flux:text>
                         @endif
+                        @if ($addon->isBundle())
+                            <flux:text class="mt-2 text-sm">{{ __('Includes :addons', ['addons' => $addon->includedAddons->pluck('name')->join(', ', ' & ')]) }}</flux:text>
+                        @endif
                     </div>
 
                     <div class="mt-auto flex items-end justify-between gap-4">
@@ -54,16 +62,23 @@
                                     {{ __('The last direct debit failed. Retry the payment to reactivate the add-on.') }}
                                 @elseif ($status === $statuses::Pending)
                                     {{ __('Payment not completed yet') }}
+                                @elseif ($includedIn)
+                                    {{ __('Already part of your bundle') }}
+                                @elseif ($addon->isBundle() && $addon->separatePriceCents() > $addon->price_cents)
+                                    {{ __('Per month, :amount less than separately', ['amount' => \App\Models\Addon::formatCents($addon->separatePriceCents() - $addon->price_cents)]) }}
                                 @else
                                     {{ __('Per month') }}
                                 @endif
                             </flux:text>
+                            @if ($upgrade && $upgrade['credit_cents'] > 0)
+                                <flux:text class="mt-1 text-xs">{{ __('First payment :amount: the unused days of your current add-ons are deducted.', ['amount' => \App\Models\Addon::formatCents($addon->price_cents - $upgrade['credit_cents'])]) }}</flux:text>
+                            @endif
                         </div>
 
                         <div class="flex gap-2">
-                            @if ($unlocked && $addon->key === \App\Enums\AddonKey::Moneybird)
+                            @if ($featureUnlocked && $addon->key === \App\Enums\AddonKey::Moneybird)
                                 <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.moneybird', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
-                            @elseif ($unlocked && $addon->key === \App\Enums\AddonKey::Mollie)
+                            @elseif ($featureUnlocked && $addon->key === \App\Enums\AddonKey::Mollie)
                                 <flux:button size="sm" variant="ghost" icon="cog-6-tooth" :href="route('clubs.mollie', $club)" wire:navigate>{{ __('Set up') }}</flux:button>
                             @endif
                             @if ($status === $statuses::Active)
@@ -75,6 +90,10 @@
                                 <flux:button size="sm" variant="primary" wire:click="resume({{ $subscription->id }})">{{ __('Resume') }}</flux:button>
                             @elseif ($status === $statuses::Pending)
                                 <flux:button size="sm" variant="primary" icon="arrow-right" wire:click="purchase({{ $addon->id }})">{{ __('Continue payment') }}</flux:button>
+                            @elseif ($includedIn)
+                                {{-- Unlocked through a bundle: nothing to buy. --}}
+                            @elseif ($upgrade)
+                                <flux:button size="sm" variant="primary" icon="shopping-cart" wire:click="purchase({{ $addon->id }})" wire:confirm="{{ __(':addons will be replaced by this bundle and stop straight away. Continue?', ['addons' => implode(', ', $upgrade['replaces'])]) }}">{{ __('Upgrade') }}</flux:button>
                             @else
                                 <flux:button size="sm" variant="primary" icon="shopping-cart" wire:click="purchase({{ $addon->id }})">{{ __('Buy') }}</flux:button>
                             @endif
@@ -104,7 +123,12 @@
                         <flux:table.row :key="$payment->id">
                             <flux:table.cell>{{ $payment->created_at->format('d-m-Y') }}</flux:table.cell>
                             <flux:table.cell class="sp-strong">{{ $payment->subscription->addon->name }}</flux:table.cell>
-                            <flux:table.cell>{{ $payment->formattedAmount() }}</flux:table.cell>
+                            <flux:table.cell>
+                                {{ $payment->formattedAmount() }}
+                                @if ($payment->credit_cents > 0)
+                                    <span class="block text-xs">{{ __(':amount credit', ['amount' => \App\Models\Addon::formatCents($payment->credit_cents)]) }}</span>
+                                @endif
+                            </flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" :color="match($payment->status) {
                                     \App\Enums\PaymentStatus::Paid => 'green',

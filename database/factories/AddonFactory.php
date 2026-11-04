@@ -35,7 +35,7 @@ class AddonFactory extends Factory
      */
     protected function unusedKeys(): array
     {
-        $taken = Addon::query()->pluck('key')->map(fn (AddonKey $key) => $key->value)->all();
+        $taken = Addon::query()->whereNotNull('key')->pluck('key')->map(fn (AddonKey $key) => $key->value)->all();
 
         $available = array_values(array_filter(
             AddonKey::cases(),
@@ -58,6 +58,16 @@ class AddonFactory extends Factory
     public function mobileApp(): static
     {
         return $this->state(['key' => AddonKey::MobileApp, 'name' => AddonKey::MobileApp->defaultName()]);
+    }
+
+    /**
+     * A bundle unlocking the given add-ons.
+     */
+    public function bundleOf(Addon ...$addons): static
+    {
+        return $this
+            ->state(['key' => null, 'name' => 'Mollie + Moneybird', 'description' => null])
+            ->afterCreating(fn (Addon $bundle) => $bundle->includedAddons()->attach(array_map(fn (Addon $addon): int => $addon->id, $addons)));
     }
 
     public function inactive(): static

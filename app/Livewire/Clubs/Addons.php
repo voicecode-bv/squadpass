@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Clubs;
 
+use App\Actions\Addons\CalculateAddonUpgrade;
 use App\Actions\Addons\CancelAddonSubscription;
 use App\Actions\Addons\ChargeAddonSubscription;
 use App\Actions\Addons\PurchaseAddon;
@@ -121,7 +122,57 @@ class Addons extends Component
     #[Computed]
     public function addons(): Collection
     {
-        return Addon::query()->active()->orderBy('id')->get();
+        return Addon::query()
+            ->active()
+            ->with('includedAddons')
+            ->orderBy('id')
+            ->get()
+            ->sortBy(fn (Addon $addon): int => $addon->isBundle() ? 1 : 0)
+            ->values();
+    }
+
+    /**
+     * Name of the current bundle that unlocks an add-on, keyed by the add-on's id,
+     * so its card says it is included instead of offering it for sale.
+     *
+     * @return array<int, string>
+     */
+    #[Computed]
+    public function includedVia(): array
+    {
+        return AddonSubscription::query()
+            ->where('club_id', $this->club->id)
+            ->with('addon.includedAddons')
+            ->get()
+            ->filter(fn (AddonSubscription $subscription): bool => $subscription->isCurrent() && $subscription->addon->isBundle())
+            ->flatMap(fn (AddonSubscription $subscription): array => $subscription->addon->includedAddons
+                ->mapWithKeys(fn (Addon $included): array => [$included->id => $subscription->addon->name])
+                ->all())
+            ->all();
+    }
+
+    /**
+     * What buying each bundle would replace and credit, keyed by bundle id.
+     * Only bundles that replace at least one current subscription are listed.
+     *
+     * @return array<int, array{credit_cents: int, replaces: list<string>}>
+     */
+    #[Computed]
+    public function upgrades(): array
+    {
+        $calculateUpgrade = app(CalculateAddonUpgrade::class);
+
+        return $this->addons
+            ->filter(fn (Addon $addon): bool => $addon->isBundle() && ! ($this->subscriptions->get($addon->id)?->isCurrent() ?? false))
+            ->mapWithKeys(function (Addon $bundle) use ($calculateUpgrade): array {
+                $replaced = $calculateUpgrade->replacedSubscriptions($this->club, $bundle);
+
+                return $replaced->isEmpty() ? [] : [$bundle->id => [
+                    'credit_cents' => $calculateUpgrade->creditCents($this->club, $bundle),
+                    'replaces' => $replaced->map(fn (AddonSubscription $subscription): string => $subscription->addon->name)->all(),
+                ]];
+            })
+            ->all();
     }
 
     /**
@@ -163,7 +214,7 @@ class Addons extends Component
 
     protected function refreshLists(): void
     {
-        unset($this->subscriptions, $this->payments);
+        unset($this->subscriptions, $this->payments, $this->includedVia, $this->upgrades);
 
         $this->club->forgetAddonCache();
     }

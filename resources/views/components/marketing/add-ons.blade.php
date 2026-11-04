@@ -81,6 +81,22 @@
         @endforeach
     </div>
 
+    @foreach (\App\Models\Addon::landingBundles() as $bundle)
+        <div class="mt-6 flex flex-col gap-6 rounded-3xl bg-blue-600/20 p-8 ring-1 ring-blue-400/40 md:flex-row md:items-center md:justify-between">
+            <div>
+                <span class="text-xs font-semibold tracking-wider text-blue-200 uppercase">{{ __('Combine and save') }}</span>
+                <h3 class="mt-2 text-xl font-semibold text-white">{{ $bundle['name'] }}</h3>
+                <p class="mt-2 leading-relaxed text-zinc-300">{{ $bundle['description'] ?: __('Includes :addons', ['addons' => implode(' & ', $bundle['included'])]) }}</p>
+            </div>
+            <div class="shrink-0 md:text-right">
+                <p class="text-2xl font-semibold text-white">{{ \App\Models\Addon::formatCents($bundle['price_cents']) }}<span class="text-sm font-normal text-zinc-400"> / {{ __('month') }}</span></p>
+                @if ($bundle['separate_price_cents'] > $bundle['price_cents'])
+                    <p class="mt-1 text-xs text-zinc-400">{{ __('instead of :price separately', ['price' => \App\Models\Addon::formatCents($bundle['separate_price_cents'])]) }}</p>
+                @endif
+            </div>
+        </div>
+    @endforeach
+
     <div class="mt-10 grid gap-6 rounded-3xl bg-white/5 p-8 ring-1 ring-white/10 sm:grid-cols-3">
         @foreach ([
             ['icon' => 'cursor-arrow-rays', 'title' => __('Activate in one click'), 'text' => __('Buy an add-on from your club settings and pay securely via Mollie. It is live the moment the payment succeeds.')],

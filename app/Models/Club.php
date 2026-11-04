@@ -230,6 +230,7 @@ class Club extends Model implements MollieAccount
     /**
      * Whether the club currently has the given add-on unlocked: an active
      * subscription, or a cancelled one that is paid up until its end date.
+     * A bundle subscription unlocks every add-on included in the bundle.
      */
     public function hasAddon(AddonKey $key): bool
     {
@@ -237,6 +238,16 @@ class Club extends Model implements MollieAccount
             return true;
         }
 
+        return in_array($key->value, $this->unlockedAddonKeys(), true);
+    }
+
+    /**
+     * Values of every AddonKey the club's current subscriptions unlock.
+     *
+     * @return list<string>
+     */
+    public function unlockedAddonKeys(): array
+    {
         if ($this->activeAddonKeys === null) {
             $this->activeAddonKeys = array_values(AddonSubscription::query()
                 ->where('addon_subscriptions.club_id', $this->id)
@@ -248,12 +259,18 @@ class Club extends Model implements MollieAccount
                         });
                 })
                 ->join('addons', 'addons.id', '=', 'addon_subscriptions.addon_id')
-                ->pluck('addons.key')
+                ->leftJoin('addon_bundle_items', 'addon_bundle_items.bundle_id', '=', 'addons.id')
+                ->leftJoin('addons as included_addons', 'included_addons.id', '=', 'addon_bundle_items.addon_id')
+                ->selectRaw('coalesce(included_addons.key, addons.key) as unlocked_key')
+                ->pluck('unlocked_key')
+                ->filter()
                 ->map(fn (mixed $addonKey): string => (string) $addonKey)
+                ->unique()
+                ->values()
                 ->all());
         }
 
-        return in_array($key->value, $this->activeAddonKeys, true);
+        return $this->activeAddonKeys;
     }
 
     public function forgetAddonCache(): void

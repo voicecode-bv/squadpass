@@ -55,7 +55,11 @@
                     </button>
 
                     <a href="{{ route('clubs.addons', $club) }}" wire:navigate class="mt-3 block text-center text-xs text-blue-100 underline-offset-4 hover:text-white hover:underline">
-                        {{ __('Compare add-ons') }}
+                        @if ($this->bundle)
+                            {{ __('Or take :bundle for :price per month', ['bundle' => $this->bundle->name, 'price' => $this->bundle->formattedPrice()]) }}
+                        @else
+                            {{ __('Compare add-ons') }}
+                        @endif
                     </a>
                 @else
                     <p class="mt-5 text-sm text-blue-50">{{ __('Ask the owner of your club to activate this add-on.') }}</p>

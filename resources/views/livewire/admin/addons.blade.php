@@ -1,5 +1,9 @@
 <div class="flex w-full flex-col gap-8">
-    <x-portal.hero :title="__('Add-ons')" :subtitle="__('Manage the add-ons clubs can buy and set their monthly price. Price changes apply to new purchases only.')" />
+    <x-portal.hero :title="__('Add-ons')" :subtitle="__('Manage the add-ons clubs can buy and set their monthly price. Price changes apply to new purchases only.')">
+        <x-slot:actions>
+            <flux:button variant="primary" icon="plus" wire:click="createBundle">{{ __('New bundle') }}</flux:button>
+        </x-slot:actions>
+    </x-portal.hero>
 
     <x-table-card>
         <flux:table>
@@ -16,10 +20,14 @@
                     <flux:table.row :key="$addon->id">
                         <flux:table.cell class="sp-strong">
                             <div class="flex items-center gap-3">
-                                <flux:icon :name="$addon->key->icon()" class="size-5 text-zinc-400" />
+                                <flux:icon :name="$addon->icon()" class="size-5 text-zinc-400" />
                                 <div>
                                     {{ $addon->name }}
-                                    <flux:text class="text-xs">{{ $addon->key->value }}</flux:text>
+                                    @if ($addon->isBundle())
+                                        <flux:text class="text-xs">{{ __('Bundle: :addons', ['addons' => $addon->includedAddons->pluck('name')->join(', ')]) }}</flux:text>
+                                    @else
+                                        <flux:text class="text-xs">{{ $addon->key->value }}</flux:text>
+                                    @endif
                                 </div>
                             </div>
                         </flux:table.cell>
@@ -95,11 +103,28 @@
     <flux:modal name="edit-addon" class="md:w-96">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit add-on') }}</flux:heading>
+                <flux:heading size="lg">
+                    @if ($editingId === null)
+                        {{ __('New bundle') }}
+                    @elseif ($this->editingBundle)
+                        {{ __('Edit bundle') }}
+                    @else
+                        {{ __('Edit add-on') }}
+                    @endif
+                </flux:heading>
             </div>
 
             <flux:input wire:model="name" :label="__('Name')" required />
             <flux:textarea wire:model="description" :label="__('Description')" rows="3" />
+
+            @if ($this->editingBundle)
+                <flux:checkbox.group wire:model="includedAddonIds" :label="__('Included add-ons')" :description="__('Clubs with this bundle get every selected add-on. Changes apply to existing bundle subscriptions straight away.')">
+                    @foreach ($this->singleAddons as $single)
+                        <flux:checkbox :value="(string) $single->id" :label="$single->name" :description="$single->formattedPrice()" />
+                    @endforeach
+                </flux:checkbox.group>
+            @endif
+
             <flux:input wire:model="price" :label="__('Price per month (€)')" type="number" step="0.01" min="0" required />
             <flux:switch wire:model="is_active" :label="__('For sale')" :description="__('Clubs can only buy add-ons that are for sale. Existing subscriptions keep running.')" />
 

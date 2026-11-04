@@ -20,7 +20,8 @@ use Illuminate\Support\Carbon;
  * @property string $mollie_payment_id
  * @property string $purpose first|recurring
  * @property PaymentStatus $status
- * @property int $amount_cents
+ * @property int $amount_cents charged, after any upgrade credit
+ * @property int $credit_cents unused value of replaced add-ons deducted from a first payment
  * @property string $currency
  * @property Carbon|null $paid_at
  * @property Carbon|null $created_at
@@ -28,7 +29,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'club_id', 'addon_subscription_id', 'mollie_payment_id', 'purpose',
-    'status', 'amount_cents', 'currency', 'paid_at',
+    'status', 'amount_cents', 'credit_cents', 'currency', 'paid_at',
 ])]
 class AddonPayment extends Model
 {
@@ -47,6 +48,7 @@ class AddonPayment extends Model
         return [
             'status' => PaymentStatus::class,
             'amount_cents' => 'integer',
+            'credit_cents' => 'integer',
             'paid_at' => 'datetime',
         ];
     }

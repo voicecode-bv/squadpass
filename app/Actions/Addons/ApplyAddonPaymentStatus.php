@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class ApplyAddonPaymentStatus
 {
+    public function __construct(protected CalculateAddonUpgrade $calculateUpgrade) {}
+
     /**
      * Apply a Mollie payment state idempotently: statuses only move forward,
      * and the add-on is activated exactly once when the first payment is paid.
@@ -64,12 +66,33 @@ class ApplyAddonPaymentStatus
                 'next_billing_at' => $subscription->starts_at->addMonthNoOverflow(),
             ]);
 
+            $this->endReplacedSubscriptions($subscription);
+
             return;
         }
 
         if ($subscription->status === SubscriptionStatus::PastDue) {
             $subscription->update(['status' => SubscriptionStatus::Active]);
         }
+    }
+
+    /**
+     * Stop the add-ons the new one makes redundant. Their unused days were
+     * deducted from the first payment, so they end straight away and are
+     * never charged again.
+     */
+    protected function endReplacedSubscriptions(AddonSubscription $subscription): void
+    {
+        $subscription->load('club', 'addon.includedAddons');
+
+        $this->calculateUpgrade
+            ->replacedSubscriptions($subscription->club, $subscription->addon)
+            ->each(fn (AddonSubscription $replaced) => $replaced->update([
+                'status' => SubscriptionStatus::Cancelled,
+                'cancelled_at' => $replaced->cancelled_at ?? now(),
+                'ends_at' => today()->subDay(),
+                'next_billing_at' => null,
+            ]));
     }
 
     protected function handleFailure(AddonSubscription $subscription, AddonPayment $payment): void

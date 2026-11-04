@@ -26,6 +26,11 @@ class PaymentException extends RuntimeException
         return new self(__('Your club already has this add-on.'));
     }
 
+    public static function addonAlreadyIncluded(): self
+    {
+        return new self(__('Your club already has these features through another add-on.'));
+    }
+
     public static function membershipRequired(): self
     {
         return new self(__('An active membership at this club is required.'));

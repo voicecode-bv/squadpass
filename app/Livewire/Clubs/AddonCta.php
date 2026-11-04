@@ -60,6 +60,20 @@ class AddonCta extends Component
         return Addon::query()->active()->where('key', $this->addonKey->value)->first();
     }
 
+    /**
+     * The cheapest bundle for sale that includes this add-on, to mention as an alternative.
+     */
+    #[Computed]
+    public function bundle(): ?Addon
+    {
+        return Addon::query()
+            ->active()
+            ->bundles()
+            ->whereHas('includedAddons', fn ($query) => $query->where('key', $this->addonKey->value))
+            ->orderBy('price_cents')
+            ->first();
+    }
+
     public function render(): View
     {
         return view('livewire.clubs.addon-cta');
