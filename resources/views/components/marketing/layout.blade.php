@@ -72,6 +72,8 @@
 
         {{ $head ?? '' }}
 
+        @include('partials.google-analytics')
+
         @fonts
         @vite(['resources/css/app.css'])
     </head>
@@ -147,6 +149,9 @@
                 </div>
                 <div class="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
                     <span>&copy; {{ now()->year }} {{ config('app.name', 'Laravel') }} · {{ __('Made with :heart in the Netherlands', ['heart' => '❤️']) }}</span>
+                    @production
+                        <button type="button" data-cookie-settings class="transition hover:text-white">{{ __('Cookie settings') }}</button>
+                    @endproduction
                     <span>{{ __('Made for clubs that keep moving.') }}</span>
                 </div>
             </footer>

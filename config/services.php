@@ -40,6 +40,11 @@ return [
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
+    'google_analytics' => [
+        // GA4 measurement id, only loaded on production.
+        'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', 'G-931HC5QPND'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

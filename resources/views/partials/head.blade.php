@@ -24,6 +24,8 @@
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#2563eb">
 
+@include('partials.google-analytics')
+
 @fonts
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])

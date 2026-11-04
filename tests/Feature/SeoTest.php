@@ -55,3 +55,41 @@ test('account pages stay out of search results', function () {
         ->assertOk()
         ->assertSee('<meta name="robots" content="noindex, nofollow" />', escape: false);
 });
+
+test('google analytics loads on marketing and app pages in production', function (string $url) {
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->get($url)
+        ->assertOk()
+        ->assertSee('https://www.googletagmanager.com/gtag/js?id=G-931HC5QPND', escape: false);
+})->with([
+    'marketing' => fn () => route('home'),
+    'app' => fn () => route('login'),
+]);
+
+test('google analytics starts with every consent type denied and offers the cookie banner', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeInOrder([
+            "gtag('consent', 'default'",
+            "ad_storage: 'denied'",
+            "ad_user_data: 'denied'",
+            "ad_personalization: 'denied'",
+            "gtag('config'",
+            'googletagmanager.com/gtag/js',
+        ], escape: false)
+        ->assertSee('id="cookie-banner-template"', escape: false)
+        ->assertSee('data-cookie-choice="denied"', escape: false)
+        ->assertSee('data-cookie-choice="granted"', escape: false)
+        ->assertSee('data-cookie-settings', escape: false);
+});
+
+test('google analytics and the cookie banner stay off outside production', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('googletagmanager.com', escape: false)
+        ->assertDontSee('cookie-banner', escape: false)
+        ->assertDontSee('data-cookie-settings', escape: false);
+});
