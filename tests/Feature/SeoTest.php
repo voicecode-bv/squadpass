@@ -98,7 +98,7 @@ test('google analytics and the cookie banner stay off outside production', funct
 test('the privacy statement is public, indexed and linked from the footer', function () {
     $this->get(route('privacy'))
         ->assertOk()
-        ->assertSee('Privacyverklaring')
+        ->assertSee(__('Privacy statement'))
         ->assertSee(config('mail.from.address'));
 
     $this->get(route('home'))->assertSee(route('privacy'), escape: false);
