@@ -2,6 +2,10 @@
 
 @php
     $lowestAddonPrice = $addonPrices === [] ? null : min($addonPrices);
+    $launchOfferAvailable = \App\Models\LaunchOffer::isAvailable();
+    $launchOfferPercent = \App\Models\LaunchOffer::discountPercent();
+    $launchOfferSpots = \App\Models\LaunchOffer::spots();
+    $launchOfferSpotsLeft = \App\Models\LaunchOffer::spotsLeft();
 @endphp
 
 <section id="pricing" class="scroll-mt-8 py-16 lg:py-24">
@@ -13,6 +17,28 @@
         <h2 class="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('One price per month, based on your club size') }}</h2>
         <p class="mt-4 text-lg text-zinc-400">{{ __('Every plan includes all features for your whole club. You only choose which add-ons you switch on.') }}</p>
     </div>
+
+    @if ($launchOfferAvailable)
+        <div id="opening-offer" class="mx-auto mt-12 max-w-3xl scroll-mt-8 rounded-3xl bg-linear-to-r from-amber-400/15 via-orange-400/10 to-amber-400/15 p-6 ring-1 ring-amber-300/40 sm:p-8" data-test="launch-offer">
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <span class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-amber-200 uppercase">
+                        <flux:icon.sparkles variant="micro" class="size-4" />
+                        {{ __('Opening offer') }}
+                    </span>
+                    <p class="mt-2 text-xl font-semibold text-white sm:text-2xl">{{ __(':percent% off for good for the first :spots clubs', ['percent' => $launchOfferPercent, 'spots' => $launchOfferSpots]) }}</p>
+                    <p class="mt-2 text-zinc-300">{{ __('Choose a plan while spots are left and you keep the opening price for as long as you stay a customer, also when you switch plans.') }}</p>
+                </div>
+                <div class="shrink-0 text-center sm:text-end">
+                    <p class="text-4xl font-bold text-white tabular-nums">{{ $launchOfferSpotsLeft }}</p>
+                    <p class="text-sm text-amber-200">{{ trans_choice('spot left|spots left', $launchOfferSpotsLeft) }}</p>
+                </div>
+            </div>
+            <div class="mt-6 h-2 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                <div class="h-full rounded-full bg-linear-to-r from-amber-300 to-orange-400" style="width: {{ $launchOfferSpots > 0 ? min(100, (int) round(($launchOfferSpots - $launchOfferSpotsLeft) / $launchOfferSpots * 100)) : 0 }}%"></div>
+            </div>
+        </div>
+    @endif
 
     <div class="mt-14 grid items-stretch gap-6 lg:grid-cols-3">
         @foreach (collect(\App\Enums\ClubPlan::cases())->map(fn (\App\Enums\ClubPlan $clubPlan) => [
@@ -30,7 +56,14 @@
                 <p class="relative mt-2 text-sm leading-relaxed text-zinc-400">{{ $plan['text'] }}</p>
 
                 <p class="relative mt-8 flex flex-wrap items-baseline gap-x-2">
-                    @if ($plan['price_cents'] !== null)
+                    @if ($plan['price_cents'] !== null && $launchOfferAvailable)
+                        <span class="text-4xl font-bold tracking-tight text-white">{{ \App\Models\Addon::formatCents(\App\Models\LaunchOffer::applyDiscount($plan['price_cents'], $launchOfferPercent)) }}</span>
+                        <span class="text-sm text-zinc-400">/ {{ __('month') }}</span>
+                        <span class="w-full text-sm text-zinc-500">
+                            <span class="line-through">{{ \App\Models\Addon::formatCents($plan['price_cents']) }}</span>
+                            <span class="ml-1 font-medium text-amber-200">{{ __('Opening price: :percent% off for good', ['percent' => $launchOfferPercent]) }}</span>
+                        </span>
+                    @elseif ($plan['price_cents'] !== null)
                         <span class="text-4xl font-bold tracking-tight text-white">{{ \App\Models\Addon::formatCents($plan['price_cents']) }}</span>
                         <span class="text-sm text-zinc-400">/ {{ __('month') }}</span>
                     @else

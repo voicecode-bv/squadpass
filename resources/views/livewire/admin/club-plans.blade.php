@@ -30,6 +30,23 @@
         </flux:table>
     </x-table-card>
 
+    <section class="sp-panel p-5" data-test="launch-offer">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h2 class="sp-card-title">{{ __('Opening offer') }}</h2>
+                <p class="sp-card-subtitle">
+                    {{ $launchOffer['is_active'] ? __('Active') : __('Inactive') }}
+                    · {{ __(':taken of :spots spots taken', ['taken' => $this->foundingSpotsTaken, 'spots' => $launchOffer['spots']]) }}
+                </p>
+            </div>
+            <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="editOffer">{{ __('Edit') }}</flux:button>
+        </div>
+
+        <flux:text class="mt-4">
+            {{ __('The first :spots clubs that take out a plan get :percent% off every plan for as long as they stay a customer. A club claims its spot when it chooses a plan and gives it back if the first payment fails.', ['spots' => $launchOffer['spots'], 'percent' => $launchOffer['discount_percent']]) }}
+        </flux:text>
+    </section>
+
     <div>
         <flux:heading size="lg">{{ __('Club subscriptions') }}</flux:heading>
         <flux:text class="mt-1">{{ __('Every SquadPass plan taken out by a club.') }}</flux:text>
@@ -56,6 +73,9 @@
                         <flux:table.row :key="$subscription->id">
                             <flux:table.cell class="sp-strong">
                                 <flux:link :href="route('clubs.plan', $subscription->club)" wire:navigate>{{ $subscription->club->name }}</flux:link>
+                                @if ($subscription->club->isFoundingMember())
+                                    <flux:text class="text-xs">{{ __('Opening price (:percent% off)', ['percent' => $subscription->club->founding_discount_percent]) }}</flux:text>
+                                @endif
                             </flux:table.cell>
                             <flux:table.cell>{{ $subscription->plan->label() }}</flux:table.cell>
                             <flux:table.cell>{{ $subscription->isBilledManually() ? __('Billed manually') : $subscription->formattedPrice() }}</flux:table.cell>
@@ -82,6 +102,23 @@
             </flux:table>
         </x-table-card>
     @endif
+
+    <flux:modal name="edit-launch-offer" class="md:w-96">
+        <form wire:submit="saveOffer" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Edit opening offer') }}</flux:heading>
+                <flux:text class="mt-2">{{ __('A new discount applies to clubs that claim a spot from now on. Clubs with the opening price keep the discount they claimed.') }}</flux:text>
+            </div>
+
+            <flux:switch wire:model="offer_active" :label="__('Offer active')" :description="__('Shown on the website and applied when a club chooses a plan.')" />
+            <flux:input wire:model="offer_discount_percent" :label="__('Discount (%)')" type="number" step="1" min="1" max="100" />
+            <flux:input wire:model="offer_spots" :label="__('Number of spots')" :description="__('Number of clubs that can claim the opening price.')" type="number" step="1" min="0" />
+
+            <div class="flex justify-end">
+                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     <flux:modal name="edit-club-plan" class="md:w-96">
         <form wire:submit="save" class="space-y-6">

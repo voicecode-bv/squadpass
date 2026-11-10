@@ -3,6 +3,19 @@
     'items',
 ])
 
+@php
+    if (\App\Models\LaunchOffer::isAvailable()) {
+        $items = [
+            ['question' => __('What is the opening offer?'), 'answer' => __('The first :spots clubs that choose a plan get :percent% off their plan for as long as they stay a customer, also when they switch plans later. :count Your trial stays free: the discount applies from your first paid month.', [
+                'spots' => \App\Models\LaunchOffer::spots(),
+                'percent' => \App\Models\LaunchOffer::discountPercent(),
+                'count' => trans_choice('There is :count spot left.|There are :count spots left.', \App\Models\LaunchOffer::spotsLeft()),
+            ])],
+            ...$items,
+        ];
+    }
+@endphp
+
 <section id="faq" class="scroll-mt-8 py-16 lg:py-24">
     <div class="mx-auto max-w-2xl text-center">
         <span class="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-white/10">

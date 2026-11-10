@@ -13,11 +13,12 @@
                     <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ $title }}</h2>
                     <p class="mt-4 text-lg text-blue-100">{{ $text }}</p>
                     <ul class="mt-8 hidden space-y-3 text-blue-50 lg:block">
-                        @foreach ([
+                        @foreach (array_filter([
                             __(':days days free with every feature', ['days' => \App\Enums\ClubPlan::TRIAL_DAYS]),
+                            \App\Models\LaunchOffer::isAvailable() ? __('Opening offer: :percent% off for good', ['percent' => \App\Models\LaunchOffer::discountPercent()]) : null,
                             __('No payment details needed'),
                             __('Cancel monthly'),
-                        ] as $promise)
+                        ]) as $promise)
                             <li class="flex items-center gap-3">
                                 <flux:icon.check-circle variant="micro" class="size-5 shrink-0 text-white" />
                                 {{ $promise }}

@@ -20,12 +20,14 @@ class StartClubSubscription
         protected MollieGateway $gateway,
         protected PlatformMollieAccount $platform,
         protected ResolvePlatformMollieCustomer $resolveCustomer,
+        protected ClaimFoundingSpot $claimFoundingSpot,
     ) {}
 
     /**
      * Start a SquadPass plan for a club. The first payment on the platform Mollie
-     * account establishes the mandate and covers the first month. Returns the
-     * checkout URL.
+     * account establishes the mandate and covers the first month. While the
+     * opening offer has spots left, the club claims one and pays its founding
+     * price from the first month on. Returns the checkout URL.
      *
      * @throws ClubPlanException
      */
@@ -47,7 +49,10 @@ class StartClubSubscription
         throw_if($limit !== null && $club->activeMemberCount() > $limit, ClubPlanException::tooManyMembersForPlan($limit ?? 0));
 
         $customerId = $this->resolveCustomer->handle($club, $purchaser->email);
-        $priceCents = (int) $plan->priceCents();
+
+        $this->claimFoundingSpot->handle($club);
+
+        $priceCents = (int) $club->planPriceCents($plan);
 
         $subscription = ClubSubscription::create([
             'club_id' => $club->id,

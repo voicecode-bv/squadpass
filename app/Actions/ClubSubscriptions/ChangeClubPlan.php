@@ -12,7 +12,7 @@ class ChangeClubPlan
     /**
      * Switch an active, self-service plan to another tier. The new member limit
      * applies right away; the new price from the next billing date, so there is
-     * nothing to prorate.
+     * nothing to prorate. A founding club keeps its discount on the new plan.
      *
      * @throws ClubPlanException
      */
@@ -30,7 +30,7 @@ class ChangeClubPlan
 
         $subscription->update([
             'plan' => $plan,
-            'price_cents' => $plan->priceCents(),
+            'price_cents' => $subscription->club->planPriceCents($plan),
         ]);
     }
 }

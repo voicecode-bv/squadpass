@@ -5,6 +5,9 @@
     $canSubscribe = $subscription === null || ! $subscription->blocksNewSubscription();
     $canSwitch = $status === $statuses::Active && ! $subscription->isBilledManually();
     $memberLimit = $club->memberLimit();
+    $isFoundingMember = $club->isFoundingMember();
+    $launchOfferAvailable = ! $isFoundingMember && $canSubscribe && \App\Models\LaunchOffer::isAvailable();
+    $launchOfferPercent = \App\Models\LaunchOffer::discountPercent();
 @endphp
 
 <div class="flex w-full flex-col gap-8">
@@ -24,6 +27,19 @@
             <flux:callout.text>{{ __('In a demo club you cannot choose a plan or buy add-ons. Every add-on is already switched on, so you can try them all.') }}</flux:callout.text>
         </flux:callout>
     @else
+
+    @if ($isFoundingMember)
+        <x-portal.notice :heading="__('Opening price: :percent% off', ['percent' => $club->founding_discount_percent])" data-test="founding-notice">
+            {{ __(':club claimed a spot in the opening offer. You keep this discount on every plan for as long as you stay a customer.', ['club' => $club->name]) }}
+        </x-portal.notice>
+    @elseif ($launchOfferAvailable)
+        <x-portal.notice :heading="__('Opening offer: :percent% off for good', ['percent' => $launchOfferPercent])" data-test="launch-offer-notice">
+            {{ __('Choose a plan now and keep :percent% off for as long as you stay a customer. :count', [
+                'percent' => $launchOfferPercent,
+                'count' => trans_choice('There is :count spot left.|There are :count spots left.', \App\Models\LaunchOffer::spotsLeft()),
+            ]) }}
+        </x-portal.notice>
+    @endif
 
     @if ($status === $statuses::PastDue)
         <flux:callout icon="exclamation-triangle" variant="danger">
@@ -134,7 +150,11 @@
 
                 <div class="mt-auto flex items-end justify-between gap-4">
                     <div>
-                        @if ($plan->isSelfService())
+                        @if ($plan->isSelfService() && ($isFoundingMember || $launchOfferAvailable))
+                            <flux:heading size="lg">{{ \App\Models\Addon::formatCents($isFoundingMember ? $club->planPriceCents($plan) : \App\Models\LaunchOffer::applyDiscount($plan->priceCents(), $launchOfferPercent)) }}</flux:heading>
+                            <flux:text class="text-xs">{{ __('Per month') }}</flux:text>
+                            <flux:text class="text-xs whitespace-nowrap line-through">{{ \App\Models\Addon::formatCents($plan->priceCents()) }}</flux:text>
+                        @elseif ($plan->isSelfService())
                             <flux:heading size="lg">{{ \App\Models\Addon::formatCents($plan->priceCents()) }}</flux:heading>
                             <flux:text class="text-xs">{{ __('Per month') }}</flux:text>
                         @else

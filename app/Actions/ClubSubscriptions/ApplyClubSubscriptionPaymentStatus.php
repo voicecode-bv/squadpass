@@ -4,6 +4,7 @@ namespace App\Actions\ClubSubscriptions;
 
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
+use App\Models\Club;
 use App\Models\ClubSubscription;
 use App\Models\ClubSubscriptionPayment;
 use App\Services\Mollie\MolliePaymentResult;
@@ -78,6 +79,8 @@ class ApplyClubSubscriptionPaymentStatus
             // No mandate was established; drop the pending subscription so the club can retry.
             if ($subscription->status === SubscriptionStatus::Pending) {
                 $subscription->delete();
+
+                $this->releaseFoundingSpot($subscription);
             }
 
             return;
@@ -86,5 +89,24 @@ class ApplyClubSubscriptionPaymentStatus
         if ($subscription->status === SubscriptionStatus::Active) {
             $subscription->update(['status' => SubscriptionStatus::PastDue]);
         }
+    }
+
+    /**
+     * A club that never got a paid plan gives its founding spot back, so an
+     * abandoned checkout does not use up a spot of the opening offer.
+     */
+    protected function releaseFoundingSpot(ClubSubscription $subscription): void
+    {
+        $hasOtherSubscriptions = ClubSubscription::query()
+            ->where('club_id', $subscription->club_id)
+            ->exists();
+
+        if ($hasOtherSubscriptions) {
+            return;
+        }
+
+        Club::query()
+            ->whereKey($subscription->club_id)
+            ->update(['founding_discount_percent' => null, 'founding_claimed_at' => null]);
     }
 }

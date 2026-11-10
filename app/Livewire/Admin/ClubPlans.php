@@ -6,6 +6,7 @@ use App\Enums\ClubPlan;
 use App\Enums\SubscriptionStatus;
 use App\Models\ClubPlanSetting;
 use App\Models\ClubSubscription;
+use App\Models\LaunchOffer;
 use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -16,7 +17,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Superadmin management of the SquadPass plans: monthly price and member limit.
+ * Superadmin management of the SquadPass plans: monthly price and member limit,
+ * and the opening offer that gives the first clubs a lasting founding price.
  */
 #[Title('SquadPass plans')]
 class ClubPlans extends Component
@@ -29,6 +31,12 @@ class ClubPlans extends Component
     public string $price = '';
 
     public string $member_limit = '';
+
+    public bool $offer_active = false;
+
+    public string $offer_discount_percent = '';
+
+    public string $offer_spots = '';
 
     public function mount(): void
     {
@@ -70,6 +78,53 @@ class ClubPlans extends Component
         Flux::toast(variant: 'success', text: __('Plan saved.'));
     }
 
+    public function editOffer(): void
+    {
+        $this->authorize('manage-platform');
+
+        $settings = LaunchOffer::settings();
+
+        $this->offer_active = $settings['is_active'];
+        $this->offer_discount_percent = (string) $settings['discount_percent'];
+        $this->offer_spots = (string) $settings['spots'];
+        $this->resetErrorBag();
+
+        Flux::modal('edit-launch-offer')->show();
+    }
+
+    /**
+     * A changed discount only applies to clubs that claim a spot from now on;
+     * founding clubs keep the discount they claimed.
+     */
+    public function saveOffer(): void
+    {
+        $this->authorize('manage-platform');
+
+        $validated = $this->validate([
+            'offer_active' => ['boolean'],
+            'offer_discount_percent' => ['required', 'integer', 'min:1', 'max:100'],
+            'offer_spots' => ['required', 'integer', 'min:0', 'max:100000'],
+        ]);
+
+        $offer = LaunchOffer::query()->firstOrNew();
+        $offer->fill([
+            'is_active' => $validated['offer_active'],
+            'discount_percent' => (int) $validated['offer_discount_percent'],
+            'spots' => (int) $validated['offer_spots'],
+        ])->save();
+
+        unset($this->foundingSpotsTaken);
+
+        Flux::modal('edit-launch-offer')->close();
+        Flux::toast(variant: 'success', text: __('Opening offer saved.'));
+    }
+
+    #[Computed]
+    public function foundingSpotsTaken(): int
+    {
+        return LaunchOffer::spotsTaken();
+    }
+
     /**
      * Active subscriptions per plan value.
      *
@@ -94,7 +149,7 @@ class ClubPlans extends Component
     public function subscriptions(): LengthAwarePaginator
     {
         return ClubSubscription::query()
-            ->with('club:id,name,slug')
+            ->with('club:id,name,slug,founding_discount_percent,founding_claimed_at')
             ->latest('id')
             ->paginate(25);
     }
@@ -103,6 +158,7 @@ class ClubPlans extends Component
     {
         return view('livewire.admin.club-plans', [
             'plans' => ClubPlan::cases(),
+            'launchOffer' => LaunchOffer::settings(),
         ]);
     }
 }

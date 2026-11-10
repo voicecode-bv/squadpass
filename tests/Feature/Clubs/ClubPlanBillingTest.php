@@ -8,6 +8,7 @@ use App\Livewire\Clubs\Plan;
 use App\Models\Club;
 use App\Models\ClubSubscription;
 use App\Models\ClubSubscriptionPayment;
+use App\Models\LaunchOffer;
 use App\Models\User;
 use App\Services\Mollie\MollieGateway;
 use Livewire\Livewire;
@@ -15,6 +16,9 @@ use Tests\Fakes\FakeMollieGateway;
 
 beforeEach(function () {
     config()->set('services.mollie.key', 'test_platform_key');
+
+    // These tests cover the regular prices; the opening offer has its own tests.
+    LaunchOffer::query()->update(['is_active' => false]);
 
     $this->gateway = new FakeMollieGateway;
     $this->app->instance(MollieGateway::class, $this->gateway);

@@ -15,10 +15,18 @@
     {{-- Hero --}}
     <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
         <div class="flex flex-col items-start gap-6">
-            <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
-                <flux:icon.bolt variant="micro" class="size-4" />
-                {{ __('Club management, lessons & payments') }}
-            </span>
+            @if (\App\Models\LaunchOffer::isAvailable())
+                <a href="#opening-offer" class="inline-flex items-center gap-2 rounded-full bg-amber-400/10 px-4 py-1.5 text-sm font-medium text-amber-200 ring-1 ring-amber-300/40 transition hover:bg-amber-400/20" data-test="launch-offer-pill">
+                    <flux:icon.sparkles variant="micro" class="size-4" />
+                    {{ __('Opening offer: :percent% off for good, :count left', ['percent' => \App\Models\LaunchOffer::discountPercent(), 'count' => trans_choice(':count spot|:count spots', \App\Models\LaunchOffer::spotsLeft())]) }}
+                    <flux:icon.arrow-right variant="micro" class="size-4" />
+                </a>
+            @else
+                <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
+                    <flux:icon.bolt variant="micro" class="size-4" />
+                    {{ __('Club management, lessons & payments') }}
+                </span>
+            @endif
 
             <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
                 {{ __('Everything your club needs,') }}
