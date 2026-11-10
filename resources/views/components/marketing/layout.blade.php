@@ -76,13 +76,14 @@
 
         @fonts
         @vite(['resources/css/app.css'])
+        @fluxAppearance
     </head>
-    <body class="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+    <body class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased">
         {{-- Glow backdrop --}}
         <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-            <div class="absolute -top-40 left-1/2 h-[32rem] w-[52rem] -translate-x-1/2 rounded-full bg-blue-600/25 blur-3xl"></div>
-            <div class="absolute top-1/3 -left-40 h-96 w-96 rounded-full bg-indigo-600/15 blur-3xl"></div>
-            <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-sky-600/10 blur-3xl"></div>
+            <div class="absolute -top-40 left-1/2 h-[32rem] w-[52rem] -translate-x-1/2 rounded-full bg-blue-400/20 dark:bg-blue-600/25 blur-3xl"></div>
+            <div class="absolute top-1/3 -left-40 h-96 w-96 rounded-full bg-indigo-400/10 dark:bg-indigo-600/15 blur-3xl"></div>
+            <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-sky-400/10 dark:bg-sky-600/10 blur-3xl"></div>
         </div>
 
         <div class="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 lg:px-8">
@@ -93,30 +94,44 @@
 
                 @if (Route::has('login'))
                     <nav class="flex items-center gap-3">
-                        <a href="{{ route('features.index') }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white md:inline-block">
+                        <a href="{{ route('features.index') }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white md:inline-block">
                             {{ __('Features') }}
                         </a>
-                        <a href="{{ route('features.show', \App\Enums\MarketingFeature::WhiteLabel) }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white lg:inline-block">
+                        <a href="{{ route('features.show', \App\Enums\MarketingFeature::WhiteLabel) }}" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white lg:inline-block">
                             {{ __('White label') }}
                         </a>
-                        <a href="#pricing" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
+                        <a href="#pricing" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white sm:inline-block">
                             {{ __('Pricing') }}
                         </a>
-                        <a href="#add-ons" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
+                        <a href="#add-ons" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white sm:inline-block">
                             {{ __('Add-ons') }}
                         </a>
-                        <a href="#faq" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white sm:inline-block">
+                        <a href="#faq" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white sm:inline-block">
                             {{ __('FAQ') }}
                         </a>
+                        {{-- Follows the system setting until a visitor picks one; Flux stores the choice, shared with the app. --}}
+                        <flux:button
+                            x-data
+                            x-on:click="$flux.dark = ! $flux.dark"
+                            variant="ghost"
+                            square
+                            size="sm"
+                            class="shrink-0"
+                            :aria-label="__('Switch between light and dark mode')"
+                            data-test="appearance-toggle"
+                        >
+                            <flux:icon.moon variant="mini" class="dark:hidden" />
+                            <flux:icon.sun variant="mini" class="hidden dark:block" />
+                        </flux:button>
                         @auth
-                            <a href="{{ route('dashboard') }}" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
+                            <a href="{{ route('dashboard') }}" class="rounded-lg bg-zinc-100 dark:bg-white/10 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-200 dark:hover:bg-white/20">
                                 {{ __('Dashboard') }}
                             </a>
                         @else
-                            <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white">
+                            <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white">
                                 {{ __('Log in') }}
                             </a>
-                            <a href="#signup" class="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/20">
+                            <a href="#signup" class="rounded-lg bg-zinc-100 dark:bg-white/10 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-200 dark:hover:bg-white/20">
                                 {{ __('Register') }}
                             </a>
                         @endauth
@@ -128,21 +143,21 @@
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-white/10 py-8 text-sm text-zinc-500">
+            <footer class="border-t border-zinc-200 dark:border-white/10 py-8 text-sm text-zinc-500">
                 <div class="grid gap-8 sm:grid-cols-2">
                     <nav aria-label="{{ __('Features') }}">
-                        <p class="font-semibold text-zinc-300">{{ __('Features') }}</p>
+                        <p class="font-semibold text-zinc-700 dark:text-zinc-300">{{ __('Features') }}</p>
                         <ul class="mt-3 flex flex-col gap-2">
                             @foreach (\App\Enums\MarketingFeature::cases() as $footerFeature)
-                                <li><a href="{{ route('features.show', $footerFeature) }}" class="transition hover:text-white">{{ $footerFeature->label() }}</a></li>
+                                <li><a href="{{ route('features.show', $footerFeature) }}" class="transition hover:text-zinc-900 dark:hover:text-white">{{ $footerFeature->label() }}</a></li>
                             @endforeach
                         </ul>
                     </nav>
                     <nav aria-label="{{ __('SquadPass for every club') }}">
-                        <p class="font-semibold text-zinc-300">{{ __('SquadPass for every club') }}</p>
+                        <p class="font-semibold text-zinc-700 dark:text-zinc-300">{{ __('SquadPass for every club') }}</p>
                         <ul class="mt-3 flex flex-col gap-2">
                             @foreach (\App\Enums\ClubSegment::cases() as $footerSegment)
-                                <li><a href="{{ route('segments.show', $footerSegment) }}" class="transition hover:text-white">{{ $footerSegment->label() }}</a></li>
+                                <li><a href="{{ route('segments.show', $footerSegment) }}" class="transition hover:text-zinc-900 dark:hover:text-white">{{ $footerSegment->label() }}</a></li>
                             @endforeach
                         </ul>
                     </nav>
@@ -150,9 +165,9 @@
                 <div class="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
                     <span>&copy; {{ now()->year }} {{ config('app.name', 'Laravel') }} · {{ __('Made with :heart in the Netherlands', ['heart' => '❤️']) }}</span>
                     <span class="flex gap-4">
-                        <a href="{{ route('privacy') }}" class="transition hover:text-white">{{ __('Privacy statement') }}</a>
+                        <a href="{{ route('privacy') }}" class="transition hover:text-zinc-900 dark:hover:text-white">{{ __('Privacy statement') }}</a>
                         @production
-                            <button type="button" data-cookie-settings class="transition hover:text-white">{{ __('Cookie settings') }}</button>
+                            <button type="button" data-cookie-settings class="transition hover:text-zinc-900 dark:hover:text-white">{{ __('Cookie settings') }}</button>
                         @endproduction
                     </span>
                     <span>{{ __('Made for clubs that keep moving.') }}</span>

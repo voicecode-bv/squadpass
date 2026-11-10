@@ -8,16 +8,16 @@
         </a>
         <livewire:clubs.start-demo />
     @else
-        <a href="#pricing" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-300 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
+        <a href="#pricing" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
             {{ __('See pricing') }}
         </a>
     @endguest
 </div>
 
-<ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-400">
+<ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-600 dark:text-zinc-400">
     @foreach ([__(':days days free', ['days' => $days]), __('No payment details needed'), __('Cancel monthly')] as $promise)
         <li class="flex items-center gap-2">
-            <flux:icon.check variant="micro" class="size-4 text-blue-300" />
+            <flux:icon.check variant="micro" class="size-4 text-blue-600 dark:text-blue-300" />
             {{ $promise }}
         </li>
     @endforeach

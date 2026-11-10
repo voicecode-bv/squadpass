@@ -16,24 +16,24 @@
     <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
         <div class="flex flex-col items-start gap-6">
             @if (\App\Models\LaunchOffer::isAvailable())
-                <a href="#opening-offer" class="inline-flex items-center gap-2 rounded-full bg-amber-400/10 px-4 py-1.5 text-sm font-medium text-amber-200 ring-1 ring-amber-300/40 transition hover:bg-amber-400/20" data-test="launch-offer-pill">
+                <a href="#opening-offer" class="inline-flex items-center gap-2 rounded-full bg-amber-400/10 px-4 py-1.5 text-sm font-medium text-amber-700 dark:text-amber-200 ring-1 ring-amber-300/40 transition hover:bg-amber-400/20" data-test="launch-offer-pill">
                     <flux:icon.sparkles variant="micro" class="size-4" />
                     {{ __('Opening offer: :percent% off for good, :count left', ['percent' => \App\Models\LaunchOffer::discountPercent(), 'count' => trans_choice(':count spot|:count spots', \App\Models\LaunchOffer::spotsLeft())]) }}
                     <flux:icon.arrow-right variant="micro" class="size-4" />
                 </a>
             @else
-                <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
+                <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
                     <flux:icon.bolt variant="micro" class="size-4" />
                     {{ __('Club management, lessons & payments') }}
                 </span>
             @endif
 
-            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+            <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
                 {{ __('Everything your club needs,') }}
-                <span class="bg-linear-to-r from-blue-400 via-indigo-400 to-sky-400 bg-clip-text text-transparent">{{ __('in one pass.') }}</span>
+                <span class="bg-linear-to-r from-blue-600 dark:from-blue-400 via-indigo-600 dark:via-indigo-400 to-sky-500 dark:to-sky-400 bg-clip-text text-transparent">{{ __('in one pass.') }}</span>
             </h1>
 
-            <p class="max-w-xl text-lg leading-relaxed text-zinc-400">
+            <p class="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
                 {{ __('Members, lessons, strip cards, subscriptions and check-ins. SquadPass handles the admin so you can focus on your club.') }}
             </p>
 
@@ -44,7 +44,7 @@
                     </a>
                     <livewire:clubs.start-demo />
                 @else
-                    <a href="{{ route('dashboard') }}" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-300 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
+                    <a href="{{ route('dashboard') }}" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
                         {{ __('Dashboard') }}
                     </a>
                 @endguest
@@ -89,8 +89,8 @@
     {{-- Features --}}
     <section class="py-16 lg:py-24">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('One platform, your whole club') }}</h2>
-            <p class="mt-4 text-lg text-zinc-400">{{ __('From the front desk to the locker room, every part of your club runs through SquadPass.') }}</p>
+            <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('One platform, your whole club') }}</h2>
+            <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('From the front desk to the locker room, every part of your club runs through SquadPass.') }}</p>
         </div>
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -102,18 +102,18 @@
                 ['feature' => \App\Enums\MarketingFeature::CheckIn, 'icon' => 'finger-print', 'title' => __('Check-in desk'), 'text' => __('Check members in at the door and instantly see their coverage.')],
                 ['feature' => \App\Enums\MarketingFeature::LessonSchedule, 'icon' => 'device-phone-mobile', 'title' => __('Member portal'), 'text' => __('Members book lessons, buy cards and follow their visits from any device.')],
             ] as $feature)
-                <a href="{{ route('features.show', $feature['feature']) }}" class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
-                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
+                <a href="{{ route('features.show', $feature['feature']) }}" class="group rounded-2xl bg-white dark:bg-white/5 p-6 ring-1 ring-zinc-200 dark:ring-white/10 transition hover:bg-zinc-50 dark:hover:bg-white/10 hover:ring-blue-400/40">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
                         <flux:icon :icon="$feature['icon']" class="size-5" />
                     </span>
-                    <h3 class="mt-4 text-lg font-semibold text-white">{{ $feature['title'] }}</h3>
-                    <p class="mt-2 leading-relaxed text-zinc-400">{{ $feature['text'] }}</p>
+                    <h3 class="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">{{ $feature['title'] }}</h3>
+                    <p class="mt-2 leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $feature['text'] }}</p>
                 </a>
             @endforeach
         </div>
 
         <div class="mt-10 text-center">
-            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-1.5 font-semibold text-blue-300 transition hover:text-white">
+            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-1.5 font-semibold text-blue-600 dark:text-blue-300 transition hover:text-zinc-900 dark:hover:text-white">
                 {{ __('View all features') }}
                 <flux:icon.arrow-right variant="micro" class="size-4" />
             </a>

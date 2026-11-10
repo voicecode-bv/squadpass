@@ -16,17 +16,17 @@
     {{-- Hero --}}
     <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
         <div class="flex flex-col items-start gap-6">
-            <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30">
+            <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
                 <flux:icon :icon="$segment->icon()" variant="micro" class="size-4" />
                 {{ $segment->eyebrow() }}
             </span>
 
-            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+            <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
                 {{ $headline }}
-                <span class="bg-linear-to-r from-blue-400 via-indigo-400 to-sky-400 bg-clip-text text-transparent">{{ $highlight }}</span>
+                <span class="bg-linear-to-r from-blue-600 dark:from-blue-400 via-indigo-600 dark:via-indigo-400 to-sky-500 dark:to-sky-400 bg-clip-text text-transparent">{{ $highlight }}</span>
             </h1>
 
-            <p class="max-w-xl text-lg leading-relaxed text-zinc-400">{{ $segment->intro() }}</p>
+            <p class="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $segment->intro() }}</p>
 
             <x-marketing.hero-actions />
         </div>
@@ -72,19 +72,19 @@
     {{-- Pain points --}}
     <section class="py-16 lg:py-24">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Sounds familiar?') }}</h2>
-            <p class="mt-4 text-lg text-zinc-400">{{ __('The admin that keeps you from your real work, solved in one platform.') }}</p>
+            <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Sounds familiar?') }}</h2>
+            <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('The admin that keeps you from your real work, solved in one platform.') }}</p>
         </div>
 
         <div class="mt-14 grid gap-6 lg:grid-cols-3">
             @foreach ($segment->painPoints() as $pain)
-                <div class="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
-                    <p class="flex items-center gap-2 text-sm font-medium text-zinc-500 line-through decoration-zinc-600">
+                <div class="rounded-2xl bg-white dark:bg-white/5 p-6 ring-1 ring-zinc-200 dark:ring-white/10">
+                    <p class="flex items-center gap-2 text-sm font-medium text-zinc-500 line-through decoration-zinc-400 dark:decoration-zinc-600">
                         <flux:icon.x-circle variant="micro" class="size-4 shrink-0 text-zinc-500" />
                         {{ $pain['title'] }}
                     </p>
-                    <p class="mt-4 flex gap-3 leading-relaxed text-zinc-300">
-                        <flux:icon.check-circle variant="micro" class="mt-1 size-5 shrink-0 text-blue-300" />
+                    <p class="mt-4 flex gap-3 leading-relaxed text-zinc-700 dark:text-zinc-300">
+                        <flux:icon.check-circle variant="micro" class="mt-1 size-5 shrink-0 text-blue-600 dark:text-blue-300" />
                         <span>{{ $pain['text'] }}</span>
                     </p>
                 </div>
@@ -95,18 +95,18 @@
     {{-- Features --}}
     <section class="py-16 lg:py-24">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('Everything you need, nothing you don\'t') }}</h2>
-            <p class="mt-4 text-lg text-zinc-400">{{ __('Every plan includes all core features. Extras such as online payments you switch on whenever you like.') }}</p>
+            <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Everything you need, nothing you don\'t') }}</h2>
+            <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('Every plan includes all core features. Extras such as online payments you switch on whenever you like.') }}</p>
         </div>
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($segment->features() as $feature)
-                <div class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
-                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
+                <div class="group rounded-2xl bg-white dark:bg-white/5 p-6 ring-1 ring-zinc-200 dark:ring-white/10 transition hover:bg-zinc-50 dark:hover:bg-white/10 hover:ring-blue-400/40">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
                         <flux:icon :icon="$feature['icon']" class="size-5" />
                     </span>
-                    <h3 class="mt-4 text-lg font-semibold text-white">{{ $feature['title'] }}</h3>
-                    <p class="mt-2 leading-relaxed text-zinc-400">{{ $feature['text'] }}</p>
+                    <h3 class="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">{{ $feature['title'] }}</h3>
+                    <p class="mt-2 leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $feature['text'] }}</p>
                 </div>
             @endforeach
         </div>

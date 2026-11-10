@@ -14,17 +14,17 @@
     {{-- Hero --}}
     <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
         <div class="flex flex-col items-start gap-6">
-            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-300 ring-1 ring-blue-400/30 transition hover:text-white">
+            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30 transition hover:text-zinc-900 dark:hover:text-white">
                 <flux:icon :icon="$feature->icon()" variant="micro" class="size-4" />
                 {{ $feature->eyebrow() }}
             </a>
 
-            <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+            <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
                 {{ $headline }}
-                <span class="bg-linear-to-r from-blue-400 via-indigo-400 to-sky-400 bg-clip-text text-transparent">{{ $highlight }}</span>
+                <span class="bg-linear-to-r from-blue-600 dark:from-blue-400 via-indigo-600 dark:via-indigo-400 to-sky-500 dark:to-sky-400 bg-clip-text text-transparent">{{ $highlight }}</span>
             </h1>
 
-            <p class="max-w-xl text-lg leading-relaxed text-zinc-400">{{ $feature->intro() }}</p>
+            <p class="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $feature->intro() }}</p>
 
             <x-marketing.hero-actions />
         </div>
@@ -55,18 +55,18 @@
     {{-- Benefits --}}
     <section class="py-16 lg:py-24">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ __('How it works in SquadPass') }}</h2>
-            <p class="mt-4 text-lg text-zinc-400">{{ __('Included in every plan, ready to use the moment you create your club.') }}</p>
+            <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('How it works in SquadPass') }}</h2>
+            <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('Included in every plan, ready to use the moment you create your club.') }}</p>
         </div>
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2">
             @foreach ($feature->benefits() as $benefit)
-                <div class="group rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-blue-400/40">
-                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
+                <div class="group rounded-2xl bg-white dark:bg-white/5 p-6 ring-1 ring-zinc-200 dark:ring-white/10 transition hover:bg-zinc-50 dark:hover:bg-white/10 hover:ring-blue-400/40">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30 transition group-hover:bg-blue-500 group-hover:text-white">
                         <flux:icon :icon="$benefit['icon']" class="size-5" />
                     </span>
-                    <h3 class="mt-4 text-lg font-semibold text-white">{{ $benefit['title'] }}</h3>
-                    <p class="mt-2 leading-relaxed text-zinc-400">{{ $benefit['text'] }}</p>
+                    <h3 class="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">{{ $benefit['title'] }}</h3>
+                    <p class="mt-2 leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $benefit['text'] }}</p>
                 </div>
             @endforeach
         </div>

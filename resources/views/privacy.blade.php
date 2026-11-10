@@ -92,22 +92,22 @@
 
 <x-marketing.layout :title="__('Privacy statement').' | '.$appName" :description="__('How :app handles personal data: which data we process, why, who we share it with and what rights you have.', ['app' => $appName])" :canonical="route('privacy')">
     <article class="mx-auto max-w-3xl py-16 lg:py-24">
-        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">{{ __('Privacy statement') }}</h1>
+        <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-5xl">{{ __('Privacy statement') }}</h1>
         <p class="mt-4 text-sm text-zinc-500">{{ __('Last updated: :date', ['date' => \Illuminate\Support\Carbon::parse('2026-11-04')->translatedFormat('j F Y')]) }}</p>
-        <p class="mt-6 text-lg leading-relaxed text-zinc-400">
+        <p class="mt-6 text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
             {{ __('This privacy statement explains which personal data :app processes, why we do so and what rights you have.', ['app' => $appName]) }}
         </p>
 
         @foreach ($sections as $section)
             <section class="mt-12">
-                <h2 class="text-2xl font-semibold tracking-tight text-white">{{ $section['heading'] }}</h2>
+                <h2 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ $section['heading'] }}</h2>
 
                 @foreach ($section['paragraphs'] ?? [] as $paragraph)
-                    <p class="mt-4 leading-relaxed text-zinc-400">{{ $paragraph }}</p>
+                    <p class="mt-4 leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $paragraph }}</p>
                 @endforeach
 
                 @if (isset($section['items']))
-                    <ul class="mt-4 flex list-disc flex-col gap-2 ps-5 leading-relaxed text-zinc-400">
+                    <ul class="mt-4 flex list-disc flex-col gap-2 ps-5 leading-relaxed text-zinc-600 dark:text-zinc-400">
                         @foreach ($section['items'] as $item)
                             <li>{{ $item }}</li>
                         @endforeach
@@ -115,7 +115,7 @@
                 @endif
 
                 @foreach ($section['after'] ?? [] as $paragraph)
-                    <p class="mt-4 leading-relaxed text-zinc-400">{{ $paragraph }}</p>
+                    <p class="mt-4 leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $paragraph }}</p>
                 @endforeach
 
                 @if ($section['cookieSettings'] ?? false)
