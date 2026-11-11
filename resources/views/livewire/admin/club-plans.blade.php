@@ -30,20 +30,20 @@
         </flux:table>
     </x-table-card>
 
-    <section class="sp-panel p-5" data-test="launch-offer">
+    <section class="sp-panel p-5" data-test="promotion">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h2 class="sp-card-title">{{ __('Opening offer') }}</h2>
+                <h2 class="sp-card-title">{{ __('Promotion') }}: {{ $promotion['name'] }}</h2>
                 <p class="sp-card-subtitle">
-                    {{ $launchOffer['is_active'] ? __('Active') : __('Inactive') }}
-                    · {{ __(':taken of :spots spots taken', ['taken' => $this->foundingSpotsTaken, 'spots' => $launchOffer['spots']]) }}
+                    {{ $promotion['is_active'] ? __('Active') : __('Inactive') }}
+                    · {{ trans_choice(':count club with the promotional price|:count clubs with the promotional price', $this->promotionClaimedCount) }}
                 </p>
             </div>
-            <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="editOffer">{{ __('Edit') }}</flux:button>
+            <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="editPromotion">{{ __('Edit') }}</flux:button>
         </div>
 
         <flux:text class="mt-4">
-            {{ __('The first :spots clubs that take out a plan get :percent% off every plan for as long as they stay a customer. A club claims its spot when it chooses a plan and gives it back if the first payment fails.', ['spots' => $launchOffer['spots'], 'percent' => $launchOffer['discount_percent']]) }}
+            {{ __('Clubs that take out a plan while the promotion is active get :percent% off every plan for as long as they stay a customer. A club claims the price when it chooses a plan and gives it back if the first payment fails.', ['percent' => $promotion['discount_percent']]) }}
         </flux:text>
     </section>
 
@@ -73,8 +73,8 @@
                         <flux:table.row :key="$subscription->id">
                             <flux:table.cell class="sp-strong">
                                 <flux:link :href="route('clubs.plan', $subscription->club)" wire:navigate>{{ $subscription->club->name }}</flux:link>
-                                @if ($subscription->club->isFoundingMember())
-                                    <flux:text class="text-xs">{{ __('Opening price (:percent% off)', ['percent' => $subscription->club->founding_discount_percent]) }}</flux:text>
+                                @if ($subscription->club->hasPromotionalPrice())
+                                    <flux:text class="text-xs">{{ __('Promotional price (:percent% off)', ['percent' => $subscription->club->promotion_discount_percent]) }}</flux:text>
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell>{{ $subscription->plan->label() }}</flux:table.cell>
@@ -103,16 +103,16 @@
         </x-table-card>
     @endif
 
-    <flux:modal name="edit-launch-offer" class="md:w-96">
-        <form wire:submit="saveOffer" class="space-y-6">
+    <flux:modal name="edit-promotion" class="md:w-96">
+        <form wire:submit="savePromotion" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit opening offer') }}</flux:heading>
-                <flux:text class="mt-2">{{ __('A new discount applies to clubs that claim a spot from now on. Clubs with the opening price keep the discount they claimed.') }}</flux:text>
+                <flux:heading size="lg">{{ __('Edit promotion') }}</flux:heading>
+                <flux:text class="mt-2">{{ __('A new discount applies to clubs that take out a plan from now on. Clubs with the promotional price keep the discount they claimed.') }}</flux:text>
             </div>
 
-            <flux:switch wire:model="offer_active" :label="__('Offer active')" :description="__('Shown on the website and applied when a club chooses a plan.')" />
-            <flux:input wire:model="offer_discount_percent" :label="__('Discount (%)')" type="number" step="1" min="1" max="100" />
-            <flux:input wire:model="offer_spots" :label="__('Number of spots')" :description="__('Number of clubs that can claim the opening price.')" type="number" step="1" min="0" />
+            <flux:input wire:model="promotion_name" :label="__('Name')" :description="__('What customers see, for example Black Friday.')" maxlength="60" />
+            <flux:switch wire:model="promotion_active" :label="__('Promotion active')" :description="__('Shown on the website and applied when a club chooses a plan.')" />
+            <flux:input wire:model="promotion_discount" :label="__('Discount (%)')" type="number" step="1" min="1" max="100" />
 
             <div class="flex justify-end">
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>

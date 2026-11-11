@@ -6,7 +6,7 @@ use App\Enums\ClubPlan;
 use App\Enums\SubscriptionStatus;
 use App\Models\ClubPlanSetting;
 use App\Models\ClubSubscription;
-use App\Models\LaunchOffer;
+use App\Models\Promotion;
 use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -18,7 +18,7 @@ use Livewire\WithPagination;
 
 /**
  * Superadmin management of the SquadPass plans: monthly price and member limit,
- * and the opening offer that gives the first clubs a lasting founding price.
+ * and the promotion that gives the first clubs a lasting discount.
  */
 #[Title('SquadPass plans')]
 class ClubPlans extends Component
@@ -32,11 +32,11 @@ class ClubPlans extends Component
 
     public string $member_limit = '';
 
-    public bool $offer_active = false;
+    public string $promotion_name = '';
 
-    public string $offer_discount_percent = '';
+    public bool $promotion_active = false;
 
-    public string $offer_spots = '';
+    public string $promotion_discount = '';
 
     public function mount(): void
     {
@@ -78,51 +78,51 @@ class ClubPlans extends Component
         Flux::toast(variant: 'success', text: __('Plan saved.'));
     }
 
-    public function editOffer(): void
+    public function editPromotion(): void
     {
         $this->authorize('manage-platform');
 
-        $settings = LaunchOffer::settings();
+        $settings = Promotion::settings();
 
-        $this->offer_active = $settings['is_active'];
-        $this->offer_discount_percent = (string) $settings['discount_percent'];
-        $this->offer_spots = (string) $settings['spots'];
+        $this->promotion_name = $settings['name'];
+        $this->promotion_active = $settings['is_active'];
+        $this->promotion_discount = (string) $settings['discount_percent'];
         $this->resetErrorBag();
 
-        Flux::modal('edit-launch-offer')->show();
+        Flux::modal('edit-promotion')->show();
     }
 
     /**
-     * A changed discount only applies to clubs that claim a spot from now on;
-     * founding clubs keep the discount they claimed.
+     * A changed discount only applies to clubs that take out a plan from now on;
+     * clubs with a promotional price keep their discount.
      */
-    public function saveOffer(): void
+    public function savePromotion(): void
     {
         $this->authorize('manage-platform');
 
         $validated = $this->validate([
-            'offer_active' => ['boolean'],
-            'offer_discount_percent' => ['required', 'integer', 'min:1', 'max:100'],
-            'offer_spots' => ['required', 'integer', 'min:0', 'max:100000'],
+            'promotion_name' => ['required', 'string', 'max:60'],
+            'promotion_active' => ['boolean'],
+            'promotion_discount' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $offer = LaunchOffer::query()->firstOrNew();
-        $offer->fill([
-            'is_active' => $validated['offer_active'],
-            'discount_percent' => (int) $validated['offer_discount_percent'],
-            'spots' => (int) $validated['offer_spots'],
+        $promotion = Promotion::query()->firstOrNew();
+        $promotion->fill([
+            'name' => $validated['promotion_name'],
+            'is_active' => $validated['promotion_active'],
+            'discount_percent' => (int) $validated['promotion_discount'],
         ])->save();
 
-        unset($this->foundingSpotsTaken);
+        unset($this->promotionClaimedCount);
 
-        Flux::modal('edit-launch-offer')->close();
-        Flux::toast(variant: 'success', text: __('Opening offer saved.'));
+        Flux::modal('edit-promotion')->close();
+        Flux::toast(variant: 'success', text: __('Promotion saved.'));
     }
 
     #[Computed]
-    public function foundingSpotsTaken(): int
+    public function promotionClaimedCount(): int
     {
-        return LaunchOffer::spotsTaken();
+        return Promotion::claimedCount();
     }
 
     /**
@@ -149,7 +149,7 @@ class ClubPlans extends Component
     public function subscriptions(): LengthAwarePaginator
     {
         return ClubSubscription::query()
-            ->with('club:id,name,slug,founding_discount_percent,founding_claimed_at')
+            ->with('club:id,name,slug,promotion_discount_percent,promotion_claimed_at')
             ->latest('id')
             ->paginate(25);
     }
@@ -158,7 +158,7 @@ class ClubPlans extends Component
     {
         return view('livewire.admin.club-plans', [
             'plans' => ClubPlan::cases(),
-            'launchOffer' => LaunchOffer::settings(),
+            'promotion' => Promotion::settings(),
         ]);
     }
 }

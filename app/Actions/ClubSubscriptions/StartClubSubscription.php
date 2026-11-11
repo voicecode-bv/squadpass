@@ -20,14 +20,14 @@ class StartClubSubscription
         protected MollieGateway $gateway,
         protected PlatformMollieAccount $platform,
         protected ResolvePlatformMollieCustomer $resolveCustomer,
-        protected ClaimFoundingSpot $claimFoundingSpot,
+        protected ClaimPromotion $claimPromotion,
     ) {}
 
     /**
      * Start a SquadPass plan for a club. The first payment on the platform Mollie
      * account establishes the mandate and covers the first month. While the
-     * opening offer has spots left, the club claims one and pays its founding
-     * price from the first month on. Returns the checkout URL.
+     * promotion runs, the club claims it and pays the promotional price from
+     * the first month on. Returns the checkout URL.
      *
      * @throws ClubPlanException
      */
@@ -50,7 +50,7 @@ class StartClubSubscription
 
         $customerId = $this->resolveCustomer->handle($club, $purchaser->email);
 
-        $this->claimFoundingSpot->handle($club);
+        $this->claimPromotion->handle($club);
 
         $priceCents = (int) $club->planPriceCents($plan);
 

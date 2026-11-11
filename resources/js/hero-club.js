@@ -722,13 +722,16 @@ function pose(actors, seconds) {
 
 function mount(container) {
     const canvas = document.createElement('canvas');
-    canvas.className = 'pointer-events-none absolute inset-0 size-full';
+    canvas.className = 'pointer-events-none absolute inset-0 size-full opacity-0 transition-opacity duration-700';
 
     let renderer;
 
     try {
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     } catch (error) {
+        // No WebGL: show the still SVG instead.
+        container.dataset.heroClubFallback = 'true';
+
         return;
     }
 
@@ -851,6 +854,9 @@ function mount(container) {
     render();
     container.appendChild(canvas);
     container.dataset.heroClubReady = 'true';
+
+    // Fade the scene in once its first frame is on the canvas.
+    requestAnimationFrame(() => canvas.classList.remove('opacity-0'));
 }
 
 function boot() {

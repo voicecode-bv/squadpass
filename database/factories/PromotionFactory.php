@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\LaunchOffer;
+use App\Models\Promotion;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<LaunchOffer>
+ * @extends Factory<Promotion>
  */
-class LaunchOfferFactory extends Factory
+class PromotionFactory extends Factory
 {
     /**
      * @return array<string, mixed>
@@ -16,9 +16,9 @@ class LaunchOfferFactory extends Factory
     public function definition(): array
     {
         return [
+            'name' => 'Black Friday',
             'is_active' => true,
             'discount_percent' => 25,
-            'spots' => 10,
         ];
     }
 

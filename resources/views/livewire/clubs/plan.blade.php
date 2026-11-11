@@ -5,9 +5,9 @@
     $canSubscribe = $subscription === null || ! $subscription->blocksNewSubscription();
     $canSwitch = $status === $statuses::Active && ! $subscription->isBilledManually();
     $memberLimit = $club->memberLimit();
-    $isFoundingMember = $club->isFoundingMember();
-    $launchOfferAvailable = ! $isFoundingMember && $canSubscribe && \App\Models\LaunchOffer::isAvailable();
-    $launchOfferPercent = \App\Models\LaunchOffer::discountPercent();
+    $hasPromotionalPrice = $club->hasPromotionalPrice();
+    $promotionAvailable = ! $hasPromotionalPrice && $canSubscribe && \App\Models\Promotion::isAvailable();
+    $promotionPercent = \App\Models\Promotion::discountPercent();
 @endphp
 
 <div class="flex w-full flex-col gap-8">
@@ -28,16 +28,13 @@
         </flux:callout>
     @else
 
-    @if ($isFoundingMember)
-        <x-portal.notice :heading="__('Opening price: :percent% off', ['percent' => $club->founding_discount_percent])" data-test="founding-notice">
-            {{ __(':club claimed a spot in the opening offer. You keep this discount on every plan for as long as you stay a customer.', ['club' => $club->name]) }}
+    @if ($hasPromotionalPrice)
+        <x-portal.notice :heading="__('Your promotional price: :percent% off', ['percent' => $club->promotion_discount_percent])" data-test="founding-notice">
+            {{ __(':club took out a plan during a promotion. You keep this discount on every plan for as long as you stay a customer.', ['club' => $club->name]) }}
         </x-portal.notice>
-    @elseif ($launchOfferAvailable)
-        <x-portal.notice :heading="__('Opening offer: :percent% off for good', ['percent' => $launchOfferPercent])" data-test="launch-offer-notice">
-            {{ __('Choose a plan now and keep :percent% off for as long as you stay a customer. :count', [
-                'percent' => $launchOfferPercent,
-                'count' => trans_choice('There is :count spot left.|There are :count spots left.', \App\Models\LaunchOffer::spotsLeft()),
-            ]) }}
+    @elseif ($promotionAvailable)
+        <x-portal.notice :heading="__(':name: :percent% off for good', ['name' => \App\Models\Promotion::name(), 'percent' => $promotionPercent])" data-test="promotion-notice">
+            {{ __('Choose a plan now and keep :percent% off for as long as you stay a customer.', ['percent' => $promotionPercent]) }}
         </x-portal.notice>
     @endif
 
@@ -150,8 +147,8 @@
 
                 <div class="mt-auto flex items-end justify-between gap-4">
                     <div>
-                        @if ($plan->isSelfService() && ($isFoundingMember || $launchOfferAvailable))
-                            <flux:heading size="lg">{{ \App\Models\Addon::formatCents($isFoundingMember ? $club->planPriceCents($plan) : \App\Models\LaunchOffer::applyDiscount($plan->priceCents(), $launchOfferPercent)) }}</flux:heading>
+                        @if ($plan->isSelfService() && ($hasPromotionalPrice || $promotionAvailable))
+                            <flux:heading size="lg">{{ \App\Models\Addon::formatCents($hasPromotionalPrice ? $club->planPriceCents($plan) : \App\Models\Promotion::applyDiscount($plan->priceCents(), $promotionPercent)) }}</flux:heading>
                             <flux:text class="text-xs">{{ __('Per month') }}</flux:text>
                             <flux:text class="text-xs whitespace-nowrap line-through">{{ \App\Models\Addon::formatCents($plan->priceCents()) }}</flux:text>
                         @elseif ($plan->isSelfService())

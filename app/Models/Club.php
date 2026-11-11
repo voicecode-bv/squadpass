@@ -63,8 +63,8 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $demo_expires_at set on a visitor's demo sandbox, which is deleted once it passes
  * @property Carbon|null $onboarded_at
  * @property CarbonInterface|null $trial_ends_at last day a club without a plan may still add members
- * @property int|null $founding_discount_percent lasting discount on every plan, claimed in the opening offer
- * @property Carbon|null $founding_claimed_at when the club claimed its founding spot
+ * @property int|null $promotion_discount_percent lasting discount on every plan, claimed in a promotion
+ * @property Carbon|null $promotion_claimed_at when the club claimed the promotional price
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -144,8 +144,8 @@ class Club extends Model implements MollieAccount
             'demo_expires_at' => 'datetime',
             'onboarded_at' => 'datetime',
             'trial_ends_at' => 'date',
-            'founding_discount_percent' => 'integer',
-            'founding_claimed_at' => 'datetime',
+            'promotion_discount_percent' => 'integer',
+            'promotion_claimed_at' => 'datetime',
         ];
     }
 
@@ -518,26 +518,26 @@ class Club extends Model implements MollieAccount
     }
 
     /**
-     * Whether the club claimed a spot in the opening offer and keeps its founding price.
+     * Whether the club claimed a promotional price and keeps its discount.
      */
-    public function isFoundingMember(): bool
+    public function hasPromotionalPrice(): bool
     {
-        return $this->founding_claimed_at !== null && $this->founding_discount_percent !== null;
+        return $this->promotion_claimed_at !== null && $this->promotion_discount_percent !== null;
     }
 
     /**
-     * Monthly price of a plan for this club: the plan price minus its founding
+     * Monthly price of a plan for this club: the plan price minus its promotional
      * discount, if any. Null when the plan is priced on request.
      */
     public function planPriceCents(ClubPlan $plan): ?int
     {
         $priceCents = $plan->priceCents();
 
-        if ($priceCents === null || ! $this->isFoundingMember()) {
+        if ($priceCents === null || ! $this->hasPromotionalPrice()) {
             return $priceCents;
         }
 
-        return LaunchOffer::applyDiscount($priceCents, (int) $this->founding_discount_percent);
+        return Promotion::applyDiscount($priceCents, (int) $this->promotion_discount_percent);
     }
 
     public function forgetSubscriptionCache(): void

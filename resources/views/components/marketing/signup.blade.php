@@ -15,7 +15,7 @@
                     <ul class="mt-8 hidden space-y-3 text-blue-50 lg:block">
                         @foreach (array_filter([
                             __(':days days free with every feature', ['days' => \App\Enums\ClubPlan::TRIAL_DAYS]),
-                            \App\Models\LaunchOffer::isAvailable() ? __('Opening offer: :percent% off for good', ['percent' => \App\Models\LaunchOffer::discountPercent()]) : null,
+                            \App\Models\Promotion::isAvailable() ? __(':name: :percent% off for good', ['name' => \App\Models\Promotion::name(), 'percent' => \App\Models\Promotion::discountPercent()]) : null,
                             __('No payment details needed'),
                             __('Cancel monthly'),
                         ]) as $promise)

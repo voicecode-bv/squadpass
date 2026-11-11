@@ -12,7 +12,7 @@ class ChangeClubPlan
     /**
      * Switch an active, self-service plan to another tier. The new member limit
      * applies right away; the new price from the next billing date, so there is
-     * nothing to prorate. A founding club keeps its discount on the new plan.
+     * nothing to prorate. A club with a promotional price keeps its discount on the new plan.
      *
      * @throws ClubPlanException
      */

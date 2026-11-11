@@ -80,7 +80,7 @@ class ApplyClubSubscriptionPaymentStatus
             if ($subscription->status === SubscriptionStatus::Pending) {
                 $subscription->delete();
 
-                $this->releaseFoundingSpot($subscription);
+                $this->releasePromotion($subscription);
             }
 
             return;
@@ -92,10 +92,10 @@ class ApplyClubSubscriptionPaymentStatus
     }
 
     /**
-     * A club that never got a paid plan gives its founding spot back, so an
-     * abandoned checkout does not use up a spot of the opening offer.
+     * A club that never got a paid plan gives the promotional price back: it is
+     * for clubs that become a customer while the promotion runs.
      */
-    protected function releaseFoundingSpot(ClubSubscription $subscription): void
+    protected function releasePromotion(ClubSubscription $subscription): void
     {
         $hasOtherSubscriptions = ClubSubscription::query()
             ->where('club_id', $subscription->club_id)
@@ -107,6 +107,6 @@ class ApplyClubSubscriptionPaymentStatus
 
         Club::query()
             ->whereKey($subscription->club_id)
-            ->update(['founding_discount_percent' => null, 'founding_claimed_at' => null]);
+            ->update(['promotion_discount_percent' => null, 'promotion_claimed_at' => null]);
     }
 }

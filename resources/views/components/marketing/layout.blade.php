@@ -86,11 +86,11 @@
             <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-sky-400/10 dark:bg-sky-600/10 blur-3xl"></div>
         </div>
 
-        @if (\App\Models\LaunchOffer::isAvailable())
-            {{-- Opening offer, as a full-width bar above the navigation. --}}
-            <a href="{{ route('home') }}#opening-offer" class="relative z-20 flex items-center justify-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-center text-sm font-medium text-white transition hover:from-blue-500 hover:to-indigo-500" data-test="launch-offer-bar">
-                <flux:icon.sparkles variant="micro" class="size-4 shrink-0" />
-                <span>{{ __('Opening offer: :percent% off for good, :count left', ['percent' => \App\Models\LaunchOffer::discountPercent(), 'count' => trans_choice(':count spot|:count spots', \App\Models\LaunchOffer::spotsLeft())]) }}</span>
+        @if (\App\Models\Promotion::isAvailable())
+            {{-- The promotion (such as Black Friday), as a full-width bar above the navigation. --}}
+            <a href="{{ route('home') }}#promotion" class="relative z-20 flex items-center justify-center gap-2 border-b border-white/10 bg-zinc-950 px-6 py-2.5 text-center text-sm font-medium text-white transition hover:bg-zinc-900" data-test="promotion-bar">
+                <flux:icon.sparkles variant="micro" class="size-4 shrink-0 text-amber-300" />
+                <span>{{ __(':name: :percent% off for good', ['name' => \App\Models\Promotion::name(), 'percent' => \App\Models\Promotion::discountPercent()]) }}</span>
                 <flux:icon.arrow-right variant="micro" class="size-4 shrink-0" />
             </a>
         @endif

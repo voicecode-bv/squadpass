@@ -2,10 +2,8 @@
 
 @php
     $lowestAddonPrice = $addonPrices === [] ? null : min($addonPrices);
-    $launchOfferAvailable = \App\Models\LaunchOffer::isAvailable();
-    $launchOfferPercent = \App\Models\LaunchOffer::discountPercent();
-    $launchOfferSpots = \App\Models\LaunchOffer::spots();
-    $launchOfferSpotsLeft = \App\Models\LaunchOffer::spotsLeft();
+    $promotionAvailable = \App\Models\Promotion::isAvailable();
+    $promotionPercent = \App\Models\Promotion::discountPercent();
 @endphp
 
 <section id="pricing" class="scroll-mt-8 py-16 lg:py-24">
@@ -14,24 +12,19 @@
         <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('Every plan includes all features for your whole club. You only choose which add-ons you switch on.') }}</p>
     </div>
 
-    @if ($launchOfferAvailable)
-        <div id="opening-offer" class="mx-auto mt-12 max-w-3xl scroll-mt-8 rounded-3xl bg-linear-to-r from-amber-400/15 via-orange-400/10 to-amber-400/15 p-6 ring-1 ring-amber-300/40 sm:p-8" data-test="launch-offer">
-            <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+    @if ($promotionAvailable)
+        <div id="promotion" class="relative mx-auto mt-12 max-w-3xl scroll-mt-8 overflow-hidden rounded-3xl bg-zinc-950 p-6 shadow-2xl shadow-zinc-950/30 ring-1 ring-white/10 sm:p-8" data-test="promotion">
+            <div class="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-amber-400/20 blur-3xl" aria-hidden="true"></div>
+            <div class="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <span class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-amber-700 dark:text-amber-200 uppercase">
+                    <span class="inline-flex items-center gap-2 text-sm font-bold tracking-[0.2em] text-amber-300 uppercase">
                         <flux:icon.sparkles variant="micro" class="size-4" />
-                        {{ __('Opening offer') }}
+                        {{ \App\Models\Promotion::name() }}
                     </span>
-                    <p class="mt-2 text-xl font-semibold text-zinc-900 dark:text-white sm:text-2xl">{{ __(':percent% off for good for the first :spots clubs', ['percent' => $launchOfferPercent, 'spots' => $launchOfferSpots]) }}</p>
-                    <p class="mt-2 text-zinc-700 dark:text-zinc-300">{{ __('Choose a plan while spots are left and you keep the opening price for as long as you stay a customer, also when you switch plans.') }}</p>
+                    <p class="mt-2 text-xl font-semibold text-white sm:text-2xl">{{ __(':percent% off every plan, for good', ['percent' => $promotionPercent]) }}</p>
+                    <p class="mt-2 text-zinc-300">{{ __('Choose a plan during the :name offer and you keep this price for as long as you stay a customer, also when you switch plans.', ['name' => \App\Models\Promotion::name()]) }}</p>
                 </div>
-                <div class="shrink-0 text-center sm:text-end">
-                    <p class="text-4xl font-bold text-zinc-900 dark:text-white tabular-nums">{{ $launchOfferSpotsLeft }}</p>
-                    <p class="text-sm text-amber-700 dark:text-amber-200">{{ trans_choice('spot left|spots left', $launchOfferSpotsLeft) }}</p>
-                </div>
-            </div>
-            <div class="mt-6 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10" aria-hidden="true">
-                <div class="h-full rounded-full bg-linear-to-r from-amber-300 to-orange-400" style="width: {{ $launchOfferSpots > 0 ? min(100, (int) round(($launchOfferSpots - $launchOfferSpotsLeft) / $launchOfferSpots * 100)) : 0 }}%"></div>
+                <p class="shrink-0 text-5xl font-bold tracking-tight text-amber-300 tabular-nums sm:text-6xl">-{{ $promotionPercent }}%</p>
             </div>
         </div>
     @endif
@@ -52,12 +45,12 @@
                 <p class="relative mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $plan['text'] }}</p>
 
                 <p class="relative mt-8 mb-8 flex flex-wrap items-baseline gap-x-2">
-                    @if ($plan['price_cents'] !== null && $launchOfferAvailable)
-                        <span class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ \App\Models\Addon::formatCents(\App\Models\LaunchOffer::applyDiscount($plan['price_cents'], $launchOfferPercent)) }}</span>
+                    @if ($plan['price_cents'] !== null && $promotionAvailable)
+                        <span class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ \App\Models\Addon::formatCents(\App\Models\Promotion::applyDiscount($plan['price_cents'], $promotionPercent)) }}</span>
                         <span class="text-sm text-zinc-600 dark:text-zinc-400">/ {{ __('month') }}</span>
                         <span class="w-full text-sm text-zinc-500">
                             <span class="line-through">{{ \App\Models\Addon::formatCents($plan['price_cents']) }}</span>
-                            <span class="ml-1 font-medium text-amber-700 dark:text-amber-200">{{ __('Opening price: :percent% off for good', ['percent' => $launchOfferPercent]) }}</span>
+                            <span class="ml-1 font-medium text-amber-700 dark:text-amber-200">{{ __(':name price: :percent% off for good', ['name' => \App\Models\Promotion::name(), 'percent' => $promotionPercent]) }}</span>
                         </span>
                     @elseif ($plan['price_cents'] !== null)
                         <span class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ \App\Models\Addon::formatCents($plan['price_cents']) }}</span>

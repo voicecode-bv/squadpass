@@ -412,9 +412,17 @@ select:focus[data-flux-control] {
     opacity: 0;
 }
 
-/* Once the 3D version is running, the SVG fallback steps aside. */
-[data-hero-club-ready] .sp-club-fallback {
-    visibility: hidden;
+/* With motion the 3D scene takes the place of the still SVG, so the SVG stays out
+   of sight from the first paint (no flash of it while the scene loads). It only
+   shows when WebGL is unavailable, or for visitors who prefer reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+    .sp-club-fallback {
+        visibility: hidden;
+    }
+
+    [data-hero-club-fallback] .sp-club-fallback {
+        visibility: visible;
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {

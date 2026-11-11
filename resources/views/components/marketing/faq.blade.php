@@ -4,12 +4,11 @@
 ])
 
 @php
-    if (\App\Models\LaunchOffer::isAvailable()) {
+    if (\App\Models\Promotion::isAvailable()) {
         $items = [
-            ['question' => __('What is the opening offer?'), 'answer' => __('The first :spots clubs that choose a plan get :percent% off their plan for as long as they stay a customer, also when they switch plans later. :count Your trial stays free: the discount applies from your first paid month.', [
-                'spots' => \App\Models\LaunchOffer::spots(),
-                'percent' => \App\Models\LaunchOffer::discountPercent(),
-                'count' => trans_choice('There is :count spot left.|There are :count spots left.', \App\Models\LaunchOffer::spotsLeft()),
+            ['question' => __('What is the :name offer?', ['name' => \App\Models\Promotion::name()]), 'answer' => __('Clubs that choose a plan during the :name offer get :percent% off their plan for as long as they stay a customer, also when they switch plans later. Your trial stays free: the discount applies from your first paid month.', [
+                'name' => \App\Models\Promotion::name(),
+                'percent' => \App\Models\Promotion::discountPercent(),
             ])],
             ...$items,
         ];
