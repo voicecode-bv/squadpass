@@ -12,7 +12,7 @@
     class="absolute inset-x-0 top-0 isolate h-[calc(max(34rem,100svh_-_18rem)_+_6rem)] overflow-hidden lg:h-[calc(max(32rem,100svh_-_19rem)_+_6rem)] bg-linear-to-b from-sky-100 via-blue-50 to-zinc-50 dark:from-blue-950 dark:via-indigo-950 dark:to-zinc-950"
     aria-hidden="true"
     data-hero-club
-    data-club="Padel Club Amsterdam"
+    data-club="Sportclub Centrum"
     data-studio="{{ __('Group class') }}"
     data-court="{{ __('Court :number', ['number' => 1]) }}"
     data-checked-in="{{ __('Checked in') }}"
@@ -57,7 +57,7 @@
                     <rect x="160" y="18" width="168" height="44" rx="12" fill="#fff" fill-opacity="0.14" />
                     <circle cx="184" cy="40" r="12" fill="#fff" />
                     <path d="M178 40 l4 4 l8 -9" stroke="#2563eb" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                    <text x="204" y="45" fill="#fff" font-size="14" font-weight="600" font-family="inherit">Padel Club Amsterdam</text>
+                    <text x="204" y="45" fill="#fff" font-size="14" font-weight="600" font-family="inherit">Sportclub Centrum</text>
                 </g>
 
                 <g opacity="0.22" fill="#fff">
