@@ -369,6 +369,155 @@ select:focus[data-flux-control] {
     }
 }
 
+/* Hero club scene (x-marketing.hero-club): one 10s loop. A member walks in, the
+   staff member waves, the member scans the QR code at the desk and walks on.
+   The base styles are the still frame (the check-in itself), so with reduced
+   motion the scene simply shows that moment. */
+.sp-club .sp-club-member,
+.sp-club .sp-club-arm,
+.sp-club .sp-club-leg-a,
+.sp-club .sp-club-leg-b,
+.sp-club .sp-club-wave,
+.sp-club .sp-club-bubble,
+.sp-club .sp-club-ok {
+    transform-box: view-box;
+}
+
+.sp-club .sp-club-arm {
+    transform-origin: 314.5px 210px;
+    transform: rotate(95deg);
+}
+
+.sp-club .sp-club-leg-a {
+    transform-origin: 325px 288px;
+}
+
+.sp-club .sp-club-leg-b {
+    transform-origin: 337px 288px;
+}
+
+.sp-club .sp-club-wave {
+    transform-origin: 180.5px 184px;
+}
+
+.sp-club .sp-club-bubble {
+    transform-origin: 186px 112px;
+}
+
+.sp-club .sp-club-ok {
+    transform-origin: 286px 166px;
+}
+
+.sp-club .sp-club-beam {
+    opacity: 0;
+}
+
+/* Once the 3D version is running, the SVG fallback steps aside. */
+[data-hero-club-ready] .sp-club-fallback {
+    visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-club .sp-club-member { animation: sp-club-member 10s linear infinite; }
+    .sp-club .sp-club-leg-a { animation: sp-club-leg-a 10s linear infinite; }
+    .sp-club .sp-club-leg-b { animation: sp-club-leg-b 10s linear infinite; }
+    .sp-club .sp-club-arm { animation: sp-club-arm 10s ease-in-out infinite; }
+    .sp-club .sp-club-wave { animation: sp-club-wave 10s ease-in-out infinite; }
+    .sp-club .sp-club-bubble { animation: sp-club-bubble 10s ease-out infinite; }
+    .sp-club .sp-club-beam { animation: sp-club-beam 10s linear infinite; }
+    .sp-club .sp-club-scan-ok { animation: sp-club-scan-ok 10s linear infinite; }
+    .sp-club .sp-club-ok { animation: sp-club-ok 10s ease-out infinite; }
+
+    @keyframes sp-club-member {
+        0% { transform: translateX(210px); opacity: 1; }
+        22% { transform: translateX(0); opacity: 1; }
+        78% { transform: translateX(0); opacity: 1; }
+        86% { transform: translateX(-90px); opacity: 0; }
+        87%, 100% { transform: translateX(210px); opacity: 0; }
+    }
+
+    @keyframes sp-club-leg-a {
+        0.0% { transform: rotate(18deg); }
+        2.75% { transform: rotate(-18deg); }
+        5.5% { transform: rotate(18deg); }
+        8.25% { transform: rotate(-18deg); }
+        11.0% { transform: rotate(18deg); }
+        13.75% { transform: rotate(-18deg); }
+        16.5% { transform: rotate(18deg); }
+        19.25% { transform: rotate(-18deg); }
+        22.0% { transform: rotate(0deg); }
+        78.0% { transform: rotate(18deg); }
+        80.67% { transform: rotate(-18deg); }
+        83.33% { transform: rotate(18deg); }
+        86.0% { transform: rotate(0deg); }
+        100% { transform: rotate(0deg); }
+    }
+
+    @keyframes sp-club-leg-b {
+        0.0% { transform: rotate(-18deg); }
+        2.75% { transform: rotate(18deg); }
+        5.5% { transform: rotate(-18deg); }
+        8.25% { transform: rotate(18deg); }
+        11.0% { transform: rotate(-18deg); }
+        13.75% { transform: rotate(18deg); }
+        16.5% { transform: rotate(-18deg); }
+        19.25% { transform: rotate(18deg); }
+        22.0% { transform: rotate(0deg); }
+        78.0% { transform: rotate(-18deg); }
+        80.67% { transform: rotate(18deg); }
+        83.33% { transform: rotate(-18deg); }
+        86.0% { transform: rotate(0deg); }
+        100% { transform: rotate(0deg); }
+    }
+
+    @keyframes sp-club-arm {
+        0%, 40% { transform: rotate(0deg); }
+        46%, 68% { transform: rotate(95deg); }
+        74%, 100% { transform: rotate(0deg); }
+    }
+
+    @keyframes sp-club-wave {
+        0%, 15% { transform: rotate(170deg); }
+        19% { transform: rotate(0deg); }
+        23% { transform: rotate(-16deg); }
+        27% { transform: rotate(14deg); }
+        31% { transform: rotate(-16deg); }
+        35% { transform: rotate(14deg); }
+        39% { transform: rotate(0deg); }
+        44%, 100% { transform: rotate(170deg); }
+    }
+
+    @keyframes sp-club-bubble {
+        0%, 18% { transform: scale(0); opacity: 0; }
+        22% { transform: scale(1.06); opacity: 1; }
+        24%, 44% { transform: scale(1); opacity: 1; }
+        48%, 100% { transform: scale(0.6); opacity: 0; }
+    }
+
+    @keyframes sp-club-beam {
+        0%, 46% { opacity: 0; }
+        48% { opacity: 0.85; }
+        50% { opacity: 0.35; }
+        52% { opacity: 0.85; }
+        54% { opacity: 0.35; }
+        56% { opacity: 0.85; }
+        57%, 100% { opacity: 0; }
+    }
+
+    @keyframes sp-club-scan-ok {
+        0%, 56% { opacity: 0; }
+        57%, 82% { opacity: 1; }
+        86%, 100% { opacity: 0; }
+    }
+
+    @keyframes sp-club-ok {
+        0%, 56% { transform: scale(0.6) translateY(10px); opacity: 0; }
+        60% { transform: scale(1.05); opacity: 1; }
+        62%, 80% { transform: scale(1); opacity: 1; }
+        84%, 100% { transform: scale(0.9) translateY(-6px); opacity: 0; }
+    }
+}
+
 /* Every page enters the same way: its top-level blocks rise in sequence, so pages
    without their own entrance animations (tables, forms, panels) never just pop in.
    Modals, scripts and templates are left alone. */

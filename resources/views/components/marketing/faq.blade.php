@@ -18,10 +18,7 @@
 
 <section id="faq" class="scroll-mt-8 py-16 lg:py-24">
     <div class="mx-auto max-w-2xl text-center">
-        <span class="inline-flex items-center gap-2 rounded-full bg-white dark:bg-white/5 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-zinc-200 dark:ring-white/10">
-            {{ __('Frequently asked questions') }}
-        </span>
-        <h2 class="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Good to know before you start') }}</h2>
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Good to know before you start') }}</h2>
         <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
             {{ __('The questions new clubs ask us most. Is yours not listed?') }}
             <a href="mailto:{{ config('mail.from.address') }}" class="font-semibold text-blue-600 dark:text-blue-300 transition hover:text-zinc-900 dark:hover:text-white">{{ __('Send us an email') }}</a>

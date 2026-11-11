@@ -104,22 +104,6 @@ enum ClubSegment: string
         };
     }
 
-    public function eyebrow(): string
-    {
-        return match ($this) {
-            self::DanceSchool => __('For dance schools'),
-            self::PersonalTrainer => __('For personal trainers'),
-            self::BoutiqueFitness => __('For boutique fitness studios'),
-            self::FitnessClub => __('For gyms'),
-            self::BoxingSchool => __('For boxing and martial arts schools'),
-            self::YogaStudio => __('For yoga studios'),
-            self::PilatesStudio => __('For pilates studios'),
-            self::CrossfitBox => __('For CrossFit boxes'),
-            self::Bootcamp => __('For bootcamps'),
-            self::PadelClub => __('For padel clubs'),
-        };
-    }
-
     /**
      * The hero headline in two parts: the second part is highlighted.
      *

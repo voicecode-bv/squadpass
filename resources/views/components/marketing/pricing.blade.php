@@ -10,11 +10,7 @@
 
 <section id="pricing" class="scroll-mt-8 py-16 lg:py-24">
     <div class="mx-auto max-w-2xl text-center">
-        <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
-            <flux:icon.banknotes variant="micro" class="size-4" />
-            {{ __('Pricing') }}
-        </span>
-        <h2 class="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('One price per month, based on your club size') }}</h2>
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('One price per month, based on your club size') }}</h2>
         <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('Every plan includes all features for your whole club. You only choose which add-ons you switch on.') }}</p>
     </div>
 
@@ -55,7 +51,7 @@
                 <h3 class="relative text-lg font-semibold text-zinc-900 dark:text-white">{{ $plan['title'] }}</h3>
                 <p class="relative mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $plan['text'] }}</p>
 
-                <p class="relative mt-8 flex flex-wrap items-baseline gap-x-2">
+                <p class="relative mt-8 mb-8 flex flex-wrap items-baseline gap-x-2">
                     @if ($plan['price_cents'] !== null && $launchOfferAvailable)
                         <span class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ \App\Models\Addon::formatCents(\App\Models\LaunchOffer::applyDiscount($plan['price_cents'], $launchOfferPercent)) }}</span>
                         <span class="text-sm text-zinc-600 dark:text-zinc-400">/ {{ __('month') }}</span>
@@ -72,11 +68,11 @@
                 </p>
 
                 @if ($plan['price_cents'] !== null)
-                    <a href="#signup" class="relative mt-8 rounded-xl px-6 py-3 text-center text-base font-semibold transition {{ $plan['featured'] ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 hover:from-blue-400 hover:to-indigo-500' : 'text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white' }}">
+                    <a href="#signup" class="relative mt-auto rounded-xl px-6 py-3 text-center text-base font-semibold transition {{ $plan['featured'] ? 'bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 hover:from-blue-400 hover:to-indigo-500' : 'text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white' }}">
                         {{ __('Get started') }}
                     </a>
                 @else
-                    <a href="mailto:{{ config('mail.from.address') }}" class="relative mt-8 rounded-xl px-6 py-3 text-center text-base font-semibold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
+                    <a href="mailto:{{ config('mail.from.address') }}" class="relative mt-auto rounded-xl px-6 py-3 text-center text-base font-semibold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
                         {{ __('Contact us') }}
                     </a>
                 @endif

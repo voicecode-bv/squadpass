@@ -12,28 +12,23 @@
 @endphp
 
 <x-marketing.layout :title="config('app.name').' | '.__('Software for members, lessons and payments')" :description="__('SquadPass is the all-in-one platform for sports clubs, studios and gyms: members, lesson schedules, strip cards, subscriptions, check-ins and direct debit. Try it free for :days days.', ['days' => \App\Enums\ClubPlan::TRIAL_DAYS])" :canonical="route('home')">
-    {{-- Hero --}}
-    <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
-        <div class="flex flex-col items-start gap-6">
-            @if (\App\Models\LaunchOffer::isAvailable())
-                <a href="#opening-offer" class="inline-flex items-center gap-2 rounded-full bg-amber-400/10 px-4 py-1.5 text-sm font-medium text-amber-700 dark:text-amber-200 ring-1 ring-amber-300/40 transition hover:bg-amber-400/20" data-test="launch-offer-pill">
-                    <flux:icon.sparkles variant="micro" class="size-4" />
-                    {{ __('Opening offer: :percent% off for good, :count left', ['percent' => \App\Models\LaunchOffer::discountPercent(), 'count' => trans_choice(':count spot|:count spots', \App\Models\LaunchOffer::spotsLeft())]) }}
-                    <flux:icon.arrow-right variant="micro" class="size-4" />
-                </a>
-            @else
-                <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
-                    <flux:icon.bolt variant="micro" class="size-4" />
-                    {{ __('Club management, lessons & payments') }}
-                </span>
-            @endif
+    <x-slot:head>
+        @vite('resources/js/hero-club.js')
+    </x-slot:head>
 
-            <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
+    <x-slot:backdrop>
+        <x-marketing.hero-club />
+    </x-slot:backdrop>
+
+    {{-- Hero: text over the full-width club scene in the backdrop. --}}
+    <section class="flex min-h-[max(34rem,calc(100svh-18rem))] items-start pt-6 pb-[14rem] sm:pt-12 lg:min-h-[max(32rem,calc(100svh-19rem))] lg:pb-[15rem]">
+        <div class="flex max-w-4xl flex-col items-start gap-6" data-hero-text>
+            <h1 class="text-4xl font-bold tracking-tight text-balance text-zinc-900 dark:text-white sm:text-6xl">
                 {{ __('Everything your club needs,') }}
                 <span class="bg-linear-to-r from-blue-600 dark:from-blue-400 via-indigo-600 dark:via-indigo-400 to-sky-500 dark:to-sky-400 bg-clip-text text-transparent">{{ __('in one pass.') }}</span>
             </h1>
 
-            <p class="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p class="max-w-2xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
                 {{ __('Members, lessons, strip cards, subscriptions and check-ins. SquadPass handles the admin so you can focus on your club.') }}
             </p>
 
@@ -50,44 +45,10 @@
                 @endguest
             </div>
         </div>
-
-        {{-- Membership pass mockup --}}
-        <div class="relative mx-auto w-full max-w-md" aria-hidden="true">
-            <div class="absolute inset-0 rotate-6 rounded-3xl bg-linear-to-br from-sky-500/40 to-indigo-600/40 blur-sm"></div>
-            <div class="relative -rotate-3 rounded-3xl bg-linear-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 shadow-2xl shadow-blue-950/60 ring-1 ring-white/20 transition duration-500 hover:rotate-0">
-                <div class="flex items-start justify-between">
-                    <span class="flex size-10 items-center justify-center rounded-xl bg-white/15">
-                        <x-app-logo-icon class="size-6 fill-current text-white" />
-                    </span>
-                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-widest text-white uppercase">{{ __('Member pass') }}</span>
-                </div>
-
-                <div class="mt-10">
-                    <p class="text-sm text-blue-200">Padel Club Amsterdam</p>
-                    <p class="mt-1 text-2xl font-semibold text-white">Alex Janssen</p>
-                </div>
-
-                <div class="mt-8 flex items-end justify-between">
-                    <div>
-                        <p class="text-xs tracking-widest text-blue-200 uppercase">{{ __('Strip card') }}</p>
-                        <div class="mt-2 flex gap-1.5">
-                            @foreach (range(1, 10) as $strip)
-                                <span class="size-2.5 rounded-full {{ $strip <= 7 ? 'bg-white' : 'bg-white/25' }}"></span>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-4 gap-1 rounded-lg bg-white/90 p-1.5">
-                        @foreach ([1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1] as $dot)
-                            <span class="size-1.5 rounded-[2px] {{ $dot ? 'bg-blue-900' : 'bg-transparent' }}"></span>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
     </section>
 
-    {{-- Features --}}
-    <section class="py-16 lg:py-24">
+    {{-- Features: starts right below the hero, so it shows above the fold. --}}
+    <section class="pt-10 pb-16 lg:pb-24">
         <div class="mx-auto max-w-2xl text-center">
             <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('One platform, your whole club') }}</h2>
             <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('From the front desk to the locker room, every part of your club runs through SquadPass.') }}</p>

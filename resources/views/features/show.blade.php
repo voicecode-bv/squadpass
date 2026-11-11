@@ -14,11 +14,6 @@
     {{-- Hero --}}
     <section class="grid items-center gap-16 py-16 lg:grid-cols-2 lg:py-24">
         <div class="flex flex-col items-start gap-6">
-            <a href="{{ route('features.index') }}" class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30 transition hover:text-zinc-900 dark:hover:text-white">
-                <flux:icon :icon="$feature->icon()" variant="micro" class="size-4" />
-                {{ $feature->eyebrow() }}
-            </a>
-
             <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
                 {{ $headline }}
                 <span class="bg-linear-to-r from-blue-600 dark:from-blue-400 via-indigo-600 dark:via-indigo-400 to-sky-500 dark:to-sky-400 bg-clip-text text-transparent">{{ $highlight }}</span>

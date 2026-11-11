@@ -2,11 +2,7 @@
 
 <section id="add-ons" class="scroll-mt-8 py-16 lg:py-24">
     <div class="mx-auto max-w-2xl text-center">
-        <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
-            <flux:icon.puzzle-piece variant="micro" class="size-4" />
-            {{ __('Add-ons & integrations') }}
-        </span>
-        <h2 class="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Connect SquadPass with the tools that make your club stronger') }}</h2>
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Connect SquadPass with the tools that make your club stronger') }}</h2>
         <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('Your plan covers the essentials, so switch on extras the moment you need them. Every add-on is billed per month and can be cancelled monthly.') }}</p>
     </div>
 

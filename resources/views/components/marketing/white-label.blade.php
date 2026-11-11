@@ -9,11 +9,7 @@
 <section id="white-label" class="scroll-mt-8 py-16 lg:py-24">
     <div class="grid items-center gap-14 lg:grid-cols-2">
         <div>
-            <span class="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-300 ring-1 ring-blue-400/30">
-                <flux:icon.sparkles variant="micro" class="size-4" />
-                {{ __('White label') }}
-            </span>
-            <h2 class="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Your club, your brand') }}</h2>
+            <h2 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">{{ __('Your club, your brand') }}</h2>
             <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">{{ __('SquadPass works under your own name. Your members see your logo and your colours everywhere, from the member portal to the emails in their inbox.') }}</p>
 
             <ul class="mt-8 flex flex-col gap-4">

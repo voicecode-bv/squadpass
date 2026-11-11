@@ -10,6 +10,8 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/passkeys.js',
+                // Three.js only loads on the homepage, for the 3D hero.
+                'resources/js/hero-club.js',
                 // Only the check-in kiosk listens for broadcasts, so Echo and
                 // pusher-js stay out of the bundle every other page loads.
                 'resources/js/echo.js',

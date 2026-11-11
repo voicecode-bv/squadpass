@@ -93,20 +93,6 @@ enum MarketingFeature: string
         };
     }
 
-    public function eyebrow(): string
-    {
-        return match ($this) {
-            self::MemberManagement => __('Member administration'),
-            self::LessonSchedule => __('Lesson schedule'),
-            self::StripCards => __('Strip cards'),
-            self::DirectDebit => __('Subscriptions & payments'),
-            self::CheckIn => __('Check-in'),
-            self::TrialLessons => __('Trial lessons'),
-            self::Forms => __('Forms'),
-            self::WhiteLabel => __('White label'),
-        };
-    }
-
     /**
      * The hero headline in two parts: the second part is highlighted.
      *
