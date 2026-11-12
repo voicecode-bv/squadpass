@@ -23,7 +23,9 @@ test('a club signup queues the sign_up event for google analytics', function () 
 });
 
 test('starting a demo queues the demo_start event for google analytics', function () {
-    $component = Livewire::test(StartDemo::class);
+    $component = Livewire::test(StartDemo::class)
+        ->set('email', 'anna@example.com')
+        ->set('club_type', 'dansschool');
     $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
 
     $component->call('start')->assertHasNoErrors();

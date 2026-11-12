@@ -1,4 +1,8 @@
 {{-- Hero call to action plus the three promises, shared by the segment and feature pages. --}}
+@props([
+    'segment' => null,
+])
+
 @php($days = \App\Enums\ClubPlan::TRIAL_DAYS)
 
 <div class="flex flex-wrap items-center gap-3 sm:gap-4">
@@ -6,7 +10,7 @@
         <a href="#signup" class="shrink-0 rounded-xl bg-linear-to-r from-blue-500 to-indigo-600 px-4 py-3 text-sm font-semibold sm:px-6 sm:text-base text-white shadow-lg shadow-blue-500/40 transition hover:from-blue-400 hover:to-indigo-500">
             {{ __('Start your free trial') }}
         </a>
-        <livewire:clubs.start-demo />
+        <livewire:clubs.start-demo :segment="$segment" />
     @else
         <a href="#pricing" class="rounded-xl px-6 py-3 text-base font-semibold text-zinc-700 dark:text-zinc-300 ring-1 ring-zinc-300 dark:ring-white/15 transition hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white">
             {{ __('See pricing') }}

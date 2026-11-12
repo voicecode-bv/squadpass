@@ -18,6 +18,7 @@ enum ClubSegment: string
     case CrossfitBox = 'crossfit-box';
     case Bootcamp = 'bootcamp';
     case PadelClub = 'padelclub';
+    case GolfClub = 'golfclub';
 
     public function label(): string
     {
@@ -32,6 +33,27 @@ enum ClubSegment: string
             self::CrossfitBox => __('CrossFit boxes'),
             self::Bootcamp => __('Bootcamps'),
             self::PadelClub => __('Padel clubs'),
+            self::GolfClub => __('Golf clubs'),
+        };
+    }
+
+    /**
+     * One business of this type, such as in the demo modal's type picker.
+     */
+    public function singularLabel(): string
+    {
+        return match ($this) {
+            self::DanceSchool => __('Dance school'),
+            self::PersonalTrainer => __('Personal trainer'),
+            self::BoutiqueFitness => __('Boutique fitness studio'),
+            self::FitnessClub => __('Gym'),
+            self::BoxingSchool => __('Boxing school'),
+            self::YogaStudio => __('Yoga studio'),
+            self::PilatesStudio => __('Pilates studio'),
+            self::CrossfitBox => __('CrossFit box'),
+            self::Bootcamp => __('Bootcamp'),
+            self::PadelClub => __('Padel club'),
+            self::GolfClub => __('Golf club'),
         };
     }
 
@@ -51,6 +73,7 @@ enum ClubSegment: string
             self::CrossfitBox => __('WOD schedule, memberships and check-in.'),
             self::Bootcamp => __('Outdoor sessions, strip cards and trial sessions.'),
             self::PadelClub => __('Clinics per level, strip cards and trial lessons.'),
+            self::GolfClub => __('Golf lessons, clinics, beginner courses and memberships.'),
         };
     }
 
@@ -67,6 +90,7 @@ enum ClubSegment: string
             self::CrossfitBox => 'trophy',
             self::Bootcamp => 'dumbbell',
             self::PadelClub => 'sport',
+            self::GolfClub => 'flag',
         };
     }
 
@@ -83,6 +107,7 @@ enum ClubSegment: string
             self::CrossfitBox => __('Software for CrossFit boxes: WOD schedule, memberships and check-in'),
             self::Bootcamp => __('Software for bootcamps: sessions, strip cards and payments'),
             self::PadelClub => __('Software for padel clubs: lessons, clinics and memberships'),
+            self::GolfClub => __('Software for golf clubs and golf schools: lessons, clinics and memberships'),
         };
     }
 
@@ -101,6 +126,7 @@ enum ClubSegment: string
             self::CrossfitBox => __('Plan your WODs and classes, collect memberships by direct debit and let athletes check in with a QR code. SquadPass for CrossFit boxes. :days days free.', $days),
             self::Bootcamp => __('Plan outdoor sessions, sell strip cards and let new participants book a trial session online. SquadPass for bootcamps and outdoor training. :days days free.', $days),
             self::PadelClub => __('Plan padel lessons and clinics per level and court, sell strip cards and memberships and let new players book a trial lesson online. SquadPass for padel clubs. :days days free.', $days),
+            self::GolfClub => __('Plan golf lessons, clinics and beginner courses with your golf pros, sell lesson cards and memberships and let new golfers book a trial lesson online. SquadPass for golf clubs and golf schools. :days days free.', $days),
         };
     }
 
@@ -122,6 +148,7 @@ enum ClubSegment: string
             self::CrossfitBox => [__('Your box runs on strength,'), __('your admin on autopilot.')],
             self::Bootcamp => [__('Train outside,'), __('let the admin run itself.')],
             self::PadelClub => [__('More time on court,'), __('less time on admin.')],
+            self::GolfClub => [__('Focus on the swing,'), __('not on the spreadsheet.')],
         };
     }
 
@@ -138,6 +165,7 @@ enum ClubSegment: string
             self::CrossfitBox => __('Put your WODs and classes in the schedule, collect memberships automatically and let athletes check in with their QR code. Your coaches focus on coaching, not on paperwork.'),
             self::Bootcamp => __('Whether you train in the park or on the beach: participants book their session online, pay with a strip card or subscription and get a reminder beforehand.'),
             self::PadelClub => __('From beginner clinics to competitive training: players book their own spot on court, pay with a strip card or membership and get a reminder before they play. You fill every court, SquadPass keeps the overview.'),
+            self::GolfClub => __('From beginner courses to clinics with your golf pros: members book their own lesson, pay with a lesson card or membership and get a reminder beforehand. Your pros focus on teaching, SquadPass keeps the overview.'),
         };
     }
 
@@ -201,6 +229,11 @@ enum ClubSegment: string
                 $lesson('17:00', 'Jeugdpadel', 7, 8),
                 $lesson('20:00', 'Training gevorderden', 4, 4),
             ]],
+            self::GolfClub => ['club' => 'Golfschool Breda', 'lessons' => [
+                $lesson('09:00', 'Beginnerscursus', 6, 8),
+                $lesson('14:00', 'Jeugdtraining', 9, 12),
+                $lesson('18:30', 'Clinic korte spel', 6, 6),
+            ]],
         };
     }
 
@@ -261,6 +294,11 @@ enum ClubSegment: string
                 ['title' => __('Lessons arranged via group chats'), 'text' => __('Players book a lesson or clinic in the schedule themselves, and once a court is full nobody else can join.')],
                 ['title' => __('Paper lesson cards'), 'text' => __('Strip cards are digital and every lesson is deducted automatically. Players always see how many lessons they have left.')],
                 ['title' => __('Newcomers who never come back'), 'text' => __('Let new players book a trial lesson online. You get their details right away and convert them into a member with one click.')],
+            ],
+            self::GolfClub => [
+                ['title' => __('Lesson lists at the pro shop'), 'text' => __('Members book a lesson or clinic with your golf pro themselves, and you see at a glance which lessons are full.')],
+                ['title' => __('Lesson cards in a drawer'), 'text' => __('Lesson cards are digital and every lesson is deducted automatically. Members always see how many lessons they have left.')],
+                ['title' => __('Beginners who drop out'), 'text' => __('Let newcomers book a trial lesson online. You get their details right away and convert them into a member with one click.')],
             ],
         };
     }
@@ -351,6 +389,14 @@ enum ClubSegment: string
                 ['icon' => 'credit-card', 'title' => __('Memberships'), 'text' => __('Offer memberships with a set number of lessons per month, collected automatically by direct debit.')],
                 ['icon' => 'users', 'title' => __('Trainers with their own account'), 'text' => __('Give every trainer access to their schedule and check-in, at no extra cost per user.')],
             ],
+            self::GolfClub => [
+                ['icon' => 'calendar-days', 'title' => __('Lessons, clinics and courses'), 'text' => __('Plan private lessons, group clinics and beginner courses of several weeks, each with their own golf pro and maximum number of participants.')],
+                ['icon' => 'map-pin', 'title' => __('Range, green and course'), 'text' => __('Link every lesson to a location, such as the driving range, the putting green or a loop on the course.')],
+                ['icon' => 'ticket', 'title' => __('Lesson cards'), 'text' => __('Sell a 5- or 10-lesson card that members buy online and use for any lesson.')],
+                ['icon' => 'user-plus', 'title' => __('Trial lessons for newcomers'), 'text' => __('Share your trial page and new golfers book a free or paid trial lesson themselves.')],
+                ['icon' => 'credit-card', 'title' => __('Memberships and lesson subscriptions'), 'text' => __('Collect memberships and lesson subscriptions automatically by direct debit, monthly or yearly.')],
+                ['icon' => 'users', 'title' => __('Golf pros with their own account'), 'text' => __('Give every golf pro access to their own schedule and check-in, at no extra cost per user.')],
+            ],
         };
     }
 
@@ -413,6 +459,11 @@ enum ClubSegment: string
                 ['question' => __('Can players book a lesson or clinic themselves?'), 'answer' => __('Yes. Players book their spot in the member portal or in your own app and see right away how many spots are left.')],
                 ['question' => __('Can I work with several courts and trainers?'), 'answer' => __('Absolutely. You add your courts and trainers and link every lesson to them. Trainers get their own account at no extra cost.')],
             ],
+            self::GolfClub => [
+                ['question' => __('Can members book a lesson with a golf pro themselves?'), 'answer' => __('Yes. Members book their spot in the member portal or in your own app and see right away how many spots are left.')],
+                ['question' => __('Can I run a beginner course over several weeks?'), 'answer' => __('Yes. You plan the course as a recurring lesson with fixed enrollment, so participants keep their spot every week. They report absence in the member portal.')],
+                ['question' => __('Does SquadPass replace my tee time system?'), 'answer' => __('No. SquadPass focuses on lessons, clinics, members and payments. Tee times and handicap registration stay in the system you use now.')],
+            ],
         };
     }
 
@@ -429,6 +480,7 @@ enum ClubSegment: string
             self::CrossfitBox => __('Ready to level up your box?'),
             self::Bootcamp => __('Ready to grow your bootcamp?'),
             self::PadelClub => __('Ready to fill every court?'),
+            self::GolfClub => __('Ready to tee off?'),
         };
     }
 }

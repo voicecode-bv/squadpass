@@ -4,12 +4,14 @@ use App\Actions\Demo\StartDemoSandbox;
 use App\Actions\Invitations\InviteToClub;
 use App\Enums\ClubInvitationRole;
 use App\Enums\ClubPlan;
+use App\Enums\ClubSegment;
 use App\Enums\StaffRole;
 use App\Exceptions\ClubInvitationException;
 use App\Livewire\Clubs\Plan;
 use App\Livewire\Clubs\StartDemo;
 use App\Livewire\Members\Import;
 use App\Models\Club;
+use App\Models\DemoRequest;
 use App\Models\User;
 use App\Services\SpamProtection;
 use Database\Seeders\DemoClubSeeder;
@@ -18,14 +20,25 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
 beforeEach(function () {
     Storage::fake('public');
 });
 
+/**
+ * The demo modal with valid details, ready to submit.
+ */
+function demoForm(): Testable
+{
+    return Livewire::test(StartDemo::class)
+        ->set('email', 'anna@example.com')
+        ->set('club_type', ClubSegment::DanceSchool->value);
+}
+
 test('a visitor gets a private, filled demo club and lands in it as its owner', function () {
-    $component = Livewire::test(StartDemo::class);
+    $component = demoForm();
     $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
 
     $component->call('start')->assertHasNoErrors();
@@ -52,7 +65,7 @@ test('a visitor can start only a few demos per hour', function () {
         RateLimiter::hit('demo-sandbox:127.0.0.1', 3600);
     }
 
-    $component = Livewire::test(StartDemo::class);
+    $component = demoForm();
     $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
 
     $component->call('start')->assertHasErrors([SpamProtection::ERROR_KEY => __('You have started the maximum number of demos for this hour. Try again in :minutes minutes, or create your own club right away.', ['minutes' => 60])]);
@@ -63,7 +76,7 @@ test('a visitor can start only a few demos per hour', function () {
 test('no new demo starts once the cap of live sandboxes is reached', function () {
     Club::factory()->count(StartDemo::MAX_ACTIVE_SANDBOXES)->create(['demo_expires_at' => now()->addHour()]);
 
-    $component = Livewire::test(StartDemo::class);
+    $component = demoForm();
     $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
 
     $component->call('start')->assertHasErrors(SpamProtection::ERROR_KEY);
@@ -162,7 +175,7 @@ test('the landing pages offer the demo to guests', function () {
 });
 
 test('starting the demo right after the page loads explains why it did not work', function () {
-    Livewire::test(StartDemo::class)
+    demoForm()
         ->call('start')
         ->assertHasErrors([SpamProtection::ERROR_KEY => __('That was a little too fast. Wait a moment and try again.')]);
 
@@ -170,13 +183,72 @@ test('starting the demo right after the page loads explains why it did not work'
 });
 
 test('starting a demo remembers the sandbox in a cookie', function () {
-    $component = Livewire::test(StartDemo::class);
+    $component = demoForm();
     $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
 
     $component->call('start');
 
     $cookie = collect(Cookie::getQueuedCookies())->firstWhere(fn ($cookie) => $cookie->getName() === StartDemo::COOKIE);
     expect($cookie->getValue())->toBe((string) auth()->id());
+});
+
+test('the demo modal records the email address and type of club', function () {
+    $component = Livewire::test(StartDemo::class)
+        ->assertSee(__('Try the demo'))
+        ->set('email', 'Anna@Example.com')
+        ->set('club_type', ClubSegment::YogaStudio->value);
+    $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
+
+    $component->call('start')->assertHasNoErrors();
+
+    $request = DemoRequest::query()->sole();
+    expect($request->email)->toBe('anna@example.com')
+        ->and($request->club_segment)->toBe(ClubSegment::YogaStudio)
+        ->and($request->other_club_type)->toBeNull();
+});
+
+test('a visitor who chooses something else describes their club', function () {
+    $component = Livewire::test(StartDemo::class)
+        ->set('email', 'anna@example.com')
+        ->set('club_type', DemoRequest::OTHER_CLUB_TYPE)
+        ->assertSee(__('What kind of club is it?'));
+    $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
+
+    $component->call('start')->assertHasErrors(['other_club_type' => 'required_if']);
+    expect(Club::query()->count())->toBe(0);
+
+    $component->set('other_club_type', 'Zwemschool')->call('start')->assertHasNoErrors();
+
+    $request = DemoRequest::query()->sole();
+    expect($request->club_segment)->toBeNull()
+        ->and($request->other_club_type)->toBe('Zwemschool');
+});
+
+test('the demo needs an email address and a type of club', function (array $details, array $errors) {
+    $component = Livewire::test(StartDemo::class);
+    $this->travel(SpamProtection::MINIMUM_SECONDS + 1)->seconds();
+
+    foreach ($details as $property => $value) {
+        $component->set($property, $value);
+    }
+
+    $component->call('start')->assertHasErrors($errors);
+
+    expect(Club::query()->count())->toBe(0)
+        ->and(DemoRequest::query()->count())->toBe(0);
+})->with([
+    'nothing filled in' => [[], ['email' => 'required', 'club_type' => 'required']],
+    'invalid email address' => [['email' => 'anna', 'club_type' => 'dansschool'], ['email' => 'email']],
+    'unknown type of club' => [['email' => 'anna@example.com', 'club_type' => 'zwemschool'], ['club_type' => 'in']],
+]);
+
+test('a segment page preselects its type of club in the demo modal', function () {
+    Livewire::test(StartDemo::class, ['segment' => ClubSegment::PadelClub])
+        ->assertSet('club_type', ClubSegment::PadelClub->value);
+
+    $this->get(route('segments.show', ClubSegment::PadelClub))
+        ->assertOk()
+        ->assertSee('"club_type":"'.ClubSegment::PadelClub->value.'"');
 });
 
 test('a visitor with a live sandbox returns to it instead of starting a new one', function () {
@@ -186,6 +258,7 @@ test('a visitor with a live sandbox returns to it instead of starting a new one'
         ->test(StartDemo::class)
         ->assertSet('canResume', true)
         ->assertSee(__('Continue your demo'))
+        ->assertDontSee(__('Type of club'))
         ->call('start')
         ->assertHasNoErrors()
         ->assertRedirect(route('clubs.dashboard', $club));

@@ -2,7 +2,8 @@
     Full-screen hero backdrop. resources/js/hero-club.js renders a cross-section
     of a club in 3D across the full width: members walk in one after another,
     are greeted at the front desk, check in at the QR scanner on the desk and
-    walk on to the group class, the gym and the padel court. The SVG (the check-in at the desk,
+    walk on to the dance studio, the gym, the yoga studio, the padel court and
+    the golf room, with the camera following them. The SVG (the check-in at the desk,
     looped by the .sp-club rules in app.css) is the fallback without WebGL;
     with reduced motion only that still SVG shows.
 
@@ -13,13 +14,17 @@
     aria-hidden="true"
     data-hero-club
     data-club="Sportclub Centrum"
-    data-studio="{{ __('Group class') }}"
+    data-studio="{{ __('Dance studio') }}"
+    data-yoga="{{ __('Yoga studio') }}"
     data-court="{{ __('Court :number', ['number' => 1]) }}"
+    data-golf="Golf"
     data-checked-in="{{ __('Checked in') }}"
     data-members="{{ json_encode([
-        ['activity' => 'class', 'greeting' => __('Hi :name!', ['name' => 'Alex']), 'label' => 'Alex · '.__('Group class')],
+        ['activity' => 'dance', 'greeting' => __('Hi :name!', ['name' => 'Alex']), 'label' => 'Alex · '.__('Dance class')],
         ['activity' => 'gym', 'greeting' => __('Hi :name!', ['name' => 'Sanne']), 'label' => 'Sanne · '.__('Gym floor')],
+        ['activity' => 'yoga', 'greeting' => __('Hi :name!', ['name' => 'Mila']), 'label' => 'Mila · Yoga'],
         ['activity' => 'padel', 'greeting' => __('Hi :name!', ['name' => 'Jesse']), 'label' => 'Jesse · Padel'],
+        ['activity' => 'golf', 'greeting' => __('Hi :name!', ['name' => 'Daan']), 'label' => 'Daan · '.__('Putting green')],
     ]) }}"
 >
     {{-- Still fallback: right of the text on wide screens, below it on phones. --}}

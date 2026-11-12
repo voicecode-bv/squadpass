@@ -23,7 +23,7 @@
 
             <p class="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $segment->intro() }}</p>
 
-            <x-marketing.hero-actions />
+            <x-marketing.hero-actions :segment="$segment" />
         </div>
 
         {{-- Schedule mockup --}}
