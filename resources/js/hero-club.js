@@ -423,6 +423,7 @@ function buildScene(scene, texts) {
     });
 
     // Gym: a treadmill runner and someone lifting dumbbells.
+    wallSign(scene, texts.gym, { x: 5.3, y: 3.05, width: 3.0 });
     [-1.2, 0.5].forEach((z) => {
         const treadmill = new THREE.Group();
         treadmill.position.set(4.0, 0, z);
@@ -986,6 +987,7 @@ function mount(container) {
     const actors = buildScene(scene, {
         club: container.dataset.club,
         studio: container.dataset.studio,
+        gym: container.dataset.gym,
         yoga: container.dataset.yoga,
         court: container.dataset.court,
         golf: container.dataset.golf,

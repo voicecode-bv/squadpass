@@ -15,15 +15,16 @@
     data-hero-club
     data-club="Sportclub Centrum"
     data-studio="{{ __('Dance studio') }}"
+    data-gym="{{ __('Gym floor') }}"
     data-yoga="{{ __('Yoga studio') }}"
-    data-court="{{ __('Court :number', ['number' => 1]) }}"
+    data-court="Padelclub"
     data-golf="Golf"
     data-checked-in="{{ __('Checked in') }}"
     data-members="{{ json_encode([
         ['activity' => 'dance', 'greeting' => __('Hi :name!', ['name' => 'Alex']), 'label' => 'Alex · '.__('Dance class')],
         ['activity' => 'gym', 'greeting' => __('Hi :name!', ['name' => 'Sanne']), 'label' => 'Sanne · '.__('Gym floor')],
         ['activity' => 'yoga', 'greeting' => __('Hi :name!', ['name' => 'Mila']), 'label' => 'Mila · Yoga'],
-        ['activity' => 'padel', 'greeting' => __('Hi :name!', ['name' => 'Jesse']), 'label' => 'Jesse · Padel'],
+        ['activity' => 'padel', 'greeting' => __('Hi :name!', ['name' => 'Jesse']), 'label' => 'Jesse · Padelclub'],
         ['activity' => 'golf', 'greeting' => __('Hi :name!', ['name' => 'Daan']), 'label' => 'Daan · '.__('Putting green')],
     ]) }}"
 >
